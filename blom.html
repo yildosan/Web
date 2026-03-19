@@ -1,193 +1,354 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bloom — AI Bitki Tasarımı</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        :root {
-            --radius: 1rem;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #000;
-            color: white;
-            overflow: hidden;
-        }
+<title>Bloom AI</title>
 
-        .font-serif {
-            font-family: 'Source Serif 4', serif;
-            font-style: italic;
-        }
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Source+Serif+4:ital@1&display=swap" rel="stylesheet">
 
-        /* Liquid Glass Components */
-        @layer components {
-            .liquid-glass {
-                background: rgba(255, 255, 255, 0.01);
-                background-blend-mode: luminosity;
-                backdrop-filter: blur(4px);
-                position: relative;
-                overflow: hidden;
-                transition: transform 0.3s ease;
-            }
+<style>
+:root {
+  --radius: 1rem;
+}
 
-            .liquid-glass::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                padding: 1.4px;
-                border-radius: inherit;
-                background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 20%, transparent 40%, transparent 60%, rgba(255, 255, 255, 0.15) 80%, rgba(255, 255, 255, 0.45) 100%);
-                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                -webkit-mask-composite: xor;
-                mask-composite: exclude;
-                pointer-events: none;
-            }
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-            .liquid-glass-strong {
-                background: rgba(255, 255, 255, 0.02);
-                backdrop-filter: blur(50px);
-                box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-                position: relative;
-                overflow: hidden;
-                transition: transform 0.3s ease;
-            }
+body {
+  font-family: 'Poppins', sans-serif;
+  color: white;
+  overflow-x: hidden;
+}
 
-            .liquid-glass-strong::before {
-                content: "";
-                position: absolute;
-                inset: 0;
-                padding: 1.4px;
-                border-radius: inherit;
-                background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 20%, transparent 40%, transparent 60%, rgba(255, 255, 255, 0.2) 80%, rgba(255, 255, 255, 0.5) 100%);
-                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-                -webkit-mask-composite: xor;
-                mask-composite: exclude;
-                pointer-events: none;
-            }
-        }
+/* VIDEO BACKGROUND */
+video {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
 
-        .icon-box {
-            width: 2rem;
-            height: 2rem;
-            border-radius: 9999px;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
+/* MAIN LAYER */
+.main {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* LAYOUT */
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.left {
+  width: 100%;
+  padding: 20px;
+}
+
+.right {
+  display: none;
+}
+
+@media(min-width: 1024px) {
+  .left { width: 52%; }
+  .right {
+    display: flex;
+    width: 48%;
+    flex-direction: column;
+    padding: 20px;
+  }
+}
+
+/* LOGO */
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+}
+
+/* GLASS */
+.liquid-glass {
+  backdrop-filter: blur(4px);
+  background: rgba(255,255,255,0.02);
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
+.liquid-glass-strong {
+  backdrop-filter: blur(50px);
+  background: rgba(255,255,255,0.03);
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.liquid-glass::before,
+.liquid-glass-strong::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.4),
+    rgba(255,255,255,0.15),
+    transparent,
+    transparent,
+    rgba(255,255,255,0.15),
+    rgba(255,255,255,0.4)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* NAV */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.menu-btn {
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* HERO */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 40px;
+  max-width: 700px;
+  letter-spacing: -1px;
+}
+
+@media(min-width:1024px){
+  .hero h1 {
+    font-size: 70px;
+  }
+}
+
+.hero em {
+  font-family: 'Source Serif 4', serif;
+  opacity: 0.8;
+}
+
+.btn {
+  margin-top: 30px;
+  padding: 14px 30px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+}
+
+.pills {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pill {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+/* QUOTE */
+.quote {
+  margin-top: 40px;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.quote small {
+  letter-spacing: 2px;
+  opacity: 0.6;
+}
+
+.quote p {
+  margin: 10px 0;
+  font-style: italic;
+}
+
+/* RIGHT SIDE */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.icons {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+}
+
+.card {
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.bottom {
+  margin-top: auto;
+}
+
+.row {
+  display: flex;
+  gap: 15px;
+}
+
+.small-card {
+  flex: 1;
+  padding: 20px;
+}
+
+/* HOVER */
+.liquid-glass,
+.liquid-glass-strong {
+  transition: transform 0.3s;
+}
+
+.liquid-glass:hover,
+.liquid-glass-strong:hover {
+  transform: scale(1.05);
+}
+</style>
 </head>
+
 <body>
 
-    <video class="absolute inset-0 w-full h-full object-cover z-0" autoplay loop muted playsinline>
-        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4" type="video/mp4">
-    </video>
+<video autoplay muted loop>
+  <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260315_073750_51473149-4350-4920-ae24-c8214286f323.mp4">
+</video>
 
-    <main class="relative z-10 flex flex-row min-h-screen w-full p-4 lg:p-0">
-        
-        <section class="relative w-full lg:w-[52%] flex flex-col p-6 lg:p-10">
-            <div class="liquid-glass-strong absolute inset-2 lg:inset-6 rounded-[2rem] z-[-1]"></div>
-            
-            <nav class="flex justify-between items-center w-full mb-12">
-                <div class="flex items-center gap-2">
-                    <img src="/logo.png" alt="Bloom" class="w-8 h-8 opacity-90">
-                    <span class="text-2xl font-semibold tracking-tighter text-white">bloom</span>
-                </div>
-                <button class="liquid-glass flex items-center gap-2 px-5 py-2 rounded-full hover:scale-105 active:scale-95 transition-all">
-                    <span class="text-sm font-medium">Menü</span>
-                    <i data-lucide="menu" class="w-4 h-4"></i>
-                </button>
-            </nav>
+<div class="main">
+<div class="container">
 
-            <div class="flex-1 flex flex-col justify-center items-start space-y-8 max-w-xl">
-                <img src="/logo.png" alt="Bloom Logo" class="w-20 h-20 opacity-90">
-                <h1 class="text-5xl lg:text-7xl font-medium tracking-[-0.05em] leading-[1.1] text-white">
-                    Bloom AI <br> <span class="font-serif text-white/80">ruhunu</span> keşfedin
-                </h1>
-                
-                <button class="liquid-glass-strong group flex items-center gap-4 px-6 py-3 rounded-full hover:scale-105 active:scale-95 transition-all">
-                    <span class="font-medium">Hemen Keşfet</span>
-                    <div class="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                    </div>
-                </button>
+<!-- LEFT -->
+<div class="left">
 
-                <div class="flex flex-wrap gap-3">
-                    <span class="liquid-glass px-4 py-1.5 rounded-full text-xs text-white/80">Artistik Galeri</span>
-                    <span class="liquid-glass px-4 py-1.5 rounded-full text-xs text-white/80">AI Üretimi</span>
-                    <span class="liquid-glass px-4 py-1.5 rounded-full text-xs text-white/80">3D Yapılar</span>
-                </div>
-            </div>
+<div class="liquid-glass-strong" style="padding:30px; height:100%; border-radius:30px;">
 
-            <div class="mt-12 space-y-4">
-                <span class="text-[10px] tracking-[0.2em] uppercase text-white/50 font-medium">VİZYONER TASARIM</span>
-                <p class="text-lg lg:text-xl leading-relaxed">
-                    "Sonu olmayan bir <span class="font-serif italic text-white/90">diyar</span> hayal ettik."
-                </p>
-                <div class="flex items-center gap-4 w-fit">
-                    <div class="h-[1px] w-8 bg-white/20"></div>
-                    <span class="text-xs tracking-widest text-white/60">MARCUS AURELIO</span>
-                    <div class="h-[1px] w-8 bg-white/20"></div>
-                </div>
-            </div>
-        </section>
+<div class="nav">
+  <div class="brand">
+    <div class="logo"></div>
+    bloom
+  </div>
 
-        <section class="hidden lg:flex w-[48%] flex-col p-10 space-y-6">
-            
-            <div class="flex justify-between items-center">
-                <div class="liquid-glass flex items-center gap-4 px-4 py-2 rounded-full">
-                    <a href="#" class="text-white hover:text-white/70 transition-colors"><i data-lucide="twitter" class="w-4 h-4"></i></a>
-                    <a href="#" class="text-white hover:text-white/70 transition-colors"><i data-lucide="linkedin" class="w-4 h-4"></i></a>
-                    <a href="#" class="text-white hover:text-white/70 transition-colors"><i data-lucide="instagram" class="w-4 h-4"></i></a>
-                    <div class="h-4 w-[1px] bg-white/20 ml-2"></div>
-                    <i data-lucide="arrow-right" class="w-4 h-4 opacity-60"></i>
-                </div>
-                
-                <button class="liquid-glass w-12 h-12 flex items-center justify-center rounded-full hover:scale-110 transition-all">
-                    <i data-lucide="sparkles" class="w-5 h-5"></i>
-                </button>
-            </div>
+  <div class="menu-btn liquid-glass">Menü</div>
+</div>
 
-            <div class="liquid-glass p-5 rounded-3xl w-60 self-end hover:scale-105 transition-transform">
-                <h3 class="text-sm font-medium mb-1 text-white">Ekosisteme Katıl</h3>
-                <p class="text-[11px] text-white/60 leading-normal">Topluluğumuzun bir parçası olun ve yeni nesil botanik sanatı keşfedin.</p>
-            </div>
+<div class="hero">
+  <div class="logo" style="width:80px;height:80px;"></div>
 
-            <div class="mt-auto liquid-glass p-4 rounded-[2.5rem] space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="liquid-glass-strong p-6 rounded-3xl flex flex-col gap-3 hover:scale-[1.02] transition-all cursor-pointer">
-                        <i data-lucide="wand-2" class="w-6 h-6 text-white/80"></i>
-                        <span class="text-sm font-medium">İşleme</span>
-                    </div>
-                    <div class="liquid-glass-strong p-6 rounded-3xl flex flex-col gap-3 hover:scale-[1.02] transition-all cursor-pointer">
-                        <i data-lucide="book-open" class="w-6 h-6 text-white/80"></i>
-                        <span class="text-sm font-medium">Arşiv</span>
-                    </div>
-                </div>
+  <h1>
+    Bloom AI ile doğanın <em>ruhunu</em> yeniden tasarla
+  </h1>
 
-                <div class="liquid-glass rounded-3xl p-4 flex items-center gap-4 group cursor-pointer">
-                    <img src="@/assets/hero-flowers.png" alt="Bitki" class="w-24 h-16 rounded-xl object-cover bg-white/5 shadow-lg">
-                    <div class="flex-1">
-                        <h4 class="text-sm font-medium text-white">Gelişmiş Bitki Heykelciliği</h4>
-                        <p class="text-[10px] text-white/50">Yapay zeka ile organik formları yeniden şekillendirin.</p>
-                    </div>
-                    <button class="liquid-glass w-8 h-8 rounded-full flex items-center justify-center text-white/80 group-hover:scale-110 transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
+  <div class="btn liquid-glass-strong">
+    Keşfet
+  </div>
 
-        </section>
-    </main>
+  <div class="pills">
+    <div class="pill liquid-glass">Sanatsal Galeri</div>
+    <div class="pill liquid-glass">AI Üretim</div>
+    <div class="pill liquid-glass">3D Yapılar</div>
+  </div>
 
-    <script>
-        // İkonları yükle
-        lucide.createIcons();
-    </script>
+  <div class="quote">
+    <small>VİZYONER TASARIM</small>
+    <p>“Sonu olmayan bir dünya hayal ettik.”</p>
+    <small>— MARCUS AURELIO</small>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+<div class="topbar">
+  <div class="icons liquid-glass">
+    <div class="icon"></div>
+    <div class="icon"></div>
+    <div class="icon"></div>
+  </div>
+
+  <div class="liquid-glass" style="padding:10px 20px;">
+    Hesap
+  </div>
+</div>
+
+<div class="card liquid-glass">
+  <h3>Ekosistemimize katıl</h3>
+  <p>Topluluğa gir ve üretmeye başla</p>
+</div>
+
+<div class="bottom liquid-glass-strong" style="padding:20px; border-radius:40px;">
+  
+  <div class="row">
+    <div class="small-card liquid-glass">
+      İşleme
+    </div>
+    <div class="small-card liquid-glass">
+      Arşiv
+    </div>
+  </div>
+
+  <div class="card liquid-glass" style="margin-top:15px;">
+    Gelişmiş Bitki Tasarımı
+  </div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+
 </body>
 </html>
