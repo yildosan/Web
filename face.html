@@ -93,4 +93,38 @@
           hud.innerHTML = "!!! UYARI !!!<br>UYKU TESPİT EDİLDİ";
         } else {
           hud.classList.remove('alarm-red');
-          hud.innerHTML = `SAĞ GÖZ: ${rightEyeDist < 0.012 ? "K
+          hud.innerHTML = `SAĞ GÖZ: ${rightEyeDist < 0.012 ? "KAPALI" : "AÇIK"}<br>SOL GÖZ: ${leftEyeDist < 0.012 ? "KAPALI" : "AÇIK"}`;
+        }
+
+        const color = closed ? "#FF0000" : "#00FF00";
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: color, lineWidth: 3});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: color, lineWidth: 2});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: color, lineWidth: 2});
+        
+        // Mesh Çizimi
+        canvasCtx.beginPath();
+        canvasCtx.strokeStyle = color + "40";
+        const tesselation = FACEMESH_TESSELATION;
+        for (let i = 0; i < tesselation.length; i += 2) { 
+          const start = landmarks[tesselation[i][0]];
+          const end = landmarks[tesselation[i][1]];
+          canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
+          canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
+        }
+        canvasCtx.stroke();
+      }
+      canvasCtx.restore();
+    }
+
+    const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    faceMesh.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => await faceMesh.send({image: videoElement}),
+      width: 640, height: 480
+    });
+    camera.start();
+  </script>
+</body>
+</html>
