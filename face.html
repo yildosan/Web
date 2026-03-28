@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kalın Çizgili Hassas Mesh</title>
+  <title>Hassas Dil ve Yüz Takibi</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
@@ -33,36 +33,53 @@
       if (results.multiFaceLandmarks) {
         for (const landmarks of results.multiFaceLandmarks) {
           
-          // 1. ANA HATLAR (Dudak, Göz, Kaş, Oval - Kalınlık 2 Katına Çıkarıldı)
-          // lineWidth değerleri 1'den 2'ye, 1.5'ten 3'e yükseltildi.
+          // 1. ANA HATLAR (Kalın Çizgiler)
+          // Dudak dış çerçevesi
           drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 3});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2.5});
-
-          // 2. YÜZ AĞI (Yarı Yoğunluk - Kalınlık 2 Katına Çıkarıldı)
+          
+          // 2. DİL VE İÇ DUDAK TAKİBİ (Dil hareketlerini bu noktalar yakalar)
+          // MediaPipe'da özel bir "dil" bağlantısı yoktur, bu yüzden iç dudak (inner lips) 
+          // noktalarını kullanarak ağız boşluğunu belirginleştiriyoruz.
+          const innerLips = [
+            [78, 191], [191, 80], [80, 81], [81, 82], [82, 13], [13, 312], [312, 311], [311, 310], [310, 415], [415, 308],
+            [308, 324], [324, 318], [318, 402], [402, 317], [317, 14], [14, 87], [87, 178], [178, 95], [95, 88], [88, 78]
+          ];
+          
           canvasCtx.beginPath();
-          canvasCtx.strokeStyle = '#00FF0040'; // Şeffaflık biraz artırıldı (parlama etkisi için)
-          canvasCtx.lineWidth = 1.0; // 0.5'ten 1.0'a çıkarıldı
-
-          const tesselation = FACEMESH_TESSELATION;
-          for (let i = 0; i < tesselation.length; i += 2) { 
-            const start = landmarks[tesselation[i][0]];
-            const end = landmarks[tesselation[i][1]];
-            
+          canvasCtx.strokeStyle = '#00FF00';
+          canvasCtx.lineWidth = 2;
+          for (const [startIdx, endIdx] of innerLips) {
+            const start = landmarks[startIdx];
+            const end = landmarks[endIdx];
             canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
             canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
           }
           canvasCtx.stroke();
 
-          // 3. NOKTALAR (Her 2 noktadan biri - Boyut Artırıldı)
+          // 3. GÖZLER VE KAŞLAR
+          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_IRISES, {color: '#00FF00', lineWidth: 1});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2});
+
+          // 4. SEYREK YÜZ AĞI (%50 yoğunluk, kalın çizgiler)
+          canvasCtx.beginPath();
+          canvasCtx.strokeStyle = '#00FF0040';
+          canvasCtx.lineWidth = 1.2;
+          const tesselation = FACEMESH_TESSELATION;
+          for (let i = 0; i < tesselation.length; i += 2) { 
+            const start = landmarks[tesselation[i][0]];
+            const end = landmarks[tesselation[i][1]];
+            canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
+            canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
+          }
+          canvasCtx.stroke();
+
+          // 5. NOKTALAR (Boyut artırılmış)
           canvasCtx.fillStyle = "#00FF00";
           for (let i = 0; i < landmarks.length; i += 2) {
             const x = landmarks[i].x * canvasElement.width;
             const y = landmarks[i].y * canvasElement.height;
-            // Nokta boyutu 1x1'den 2x2'ye çıkarıldı
             canvasCtx.fillRect(x - 1, y - 1, 2, 2);
           }
         }
@@ -76,9 +93,9 @@
 
     faceMesh.setOptions({
       maxNumFaces: 1,
-      refineLandmarks: true, // Göz ve dudak mimikleri için kritik
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
+      refineLandmarks: true, // Dil ve iç dudak hassasiyeti için zorunlu
+      minDetectionConfidence: 0.7, // Daha kararlı takip için artırıldı
+      minTrackingConfidence: 0.7
     });
 
     faceMesh.onResults(onResults);
