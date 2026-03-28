@@ -3,18 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hassas Yüz Mimikleri</title>
+  <title>Yarı Yoğunluklu Hassas Mesh</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-
   <style>
     body { margin: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
     #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
     #input_video { display: none; }
   </style>
 </head>
-
 <body>
   <video id="input_video" playsinline></video>
   <canvas id="output_canvas"></canvas>
@@ -29,30 +27,42 @@
       canvasElement.height = videoElement.videoHeight;
 
       canvasCtx.save();
-      // Arka planı temizle (Siyah tut)
       canvasCtx.fillStyle = '#000000';
       canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 
       if (results.multiFaceLandmarks) {
         for (const landmarks of results.multiFaceLandmarks) {
           
-          // 1. ANA AĞ (Hafif ve ince - derinlik hissi için)
-          drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, 
-            {color: '#00FF0020', lineWidth: 0.5});
-          
-          // 2. GÖZLER (Hassas Göz Kırpma Takibi)
-          // refineLandmarks:true sayesinde göz kapakları çok daha gerçekçi hareket eder
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 1.5});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 1.5});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_IRISES, {color: '#00FF00', lineWidth: 1});
+          // 1. ANA HATLAR (Göz, Dudak, Kaş - Tam Hassasiyet)
+          // Bu kısımlar mimik için kritik olduğundan noktaları atlamıyoruz.
+          drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 1.5});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 1});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 1});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 1});
 
-          // 3. DUDAKLAR (Dudak bükme ve asimetrik hareketler için)
-          // İç ve dış dudak bağlantılarını ayrı ayrı çizerek detay artırıldı
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 2});
+          // 2. YÜZ AĞI (Nokta sayısını %50'ye indiren mantık)
+          canvasCtx.beginPath();
+          canvasCtx.strokeStyle = '#00FF0030'; // Çok hafif şeffaf yeşil
+          canvasCtx.lineWidth = 0.5;
 
-          // 4. KAŞLAR (Şaşırma ve kızma ifadeleri için)
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, {color: '#00FF00', lineWidth: 1.5});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, {color: '#00FF00', lineWidth: 1.5});
+          // FACEMESH_TESSELATION içindeki her iki bağlantıdan birini çiziyoruz
+          const tesselation = FACEMESH_TESSELATION;
+          for (let i = 0; i < tesselation.length; i += 2) { // i += 2 ile yarı yarıya azaltma
+            const start = landmarks[tesselation[i][0]];
+            const end = landmarks[tesselation[i][1]];
+            
+            canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
+            canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
+          }
+          canvasCtx.stroke();
+
+          // 3. NOKTALAR (Her 2 noktadan biri)
+          canvasCtx.fillStyle = "#00FF00";
+          for (let i = 0; i < landmarks.length; i += 2) { // i += 2 ile yarı yarıya azaltma
+            const x = landmarks[i].x * canvasElement.width;
+            const y = landmarks[i].y * canvasElement.height;
+            canvasCtx.fillRect(x - 0.5, y - 0.5, 1, 1);
+          }
         }
       }
       canvasCtx.restore();
@@ -64,9 +74,9 @@
 
     faceMesh.setOptions({
       maxNumFaces: 1,
-      refineLandmarks: true, // KRİTİK: Göz kapağı ve dudak detaylarını 10 kat artırır
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.6
+      refineLandmarks: true, // Mimik hassasiyeti için açık kalmalı
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
     });
 
     faceMesh.onResults(onResults);
@@ -75,7 +85,7 @@
       onFrame: async () => {
         await faceMesh.send({image: videoElement});
       },
-      width: 640, // 480'den 640'a çıkardık, mikro hareketler için daha fazla piksel verisi lazım
+      width: 640,
       height: 480
     });
     camera.start();
