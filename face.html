@@ -3,17 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Kalın Çizgili Hassas Mesh</title>
+  <title>Teknik Analiz Terminali</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
   <style>
-    body { margin: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
+    #output_canvas { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
     #input_video { display: none; }
+    
+    /* Teknik Veri Paneli */
+    .hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #00FF00;
+      background: rgba(0, 40, 0, 0.4);
+      padding: 15px;
+      border-left: 3px solid #00FF00;
+      font-size: 14px;
+      pointer-events: none;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
+  <div class="hud" id="hud-display">
+    Sistem: Başlatılıyor...<br>
+    Tarama: Beklemede...
+  </div>
   <video id="input_video" playsinline></video>
   <canvas id="output_canvas"></canvas>
 
@@ -21,74 +40,87 @@
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
     const canvasCtx = canvasElement.getContext('2d');
+    const hud = document.getElementById('hud-display');
 
+    let lastFrameTime = 0;
+    
     function onResults(results) {
+      // FPS Hesaplama
+      const now = performance.now();
+      const fps = Math.round(1000 / (now - lastFrameTime));
+      lastFrameTime = now;
+
       canvasElement.width = videoElement.videoWidth;
       canvasElement.height = videoElement.videoHeight;
-
       canvasCtx.save();
-      canvasCtx.fillStyle = '#000000';
+      canvasCtx.fillStyle = '#000';
       canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 
-      if (results.multiFaceLandmarks) {
-        for (const landmarks of results.multiFaceLandmarks) {
-          
-          // 1. ANA HATLAR (Dudak, Göz, Kaş, Oval - Kalınlık 2 Katına Çıkarıldı)
-          // lineWidth değerleri 1'den 2'ye, 1.5'ten 3'e yükseltildi.
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 3});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, {color: '#00FF00', lineWidth: 2});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2.5});
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
+        const landmarks = results.multiFaceLandmarks[0];
 
-          // 2. YÜZ AĞI (Yarı Yoğunluk - Kalınlık 2 Katına Çıkarıldı)
-          canvasCtx.beginPath();
-          canvasCtx.strokeStyle = '#00FF0040'; // Şeffaflık biraz artırıldı (parlama etkisi için)
-          canvasCtx.lineWidth = 1.0; // 0.5'ten 1.0'a çıkarıldı
+        // --- VERİ ANALİZİ ---
+        // 1. Uzaklık (İki göz arasındaki mesafe üzerinden kabaca)
+        const dist = Math.hypot(landmarks[33].x - landmarks[263].x, landmarks[33].y - landmarks[263].y);
+        const distancePercent = Math.round(dist * 100);
 
-          const tesselation = FACEMESH_TESSELATION;
-          for (let i = 0; i < tesselation.length; i += 2) { 
-            const start = landmarks[tesselation[i][0]];
-            const end = landmarks[tesselation[i][1]];
-            
-            canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
-            canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
-          }
-          canvasCtx.stroke();
+        // 2. Ağız Açıklığı (Üst dudak 13, Alt dudak 14)
+        const mouthOpen = Math.hypot(landmarks[13].x - landmarks[14].x, landmarks[13].y - landmarks[14].y);
+        const mouthStatus = mouthOpen > 0.05 ? "AÇIK" : "KAPALI";
 
-          // 3. NOKTALAR (Her 2 noktadan biri - Boyut Artırıldı)
-          canvasCtx.fillStyle = "#00FF00";
-          for (let i = 0; i < landmarks.length; i += 2) {
-            const x = landmarks[i].x * canvasElement.width;
-            const y = landmarks[i].y * canvasElement.height;
-            // Nokta boyutu 1x1'den 2x2'ye çıkarıldı
-            canvasCtx.fillRect(x - 1, y - 1, 2, 2);
-          }
+        // 3. Kafa Eğimi (Sağ göz 33, Sol göz 263 üzerinden Roll açısı)
+        const roll = Math.atan2(landmarks[263].y - landmarks[33].y, landmarks[263].x - landmarks[33].x) * (180 / Math.PI);
+
+        // HUD Güncelleme
+        hud.innerHTML = `
+          FPS: ${fps}<br>
+          UZAKLIK: %${distancePercent}<br>
+          AGIZ: ${mouthStatus}<br>
+          EGIM (ROLL): ${Math.round(roll)}°<br>
+          DURUM: TAKIP AKTIF
+        `;
+
+        // --- GÖRSEL ÇİZİM ---
+        // Yüz Ovali
+        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2.5});
+        // Gözler ve Dudaklar
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 3});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
+        
+        // Yarı Yoğunluklu Ağ (Tesselation)
+        canvasCtx.beginPath();
+        canvasCtx.strokeStyle = '#00FF0030';
+        canvasCtx.lineWidth = 1;
+        const tesselation = FACEMESH_TESSELATION;
+        for (let i = 0; i < tesselation.length; i += 2) { 
+          const start = landmarks[tesselation[i][0]];
+          const end = landmarks[tesselation[i][1]];
+          canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
+          canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
         }
+        canvasCtx.stroke();
+
+        // Noktalar
+        canvasCtx.fillStyle = "#00FF00";
+        for (let i = 0; i < landmarks.length; i += 2) {
+          const x = landmarks[i].x * canvasElement.width;
+          const y = landmarks[i].y * canvasElement.height;
+          canvasCtx.fillRect(x - 1, y - 1, 2, 2);
+        }
+      } else {
+        hud.innerHTML = "SİSTEM: TARANIYOR...<br>YÜZ BEKLENİYOR";
       }
       canvasCtx.restore();
     }
 
-    const faceMesh = new FaceMesh({locateFile: (file) => {
-      return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-    }});
-
-    faceMesh.setOptions({
-      maxNumFaces: 1,
-      refineLandmarks: true, // Göz ve dudak mimikleri için kritik
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
-    });
-
+    const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
     faceMesh.onResults(onResults);
 
     const camera = new Camera(videoElement, {
-      onFrame: async () => {
-        await faceMesh.send({image: videoElement});
-      },
-      width: 640,
-      height: 480
+      onFrame: async () => await faceMesh.send({image: videoElement}),
+      width: 640, height: 480
     });
     camera.start();
   </script>
