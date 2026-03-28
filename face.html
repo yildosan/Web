@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hata Giderilmiş Teknik Terminal</title>
+  <title>Göz Analizli Teknik Terminal</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
@@ -13,26 +13,26 @@
     #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
     #input_video { display: none; }
     
-    /* HUD Paneli - En Üst Katmana Alındı */
     #hud-display {
       position: absolute;
       top: 30px;
-      right: 30px; /* Daha iyi görünürlük için sağa aldım */
+      right: 30px;
       color: #00FF00;
       background: rgba(0, 30, 0, 0.7);
       padding: 20px;
       border-right: 4px solid #00FF00;
-      font-size: 16px;
-      z-index: 999; /* Diğer her şeyin üstünde olması için */
+      font-size: 15px;
+      z-index: 999;
       pointer-events: none;
-      min-width: 200px;
-      line-height: 1.5;
+      min-width: 220px;
+      line-height: 1.4;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="hud-display">SİSTEM: BAŞLATILIYOR...</div>
+    <div id="hud-display">BAĞLANTI KURULUYOR...</div>
     <video id="input_video" playsinline></video>
     <canvas id="output_canvas"></canvas>
   </div>
@@ -46,7 +46,6 @@
     let lastFrameTime = performance.now();
     
     function onResults(results) {
-      // FPS Hesaplama
       const now = performance.now();
       const fps = Math.round(1000 / (now - lastFrameTime));
       lastFrameTime = now;
@@ -61,36 +60,39 @@
       if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
         const landmarks = results.multiFaceLandmarks[0];
 
-        // --- VERİ ANALİZİ ---
-        // Uzaklık (Gözler arası mesafe)
-        const dist = Math.hypot(landmarks[33].x - landmarks[263].x, landmarks[33].y - landmarks[263].y);
-        const distancePercent = Math.round(dist * 200); // 200 çarpanı ile daha anlamlı yüzde
+        // --- GÖZ ANALİZİ (EAR - Eye Aspect Ratio Mantığı) ---
+        // Sağ Göz noktaları (Üst: 159, Alt: 145)
+        const rightEyeDist = Math.hypot(landmarks[159].x - landmarks[145].x, landmarks[159].y - landmarks[145].y);
+        const rightStatus = rightEyeDist > 0.012 ? "AÇIK " : "KAPALI";
 
-        // Ağız Açıklığı
+        // Sol Göz noktaları (Üst: 386, Alt: 374)
+        const leftEyeDist = Math.hypot(landmarks[386].x - landmarks[374].x, landmarks[386].y - landmarks[374].y);
+        const leftStatus = leftEyeDist > 0.012 ? "AÇIK " : "KAPALI";
+
+        // Genel Analiz
         const mouthOpen = Math.hypot(landmarks[13].x - landmarks[14].x, landmarks[13].y - landmarks[14].y);
-        const mouthStatus = mouthOpen > 0.04 ? "AÇIK" : "KAPALI";
-
-        // Kafa Eğimi
         const roll = Math.atan2(landmarks[263].y - landmarks[33].y, landmarks[263].x - landmarks[33].x) * (180 / Math.PI);
 
-        // HUD GÜNCELLEME (Doğrudan DOM manipülasyonu)
         hud.innerHTML = `
-          [SİSTEM ANALİZİ]<br>
+          [BİYOMETRİK VERİ]<br>
           -----------------<br>
           FPS      : ${fps}<br>
-          MESAFE   : %${distancePercent}<br>
-          AĞIZ     : ${mouthStatus}<br>
+          SAĞ GÖZ  : ${rightStatus}<br>
+          SOL GÖZ  : ${leftStatus}<br>
+          AĞIZ     : ${mouthOpen > 0.04 ? "AÇIK " : "KAPALI"}<br>
           EĞİM     : ${Math.round(roll)}°<br>
-          VERİ     : AKTİF
+          DURUM    : TARAMA AKTİF
         `;
 
         // --- ÇİZİMLER ---
+        // Göz Kırpma Belirteci (Göz kapalıysa çizgiyi kalınlaştır/renk değiştir)
+        const eyeColor = "#00FF00";
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: eyeColor, lineWidth: 2});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: eyeColor, lineWidth: 2});
         drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 3});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2.5});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2});
         
-        // Yüz Ağı
+        // Mesh Yapısı
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = '#00FF0030';
         canvasCtx.lineWidth = 1;
