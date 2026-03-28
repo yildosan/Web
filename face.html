@@ -3,97 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Ayna Modlu Yüz Takibi</title>
+  <title>Hızlı Yüz Takibi</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
 
   <style>
-    body { 
-      margin: 0; 
-      background: #000; 
-      overflow: hidden; 
-      display: flex; 
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100vw;
-      height: 100vh;
-    }
-    .container { 
-      position: relative; 
-      width: 100%; 
-      height: 100%; 
-    }
-    #input_video { 
-      display: none; 
-    }
-    #output_canvas { 
-      width: 100%; 
-      height: 100%; 
-      object-fit: cover; /* Ekranı tam kapla */
-    }
-    .status-bar {
-      position: absolute;
-      top: 20px;
-      color: white;
-      background: rgba(0,0,0,0.6);
-      padding: 8px 15px;
-      border-radius: 20px;
-      font-family: sans-serif;
-      font-size: 12px;
-      pointer-events: none;
-      z-index: 10;
-    }
+    body { margin: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    canvas { width: 100%; height: 100%; object-fit: cover; }
+    #input_video { display: none; }
   </style>
 </head>
 
 <body>
-  <div class="status-bar" id="status">Kamera hazırlanıyor...</div>
-  <div class="container">
-    <video id="input_video" playsinline></video>
-    <canvas id="output_canvas"></canvas>
-  </div>
+  <video id="input_video" playsinline></video>
+  <canvas id="output_canvas"></canvas>
 
   <script type="module">
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
     const canvasCtx = canvasElement.getContext('2d');
-    const statusDiv = document.getElementById('status');
 
     function onResults(results) {
-      statusDiv.innerText = "Canlı Takip Aktif (Ayna Modu)";
-      
       canvasElement.width = videoElement.videoWidth;
       canvasElement.height = videoElement.videoHeight;
 
       canvasCtx.save();
-      
-      // --- AYNA EFEKTİ BURADA YAPILIYOR ---
-      // Çizim alanını yatayda ters çeviriyoruz
+      // Ayna Efekti
       canvasCtx.translate(canvasElement.width, 0);
       canvasCtx.scale(-1, 1);
-      // ------------------------------------
-
+      
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
       canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
       if (results.multiFaceLandmarks) {
         for (const landmarks of results.multiFaceLandmarks) {
-          // Yüz ağı (Tesselation)
-          drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION,
-                         {color: '#00FF0050', lineWidth: 0.5});
-          
-          // Gözler, Kaşlar ve Dudaklar
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#FF3030', lineWidth: 1});
+          // Sadece ana hatları çiziyoruz (Aşırı kasmayı önlemek için TESSELATION kaldırıldı)
+          drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#E0E0E0', lineWidth: 1});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#FF3030', lineWidth: 1});
+          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#30FF30', lineWidth: 1});
           drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#30FF30', lineWidth: 1});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYEBROW, {color: '#FF3030', lineWidth: 1});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYEBROW, {color: '#30FF30', lineWidth: 1});
-          drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#FFFFFF', lineWidth: 1});
-          
-          // Göz bebekleri (İris) takibi
-          drawConnectors(canvasCtx, landmarks, FACEMESH_IRISES, {color: '#52eeff', lineWidth: 1});
         }
       }
       canvasCtx.restore();
@@ -105,19 +55,21 @@
 
     faceMesh.setOptions({
       maxNumFaces: 1,
-      refineLandmarks: true, // Göz bebeği detayları için açık
+      refineLandmarks: false, // KAPALI: Göz bebekleri takibi işlemciyi çok yorar
       minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5
+      minTrackingConfidence: 0.5,
+      selfieMode: true // Dahili ayna modu (bazı cihazlarda daha hızlı çalışır)
     });
 
     faceMesh.onResults(onResults);
 
+    // Çözünürlüğü ciddi oranda düşürdük
     const camera = new Camera(videoElement, {
       onFrame: async () => {
         await faceMesh.send({image: videoElement});
       },
-      width: 640,
-      height: 480
+      width: 320,
+      height: 240
     });
     camera.start();
   </script>
