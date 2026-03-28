@@ -3,38 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Teknik Analiz Terminali</title>
+  <title>Hata Giderilmiş Teknik Terminal</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
   <style>
-    body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', Courier, monospace; }
-    #output_canvas { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
+    body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+    .container { position: relative; width: 100vw; height: 100vh; }
+    #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
     #input_video { display: none; }
     
-    /* Teknik Veri Paneli */
-    .hud {
+    /* HUD Paneli - En Üst Katmana Alındı */
+    #hud-display {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 30px;
+      right: 30px; /* Daha iyi görünürlük için sağa aldım */
       color: #00FF00;
-      background: rgba(0, 40, 0, 0.4);
-      padding: 15px;
-      border-left: 3px solid #00FF00;
-      font-size: 14px;
+      background: rgba(0, 30, 0, 0.7);
+      padding: 20px;
+      border-right: 4px solid #00FF00;
+      font-size: 16px;
+      z-index: 999; /* Diğer her şeyin üstünde olması için */
       pointer-events: none;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      min-width: 200px;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <div class="hud" id="hud-display">
-    Sistem: Başlatılıyor...<br>
-    Tarama: Beklemede...
+  <div class="container">
+    <div id="hud-display">SİSTEM: BAŞLATILIYOR...</div>
+    <video id="input_video" playsinline></video>
+    <canvas id="output_canvas"></canvas>
   </div>
-  <video id="input_video" playsinline></video>
-  <canvas id="output_canvas"></canvas>
 
   <script type="module">
     const videoElement = document.getElementById('input_video');
@@ -42,7 +43,7 @@
     const canvasCtx = canvasElement.getContext('2d');
     const hud = document.getElementById('hud-display');
 
-    let lastFrameTime = 0;
+    let lastFrameTime = performance.now();
     
     function onResults(results) {
       // FPS Hesaplama
@@ -52,43 +53,44 @@
 
       canvasElement.width = videoElement.videoWidth;
       canvasElement.height = videoElement.videoHeight;
+      
       canvasCtx.save();
       canvasCtx.fillStyle = '#000';
       canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 
-      if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
         const landmarks = results.multiFaceLandmarks[0];
 
         // --- VERİ ANALİZİ ---
-        // 1. Uzaklık (İki göz arasındaki mesafe üzerinden kabaca)
+        // Uzaklık (Gözler arası mesafe)
         const dist = Math.hypot(landmarks[33].x - landmarks[263].x, landmarks[33].y - landmarks[263].y);
-        const distancePercent = Math.round(dist * 100);
+        const distancePercent = Math.round(dist * 200); // 200 çarpanı ile daha anlamlı yüzde
 
-        // 2. Ağız Açıklığı (Üst dudak 13, Alt dudak 14)
+        // Ağız Açıklığı
         const mouthOpen = Math.hypot(landmarks[13].x - landmarks[14].x, landmarks[13].y - landmarks[14].y);
-        const mouthStatus = mouthOpen > 0.05 ? "AÇIK" : "KAPALI";
+        const mouthStatus = mouthOpen > 0.04 ? "AÇIK" : "KAPALI";
 
-        // 3. Kafa Eğimi (Sağ göz 33, Sol göz 263 üzerinden Roll açısı)
+        // Kafa Eğimi
         const roll = Math.atan2(landmarks[263].y - landmarks[33].y, landmarks[263].x - landmarks[33].x) * (180 / Math.PI);
 
-        // HUD Güncelleme
+        // HUD GÜNCELLEME (Doğrudan DOM manipülasyonu)
         hud.innerHTML = `
-          FPS: ${fps}<br>
-          UZAKLIK: %${distancePercent}<br>
-          AGIZ: ${mouthStatus}<br>
-          EGIM (ROLL): ${Math.round(roll)}°<br>
-          DURUM: TAKIP AKTIF
+          [SİSTEM ANALİZİ]<br>
+          -----------------<br>
+          FPS      : ${fps}<br>
+          MESAFE   : %${distancePercent}<br>
+          AĞIZ     : ${mouthStatus}<br>
+          EĞİM     : ${Math.round(roll)}°<br>
+          VERİ     : AKTİF
         `;
 
-        // --- GÖRSEL ÇİZİM ---
-        // Yüz Ovali
-        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2.5});
-        // Gözler ve Dudaklar
+        // --- ÇİZİMLER ---
         drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: '#00FF00', lineWidth: 3});
         drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: '#00FF00', lineWidth: 2});
         drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: '#00FF00', lineWidth: 2});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00FF00', lineWidth: 2.5});
         
-        // Yarı Yoğunluklu Ağ (Tesselation)
+        // Yüz Ağı
         canvasCtx.beginPath();
         canvasCtx.strokeStyle = '#00FF0030';
         canvasCtx.lineWidth = 1;
@@ -104,12 +106,10 @@
         // Noktalar
         canvasCtx.fillStyle = "#00FF00";
         for (let i = 0; i < landmarks.length; i += 2) {
-          const x = landmarks[i].x * canvasElement.width;
-          const y = landmarks[i].y * canvasElement.height;
-          canvasCtx.fillRect(x - 1, y - 1, 2, 2);
+          canvasCtx.fillRect(landmarks[i].x * canvasElement.width - 1, landmarks[i].y * canvasElement.height - 1, 2, 2);
         }
       } else {
-        hud.innerHTML = "SİSTEM: TARANIYOR...<br>YÜZ BEKLENİYOR";
+        hud.innerHTML = "[SİSTEM TARANIYOR...]<br>HEDEF BEKLENİYOR";
       }
       canvasCtx.restore();
     }
