@@ -3,33 +3,67 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Göz Analizi ve Sesli Alarm</title>
+  <title>Sesli Alarm Terminali</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
   <style>
     body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
-    .container { position: relative; width: 100vw; height: 100vh; }
-    #output_canvas { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+    #output_canvas { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
     #input_video { display: none; }
+    
     #hud-display {
       position: absolute; top: 30px; right: 30px; color: #00FF00;
       background: rgba(0, 30, 0, 0.7); padding: 20px; border-right: 4px solid #00FF00;
-      font-size: 15px; z-index: 999; pointer-events: none; min-width: 220px;
+      font-size: 15px; z-index: 999; pointer-events: none;
     }
-    .alarm-active { color: #FF0000 !important; border-color: #FF0000 !important; background: rgba(30, 0, 0, 0.8) !important; }
+
+    /* Başlatma Butonu */
+    #overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); display: flex; justify-content: center;
+      align-items: center; z-index: 1000; color: #00FF00; cursor: pointer;
+      text-align: center; border: 2px solid #00FF00;
+    }
+    .alarm-red { color: #FF0000 !important; border-color: #FF0000 !important; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div id="hud-display">SİSTEM YÜKLENİYOR...</div>
-    <video id="input_video" playsinline></video>
-    <canvas id="output_canvas"></canvas>
+
+  <div id="overlay" onclick="startSystem()">
+    <div>
+      <h1>ANALİZ TERMİNALİ</h1>
+      <p>[ SİSTEMİ VE SESİ AKTİF ETMEK İÇİN TIKLAYIN ]</p>
+    </div>
   </div>
 
+  <div id="hud-display">BEKLENİYOR...</div>
+  <video id="input_video" playsinline></video>
+  <canvas id="output_canvas"></canvas>
+
   <script type="module">
-    // --- BASE64 TİZ SİNYAL SESİ (0.5 sn, 1000Hz Bip) ---
-    const beepSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFRm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YV9vT197fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8=");
+    let audioCtx = null;
+    let isSystemActive = false;
+
+    // Web Audio API ile saf tiz ses üretici
+    function playBeep() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1000, audioCtx.currentTime); // 1000 Hz Tiz ses
+      gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    window.startSystem = function() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      document.getElementById('overlay').style.display = 'none';
+      isSystemActive = true;
+    };
 
     const videoElement = document.getElementById('input_video');
     const canvasElement = document.getElementById('output_canvas');
@@ -37,6 +71,8 @@
     const hud = document.getElementById('hud-display');
 
     function onResults(results) {
+      if (!isSystemActive) return;
+
       canvasElement.width = videoElement.videoWidth;
       canvasElement.height = videoElement.videoHeight;
       canvasCtx.save();
@@ -46,60 +82,15 @@
       if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
         const landmarks = results.multiFaceLandmarks[0];
 
-        // Göz Analizi (EAR)
         const rightEyeDist = Math.hypot(landmarks[159].x - landmarks[145].x, landmarks[159].y - landmarks[145].y);
         const leftEyeDist = Math.hypot(landmarks[386].x - landmarks[374].x, landmarks[386].y - landmarks[374].y);
         
-        const isRightClosed = rightEyeDist < 0.012;
-        const isLeftClosed = leftEyeDist < 0.012;
+        const closed = rightEyeDist < 0.012 && leftEyeDist < 0.012;
 
-        // ALARM MANTIĞI: İki göz de kapalıysa
-        if (isRightClosed && isLeftClosed) {
-          hud.classList.add('alarm-active');
-          beepSound.play().catch(() => {}); // Kullanıcı etkileşimi yoksa tarayıcı engelleyebilir
-          hud.innerHTML = "[!!! UYARI !!!]<br>-----------------<br>DURUM: UYKU TESPİTİ<br>ALARM: AKTİF";
+        if (closed) {
+          playBeep();
+          hud.classList.add('alarm-red');
+          hud.innerHTML = "!!! UYARI !!!<br>UYKU TESPİT EDİLDİ";
         } else {
-          hud.classList.remove('alarm-active');
-          hud.innerHTML = `
-            [ANALİZ AKTİF]<br>
-            -----------------<br>
-            SAĞ GÖZ  : ${isRightClosed ? "KAPALI" : "AÇIK  "}<br>
-            SOL GÖZ  : ${isLeftClosed ? "KAPALI" : "AÇIK  "}<br>
-            VERİ     : ANALİZ EDİLİYOR
-          `;
-        }
-
-        // Çizimler
-        const themeColor = (isRightClosed && isLeftClosed) ? "#FF0000" : "#00FF00";
-        drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: themeColor, lineWidth: 3});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: themeColor, lineWidth: 2});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: themeColor, lineWidth: 2});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: themeColor, lineWidth: 2});
-
-        // Seyrek Mesh
-        canvasCtx.beginPath();
-        canvasCtx.strokeStyle = themeColor + "30";
-        const tesselation = FACEMESH_TESSELATION;
-        for (let i = 0; i < tesselation.length; i += 2) { 
-          const start = landmarks[tesselation[i][0]];
-          const end = landmarks[tesselation[i][1]];
-          canvasCtx.moveTo(start.x * canvasElement.width, start.y * canvasElement.height);
-          canvasCtx.lineTo(end.x * canvasElement.width, end.y * canvasElement.height);
-        }
-        canvasCtx.stroke();
-      }
-      canvasCtx.restore();
-    }
-
-    const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-    faceMesh.onResults(onResults);
-
-    const camera = new Camera(videoElement, {
-      onFrame: async () => await faceMesh.send({image: videoElement}),
-      width: 640, height: 480
-    });
-    camera.start();
-  </script>
-</body>
-</html>
+          hud.classList.remove('alarm-red');
+          hud.innerHTML = `SAĞ GÖZ: ${rightEyeDist < 0.012 ? "K
