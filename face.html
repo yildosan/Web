@@ -3,140 +3,101 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Eye Traffic Racer</title>
+  <title>Otomatik Analiz Terminali</title>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
   <style>
-    body { margin: 0; background: #111; overflow: hidden; font-family: 'Courier New', monospace; color: #00FF00; }
-    canvas { width: 100vw; height: 100vh; display: block; }
-    #ui { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(0,0,0,0.7); padding: 10px; border: 1px solid #00FF00; }
+    body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; cursor: crosshair; }
+    #output_canvas { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
     #input_video { display: none; }
-    #msg { position: absolute; bottom: 20px; width: 100%; text-align: center; font-weight: bold; font-size: 20px; }
+    
+    #hud-display {
+      position: absolute; top: 30px; right: 30px; color: #00FF00;
+      background: rgba(0, 30, 0, 0.7); padding: 15px; border-right: 4px solid #00FF00;
+      font-size: 14px; z-index: 999; pointer-events: none; min-width: 200px;
+    }
+    .alarm-mode { color: #FF0000 !important; border-color: #FF0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
   </style>
 </head>
-<body onclick="resetGame()">
-
-  <div id="ui">
-    SKOR: <span id="score">0</span><br>
-    HIZ : <span id="speed-ui">0</span> km/h
-  </div>
-
-  <div id="msg">SİSTEM HAZIRLANAMADI</div>
+<body onclick="initAudio()"> <div id="hud-display">SİSTEM AKTİF Ediliyor...</div>
   <video id="input_video" playsinline></video>
-  <canvas id="gameCanvas"></canvas>
+  <canvas id="output_canvas"></canvas>
 
   <script type="module">
+    let audioCtx = null;
+
+    // Ses motorunu aktifleştirme (Kullanıcı ekrana ilk dokunduğunda çalışır)
+    window.initAudio = function() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        console.log("Ses motoru hazır.");
+      }
+    };
+
+    function playBeep() {
+      if (!audioCtx || audioCtx.state === 'suspended') return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(1200, audioCtx.currentTime); // Tiz sinyal
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
+
     const videoElement = document.getElementById('input_video');
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const msg = document.getElementById('msg');
-    
-    let score = 0;
-    let gameSpeed = 8;
-    let lane = 1; // 0: Sol, 1: Orta, 2: Sağ
-    let cars = [];
-    let gameActive = true;
-    let roadOffset = 0;
-
-    function resetGame() {
-        score = 0; gameSpeed = 8; lane = 1; cars = []; gameActive = true;
-        msg.innerText = "GÖZLERİNLE KONTROL ET";
-        msg.style.color = "#00FF00";
-    }
-
-    function spawnCar() {
-        if(!gameActive) return;
-        cars.push({
-            lane: Math.floor(Math.random() * 3),
-            y: -100,
-            color: '#FF0000'
-        });
-    }
-    setInterval(spawnCar, 1500);
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const hud = document.getElementById('hud-display');
 
     function onResults(results) {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      const w = canvas.width;
-      const h = canvas.height;
-      const laneWidth = w / 3;
-
-      // --- YOL ÇİZİMİ ---
-      ctx.fillStyle = '#222';
-      ctx.fillRect(0, 0, w, h);
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
       
-      // Şerit Çizgileri
-      ctx.strokeStyle = '#555';
-      ctx.setLineDash([40, 40]);
-      ctx.lineDashOffset = -roadOffset;
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(laneWidth, 0); ctx.lineTo(laneWidth, h);
-      ctx.moveTo(laneWidth * 2, 0); ctx.lineTo(laneWidth * 2, h);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      if(gameActive) roadOffset = (roadOffset + gameSpeed) % 80;
+      canvasCtx.save();
+      canvasCtx.fillStyle = '#000';
+      canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
 
-      if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
         const landmarks = results.multiFaceLandmarks[0];
 
-        // --- GÖZ ANALİZİ (EAR) ---
+        // Göz Analizi (EAR)
         const rEye = Math.hypot(landmarks[159].x - landmarks[145].x, landmarks[159].y - landmarks[145].y);
         const lEye = Math.hypot(landmarks[386].x - landmarks[374].x, landmarks[386].y - landmarks[374].y);
-        
-        const rClosed = rEye < 0.012;
-        const lClosed = lEye < 0.012;
+        const isClosed = (rEye < 0.012 && lEye < 0.012);
 
-        // Şerit Değiştirme Mantığı (Ayna görüntüsü terslendi)
-        if (rClosed && lClosed) {
-            gameSpeed = 3; // Fren
-            msg.innerText = "FREN YAPILIYOR";
-        } else if (lClosed) {
-            lane = 0; // Sol (Kullanıcıya göre sol)
-            msg.innerText = "<< SOL ŞERİT";
-        } else if (rClosed) {
-            lane = 2; // Sağ (Kullanıcıya göre sağ)
-            msg.innerText = "SAĞ ŞERİT >>";
+        if (isClosed) {
+          playBeep();
+          hud.classList.add('alarm-mode');
+          hud.innerHTML = "[!!! UYARI !!!]<br>GÖZLER KAPALI<br>ALARM ÇALIYOR";
         } else {
-            lane = 1; // Orta
-            gameSpeed = Math.min(gameSpeed + 0.01, 20);
-            msg.innerText = "GAZ KESME!";
+          hud.classList.remove('alarm-mode');
+          hud.innerHTML = `SAĞ GÖZ: ${rEye < 0.012 ? "KAPALI" : "AÇIK"}<br>SOL GÖZ: ${lEye < 0.012 ? "KAPALI" : "AÇIK"}<br>SİSTEM : TAKİPTE`;
         }
 
-        // --- OYUNCU ARABASI ---
-        const playerX = lane * laneWidth + laneWidth / 2;
-        const playerY = h - 150;
+        const color = isClosed ? "#FF0000" : "#00FF00";
         
-        ctx.fillStyle = '#00FF00';
-        ctx.shadowBlur = 15; ctx.shadowColor = '#00FF00';
-        ctx.fillRect(playerX - 30, playerY, 60, 100); // Gövde
-        ctx.fillStyle = '#000';
-        ctx.fillRect(playerX - 25, playerY + 10, 50, 20); // Cam
-        ctx.shadowBlur = 0;
-
-        // --- TRAFİKTEKİ DİĞER ARAÇLAR ---
-        cars.forEach((car, index) => {
-            car.y += gameSpeed * 0.7;
-            const carX = car.lane * laneWidth + laneWidth / 2;
-            
-            ctx.fillStyle = '#FF4400';
-            ctx.fillRect(carX - 30, car.y, 60, 100);
-
-            // Çarpışma
-            if (car.lane === lane && car.y > playerY - 80 && car.y < playerY + 80) {
-                gameActive = false;
-                msg.innerText = "KAZA YAPILDI! TIKLA";
-                msg.style.color = "red";
-            }
-
-            if (car.y > h) {
-                cars.splice(index, 1);
-                score += 10;
-                document.getElementById('score').innerText = score;
-                document.getElementById('speed-ui').innerText = Math.round(gameSpeed * 10);
-            }
-        });
+        // Çizimler
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: color, lineWidth: 3});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: color, lineWidth: 2});
+        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: color, lineWidth: 2});
+        
+        // Mesh (Yarı Yoğunluk)
+        canvasCtx.beginPath();
+        canvasCtx.strokeStyle = color + "40";
+        const tess = FACEMESH_TESSELATION;
+        for (let i = 0; i < tess.length; i += 2) { 
+          const s = landmarks[tess[i][0]];
+          const e = landmarks[tess[i][1]];
+          canvasCtx.moveTo(s.x * canvasElement.width, s.y * canvasElement.height);
+          canvasCtx.lineTo(e.x * canvasElement.width, e.y * canvasElement.height);
+        }
+        canvasCtx.stroke();
       }
+      canvasCtx.restore();
     }
 
     const faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
@@ -148,7 +109,6 @@
       width: 640, height: 480
     });
     camera.start();
-    resetGame();
   </script>
 </body>
 </html>
