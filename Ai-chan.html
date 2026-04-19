@@ -101,7 +101,7 @@
             // Duygu değişimi
             let mood = "happy";
             if (aiText.match(/(üzgün|kıyamam|canım|bitanem|özledim)/i)) mood = "sad";
-            if (aiText.match(/(kızgın|küstüm|bak bak|hayır)/i)) mood = "angry";
+            if (aiText.match(/(kızgın|küstüm|bak bak|hayır|sakın)/i)) mood = "angry";
             img.src = emotions[mood];
 
         } catch (e) {
