@@ -3,61 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai-chan v13.0 - Fullscreen Edition</title>
+    <title>Ai-chan - GIF Edition</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        .cyber-mode { --bg: #050505; --card: #000000; --text: #00ffcc; --p: #ff00ff; }
         
-        /* Tam Ekran Modu İçin Özel Stil */
-        :-webkit-full-screen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
-        :-ms-fullscreen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
-        :fullscreen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; transition: 0.5s; }
+        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; transition: all 0.5s ease; }
+        
+        #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
+        #charImg { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s; opacity: 1; }
+        .img-loading { opacity: 0.3 !important; }
 
-        body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; }
+        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: var(--p); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; }
+        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
         
-        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 2px solid var(--p); position: relative; transition: all 0.5s ease; }
-        
-        #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; overflow: hidden; transition: height 0.5s; }
-        :fullscreen #visual { height: 60vh; } /* Tam ekranda görsel daha büyük */
-
-        #charImg { width: 100%; height: 100%; object-fit: cover; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, var(--card)); }
-        
-        #moodLabel { position: absolute; top: 15px; left: 15px; background: var(--p); color: white; padding: 5px 15px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; z-index: 5; box-shadow: 0 4px 10px rgba(255, 77, 109, 0.4); }
-        
-        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; background-image: radial-gradient(#ff4d6d11 1px, transparent 1px); background-size: 20px 20px; }
-        .m { padding: 12px 18px; border-radius: 20px; font-size: 14px; max-width: 80%; word-wrap: break-word; line-height: 1.5; animation: pop 0.3s ease; position: relative; }
-        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .m { padding: 12px 18px; border-radius: 20px; font-size: 14px; max-width: 80%; line-height: 1.5; animation: pop 0.3s ease; }
+        @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
         .ai { background: var(--p); color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .u { background: #334155; color: #f1f5f9; align-self: flex-end; border-bottom-right-radius: 2px; border: 1px solid #475569; }
+        .u { background: #334155; color: #f1f5f9; align-self: flex-end; border-bottom-right-radius: 2px; }
 
-        .input-area { padding: 15px 20px; display: flex; gap: 10px; background: #1e293b; border-top: 1px solid #334155; }
-        input { flex: 1; background: #0f172a; border: 2px solid #334155; color: white; padding: 12px; border-radius: 15px; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--p); }
-        
-        button { background: var(--p); border: none; color: white; padding: 0 20px; border-radius: 15px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 77, 109, 0.4); }
+        .input-area { padding: 15px 20px; display: flex; gap: 10px; background: var(--card); border-top: 1px solid #334155; }
+        input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid #475569; color: white; padding: 12px; border-radius: 15px; outline: none; }
+        button { background: var(--p); border: none; color: white; padding: 0 20px; border-radius: 15px; cursor: pointer; font-weight: bold; }
 
-        .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; font-weight: bold; letter-spacing: 2px; }
+        :fullscreen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+        .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="mainContainer" class="card">
+<div id="app" class="card">
     <div id="visual">
-        <span id="moodLabel">Beklemede</span>
-        <img id="charImg" src="https://image.pollinations.ai/prompt/cute%20anime%20girl%20smiling%20waifu%20pink%20hair?nologo=true" alt="Ai-chan">
-        <div class="overlay"></div>
-    </div>
-    
+        <span id="moodLabel">Online</span>
+        <img id="charImg" src="https://media.giphy.com/media/3o7TKubA2h3uP9ySJW/giphy.gif" alt="Ai-chan"> </div>
     <div id="chat">
-        <div id="typing" class="typing">AI-CHAN YAZIYOR...</div>
+        <div id="typing" class="typing">...</div>
     </div>
-
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Ai-chan'a bir şeyler söyle... (Tam ekran için /tam)" autocomplete="off">
-        <button onclick="askAI()">Gönder</button>
+        <input type="text" id="userInput" placeholder="Mesaj yaz..." autocomplete="off">
+        <button onclick="askAI()">></button>
     </div>
 </div>
 
@@ -67,92 +54,88 @@
     const img = document.getElementById('charImg');
     const typing = document.getElementById('typing');
     const moodLabel = document.getElementById('moodLabel');
-    const mainContainer = document.getElementById('mainContainer');
+    const app = document.getElementById('app');
 
-    let memory = JSON.parse(localStorage.getItem('ai_chan_v13_memory')) || [];
-
-    const AI_PERSONA = `Sen Ai-chan'sın. Yıldıray'ın özel anime partnerisin. 
-    Karakterin: Neşeli, bazen biraz utangaç, her zaman destekleyici.
-    Konuşma Tarzı: Samimi, kısa cümleler.`;
-
-    window.onload = () => {
-        addMsg("Selaaammm");
+    // GIF URL'leri (Duyguya göre güncelle)
+    const gifs = {
+        happy: "https://media.giphy.com/media/3o7TKubA2h3uP9ySJW/giphy.gif",
+        sad: "https://media.giphy.com/media/3o6gb59I5v7wYyO04E/giphy.gif",
+        angry: "https://media.giphy.com/media/l41YmQj5A1S30048U/giphy.gif",
+        blush: "https://media.giphy.com/media/3o7TKr6573O1yD0V9y/giphy.gif",
+        excited: "https://media.giphy.com/media/3o7TKubA2h3uP9ySJW/giphy.gif"
     };
 
-    // --- GİZLİ TAM EKRAN FONKSİYONU ---
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            mainContainer.requestFullscreen().catch(err => {
-                alert(`Hata: ${err.message}`);
-            });
-            addMsg("(Fısıldar) İşte şimdi sadece ikimiz varız Yıldıray... ✨", 'ai');
-        } else {
-            document.exitFullscreen();
-        }
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v15_memory')) || [];
+
+    window.onload = () => {
+        addMsg("Selam Yıldıray. ✨ Neler yapıyoruz bugün?", 'ai');
+    };
+
+    // --- GIF ÖN YÜKLEME VE GEÇİŞ SİSTEMİ ---
+    function updateCharGif(mood) {
+        const newUrl = gifs[mood];
+        
+        img.classList.add('img-loading'); // Mevcut GIF'i hafif karart
+        
+        const tempImg = new Image();
+        tempImg.src = newUrl;
+        tempImg.onload = () => {
+            img.src = newUrl;
+            img.classList.remove('img-loading'); // Yeni GIF tam yüklendiğinde göster
+        };
     }
 
-    // Tuş Takibi (F tuşu)
+    function toggleFS() {
+        if (!document.fullscreenElement) app.requestFullscreen();
+        else document.exitFullscreen();
+    }
+
+    // F tuşu tam ekran (Easter Egg)
     document.addEventListener('keydown', (e) => {
-        if (e.key.toLowerCase() === 'f' && document.activeElement !== input) {
-            toggleFullscreen();
-        }
+        if (e.key.toLowerCase() === 'f' && document.activeElement !== input) toggleFS();
     });
 
     async function askAI() {
-        const text = input.value.trim();
-        if (!text) return;
+        const val = input.value.trim();
+        if (!val) return;
 
-        // Gizli komut kontrolü
-        if (text === '/tam') {
-            input.value = '';
-            toggleFullscreen();
-            return;
+        // GİZLİ KODLAR (Görünmez Mantık)
+        if (val === '/tam') { input.value = ''; toggleFS(); return; }
+        if (val === '/gece') { input.value = ''; document.body.classList.toggle('cyber-mode'); return; }
+        if (val === '/temizle') { 
+            input.value = ''; chatBox.innerHTML = '<div id="typing" class="typing">...</div>';
+            memory = []; localStorage.removeItem('ai_chan_v15_memory'); return; 
         }
 
-        addMsg(text, 'u');
+        addMsg(val, 'u');
         input.value = '';
         typing.style.display = 'block';
-
-        memory.push({ role: "user", content: text });
-        if (memory.length > 10) memory.shift();
+        memory.push({ role: "user", content: val });
 
         try {
-            const response = await puter.ai.chat(
-                `${AI_PERSONA} Yıldıray: "${text}"`,
+            const res = await puter.ai.chat(
+                `Sen Ai-chan'sın, Yıldıray'ın samimi anime partnerisin. Kısa ve samimi cevap ver: ${val}`,
                 { model: 'claude-3-5-sonnet' }
             );
-
-            let aiText = response.message.content;
-            if (aiText.toLowerCase().includes("sorry")) throw new Error("Filter");
-
-            renderAI(aiText);
+            const aiText = res.message.content;
+            
+            typing.style.display = 'none';
+            addMsg(aiText, 'ai');
+            
+            // Cevabın içeriğine göre duyguyu belirle ve GIF'i güncelle
+            let mood = "happy";
+            if (aiText.includes("üzgün") || aiText.includes("malesef")) { mood = "sad"; }
+            if (aiText.includes("kızgın") || aiText.includes("sinirli")) { mood = "angry"; }
+            if (aiText.includes("utandım") || aiText.includes("teşekkür")) { mood = "blush"; }
+            if (aiText.includes("harika") || aiText.includes("muhteşem")) { mood = "excited"; }
+            updateCharGif(mood);
+            
+            memory.push({ role: "assistant", content: aiText });
+            localStorage.setItem('ai_chan_v15_memory', JSON.stringify(memory));
         } catch (e) {
-            const backupRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Ai-chan partnerin: " + text)}?model=openai`);
-            const backupText = await backupRes.text();
-            renderAI(backupText);
+            typing.style.display = 'none';
+            addMsg("Bir saniye, hemen geliyorum... ✨", 'ai');
         }
-    }
-
-    function renderAI(text) {
-        typing.style.display = 'none';
-        addMsg(text, 'ai');
-        updateImage(text);
-        memory.push({ role: "assistant", content: text });
-        localStorage.setItem('ai_chan_v13_memory', JSON.stringify(memory));
-    }
-
-    function updateImage(text) {
-        const t = text.toLowerCase();
-        let mood = "cute anime girl smiling waifu pink hair";
-        let label = "Mutlu";
-
-        if(t.includes("?") || t.includes("merak")) { mood = "thinking curious anime girl"; label = "Meraklı"; }
-        if(t.includes("!") || t.includes("sevindim")) { mood = "very happy laughing anime girl"; label = "Heyecanlı"; }
-        if(t.includes("utandım")) { mood = "blushing shy anime girl"; label = "Utangaç"; }
-
-        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(mood)}?nologo=true&seed=${Math.random()}`;
-        moodLabel.innerText = label;
-        img.src = imgUrl;
     }
 
     function addMsg(t, c) {
@@ -165,6 +148,5 @@
 
     input.onkeypress = (e) => { if(e.key === 'Enter') askAI(); };
 </script>
-
 </body>
 </html>
