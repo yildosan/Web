@@ -3,101 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini Anime Partner v4.5</title>
+    <title>AI Anime Partner v5.0</title>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; }
         body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; overflow: hidden; }
         
-        /* Giriş Paneli */
-        #setup-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 100; transition: 0.5s; }
-        .setup-card { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .setup-card h2 { margin-top: 0; color: var(--p); }
-        .setup-card p { font-size: 13px; color: #94a3b8; }
+        /* Kurulum Ekranı */
+        #setup-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .setup-card { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        input[type="password"], input[type="text"] { width: 90%; background: #0f172a; border: 1px solid #475569; color: white; padding: 12px; border-radius: 12px; outline: none; margin-bottom: 10px; }
         
-        /* Ana Uygulama Kartı */
-        .card { width: 420px; background: var(--card); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; display: none; flex-direction: column; }
+        /* Ana Uygulama */
+        .card { width: 420px; height: 90vh; background: var(--card); border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; display: none; flex-direction: column; border: 1px solid #334155; }
         
-        #visual { width: 100%; height: 320px; background: #000; position: relative; }
+        #visual { width: 100%; height: 350px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: linear-gradient(transparent, var(--card)); }
+        .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, var(--card)); }
 
-        #chat { height: 220px; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .m { padding: 12px 16px; border-radius: 18px; font-size: 14px; max-width: 85%; }
+        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+        .m { padding: 12px 16px; border-radius: 18px; font-size: 14px; max-width: 85%; word-wrap: break-word; line-height: 1.5; }
         .ai { background: var(--p); color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
         .u { background: #334155; color: #f1f5f9; align-self: flex-end; border-bottom-right-radius: 2px; }
 
-        .input-area { padding: 20px; display: flex; gap: 10px; border-top: 1px solid #334155; }
-        input { flex: 1; background: #0f172a; border: 1px solid #475569; color: white; padding: 12px; border-radius: 12px; outline: none; }
+        .input-area { padding: 15px; display: flex; gap: 10px; background: #1e293b; border-top: 1px solid #334155; }
+        .loading { font-size: 11px; color: var(--p); padding: 5px 20px; display: none; font-weight: bold; }
         button { background: var(--p); border: none; color: white; padding: 0 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
-        
-        .loading { font-size: 12px; color: #94a3b8; padding: 0 20px 10px; display: none; }
-        .btn-clear { font-size: 10px; background: none; border: 1px solid #444; color: #666; margin-top: 10px; cursor: pointer; padding: 5px; border-radius: 5px; }
+        .btn-reset { font-size: 10px; background: none; border: none; color: #64748b; cursor: pointer; text-decoration: underline; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <div id="setup-overlay">
     <div class="setup-card">
-        <h2>Kurulum</h2>
-        <p>Devam etmek için Gemini API anahtarınızı girin.</p>
-        <input type="password" id="apiKeyInput" placeholder="AI Studio Key...">
-        <button onclick="saveKey()" style="width: 100%; margin-top: 15px; padding: 12px;">Başlat</button>
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="display:block; margin-top:15px; font-size:11px; color:var(--p); text-decoration:none;">Key'im yok, almalıyım ↗</a>
+        <h2 style="color:var(--p)">Gemini AI Setup</h2>
+        <p style="font-size: 13px; color: #94a3b8;">Aldığın API Key'i buraya yapıştır:</p>
+        <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+        <button onclick="saveKey()" style="width: 100%; padding: 12px; margin-top: 10px;">Bağlan</button>
     </div>
 </div>
 
 <div class="card" id="mainCard">
     <div id="visual">
-        <img id="charImg" src="https://image.pollinations.ai/prompt/cute%20anime%20girl%20smiling?nologo=true" alt="AI">
+        <img id="charImg" src="https://image.pollinations.ai/prompt/cute%20anime%20girl%20smiling%20waifu?nologo=true" alt="AI">
         <div class="overlay"></div>
     </div>
     
+    <div id="loading" class="loading">Cevap yazılıyor...</div>
     <div id="chat">
-        <div class="m ai">Sistem hazır! ✨ Bugün senin için ne yapabilirim?</div>
+        <div class="m ai">Selam Yıldıray! ✨ Gemini motoruyla her şey hazır. Bugün ne hakkında konuşalım?</div>
     </div>
-    <div id="loading" class="loading">Gemini yanıt yazıyor...</div>
 
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Mesaj gönder..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Bir şey yaz..." autocomplete="off">
         <button onclick="askGemini()">Gönder</button>
     </div>
-    <center><button class="btn-clear" onclick="clearKey()">Anahtarı Sıfırla</button></center>
+    <center><button class="btn-reset" onclick="clearKey()">Anahtarı Sıfırla</button></center>
 </div>
 
 <script>
-    let API_KEY = localStorage.getItem('gemini_key');
+    let API_KEY = localStorage.getItem('gemini_key_v5');
     const overlay = document.getElementById('setup-overlay');
     const mainCard = document.getElementById('mainCard');
 
-    // Eğer anahtar varsa direkt uygulamayı göster
     if (API_KEY) {
         overlay.style.display = 'none';
         mainCard.style.display = 'flex';
     }
 
     function saveKey() {
-        const key = document.getElementById('apiKeyInput').value.trim();
-        if (key.length > 20) {
-            localStorage.setItem('gemini_key', key);
-            API_KEY = key;
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-                overlay.style.display = 'none';
-                mainCard.style.display = 'flex';
-            }, 500);
+        const val = document.getElementById('apiKeyInput').value.trim();
+        if(val.startsWith("AIza")) {
+            localStorage.setItem('gemini_key_v5', val);
+            location.reload();
         } else {
-            alert("Lütfen geçerli bir anahtar girin.");
+            alert("Geçersiz API Key! 'AIza' ile başlamalı.");
         }
     }
 
     function clearKey() {
-        localStorage.removeItem('gemini_key');
+        localStorage.removeItem('gemini_key_v5');
         location.reload();
     }
 
-    // --- Gemini Mantığı ---
+    // Konuşma Hafızası ve Karakter Tanımı
     let history = [
-        { role: "user", parts: [{ text: "Sen nazik, neşeli ve teknoloji meraklısı bir anime kızısın. İsmim Yıldıray. Cevapların kısa ve samimi olsun." }]}
+        { role: "user", parts: [{ text: "Senin adın Ai-chan. Nazik, zeki ve teknoloji meraklısı bir anime kızısın. Yıldıray ile konuşuyorsun. Cevapların kısa, tatlı ve samimi olsun. Emojiler kullan." }]},
+        { role: "model", parts: [{ text: "Tamamdır! Ben Ai-chan. Seninle konuşmak için sabırsızlanıyorum Yıldıray! ✨" }]}
     ];
 
     async function askGemini() {
@@ -112,6 +103,7 @@
         history.push({ role: "user", parts: [{ text: text }] });
 
         try {
+            // Verdiğin curl örneğindeki yapıya uygun fetch
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -119,33 +111,46 @@
             });
 
             const data = await response.json();
+            
+            if(data.error) {
+                throw new Error(data.error.message);
+            }
+
             const aiText = data.candidates[0].content.parts[0].text;
 
             document.getElementById('loading').style.display = 'none';
             addMsg(aiText, 'ai');
             history.push({ role: "model", parts: [{ text: aiText }] });
+            
+            // Cevap uzunsa veya belli kelimeler varsa görseli güncelle
             updateImage(aiText);
 
         } catch (e) {
+            console.error(e);
             document.getElementById('loading').style.display = 'none';
-            addMsg("Bir hata oluştu. API anahtarın hatalı veya süresi dolmuş olabilir.", 'ai');
+            addMsg("Hata: " + e.message + " (Key'i sıfırlayıp tekrar girmeyi dene.)", 'ai');
         }
     }
 
     function updateImage(text) {
         let prompt = "cute anime girl smiling";
-        if(text.includes("?") || text.includes("ne")) prompt = "thinking anime girl";
-        if(text.includes("kod") || text.includes("pc")) prompt = "cyberpunk anime girl with code";
+        if(text.includes("?") || text.includes("neden")) prompt = "thinking anime girl cute";
+        if(text.includes("haha") || text.includes("!") || text.includes("😊")) prompt = "happy laughing anime girl";
+        if(text.includes("kod") || text.includes("bilgisayar")) prompt = "anime girl hacker coding";
 
-        document.getElementById('charImg').src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&seed=${Math.random()}`;
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&width=512&height=512&seed=${Math.random()}`;
+        const temp = new Image();
+        temp.src = imgUrl;
+        temp.onload = () => document.getElementById('charImg').src = imgUrl;
     }
 
     function addMsg(t, c) {
         const d = document.createElement('div');
         d.className = `m ${c}`;
         d.innerText = t;
-        document.getElementById('chat').appendChild(d);
-        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+        const chat = document.getElementById('chat');
+        chat.appendChild(d);
+        chat.scrollTop = chat.scrollHeight;
     }
 
     document.getElementById('userInput').onkeypress = (e) => { if(e.key === 'Enter') askGemini(); };
