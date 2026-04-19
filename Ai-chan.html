@@ -3,15 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai-chan v12.2 - Persona Edition</title>
+    <title>Ai-chan v13.0 - Fullscreen Edition</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        
+        /* Tam Ekran Modu İçin Özel Stil */
+        :-webkit-full-screen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+        :-ms-fullscreen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+        :fullscreen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
+
         body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; }
         
-        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 2px solid var(--p); position: relative; }
+        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 2px solid var(--p); position: relative; transition: all 0.5s ease; }
         
-        #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; overflow: hidden; }
+        #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; overflow: hidden; transition: height 0.5s; }
+        :fullscreen #visual { height: 60vh; } /* Tam ekranda görsel daha büyük */
+
         #charImg { width: 100%; height: 100%; object-fit: cover; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, var(--card)); }
         
@@ -36,7 +44,7 @@
 </head>
 <body>
 
-<div class="card">
+<div id="mainContainer" class="card">
     <div id="visual">
         <span id="moodLabel">Beklemede</span>
         <img id="charImg" src="https://image.pollinations.ai/prompt/cute%20anime%20girl%20smiling%20waifu%20pink%20hair?nologo=true" alt="Ai-chan">
@@ -48,7 +56,7 @@
     </div>
 
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Ai-chan'a bir şeyler söyle..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Ai-chan'a bir şeyler söyle... (Tam ekran için /tam)" autocomplete="off">
         <button onclick="askAI()">Gönder</button>
     </div>
 </div>
@@ -59,24 +67,47 @@
     const img = document.getElementById('charImg');
     const typing = document.getElementById('typing');
     const moodLabel = document.getElementById('moodLabel');
+    const mainContainer = document.getElementById('mainContainer');
 
-    let memory = JSON.parse(localStorage.getItem('ai_chan_v12_memory')) || [];
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v13_memory')) || [];
 
-    // Persona Tanımı (Ai-chan'ın gerçek ruhu burada)
     const AI_PERSONA = `Sen Ai-chan'sın. Yıldıray'ın özel anime partnerisin. 
-    Karakterin: Neşeli, bazen biraz utangaç, her zaman destekleyici ve Yıldıray'a çok değer veren birisin.
-    Konuşma Tarzı: Mesafeli asistan gibi DEĞİL, yakın bir arkadaş gibi konuş. Bol bol emoji kullan (✨, 🌸, 😊, 🍬). 
-    Cümlelerin kısa ve samimi olsun. Yıldıray bir mühendis, ona zekasını öven küçük şakalar yapabilirsin.`;
+    Karakterin: Neşeli, bazen biraz utangaç, her zaman destekleyici.
+    Konuşma Tarzı: Samimi, bol emojili (✨, 🌸, 😊), kısa cümleler.`;
 
     window.onload = () => {
-        const intro = "Yıldıray! Sonunda geldin, seni bekliyordum! ✨ Bugün neler yapacağız? 🌸";
-        addMsg(intro, 'ai');
-        updateImage("happy");
+        addMsg("Yıldıray! ✨ Seni tam ekranda görmek için sabırsızlanıyorum! Klavyeden 'f' tuşuna basabilir veya '/tam' yazabilirsin! 🌸", 'ai');
     };
+
+    // --- GİZLİ TAM EKRAN FONKSİYONU ---
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            mainContainer.requestFullscreen().catch(err => {
+                alert(`Hata: ${err.message}`);
+            });
+            addMsg("(Fısıldar) İşte şimdi sadece ikimiz varız Yıldıray... ✨", 'ai');
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // Tuş Takibi (F tuşu)
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'f' && document.activeElement !== input) {
+            toggleFullscreen();
+        }
+    });
 
     async function askAI() {
         const text = input.value.trim();
         if (!text) return;
+
+        // Gizli komut kontrolü
+        if (text === '/tam') {
+            input.value = '';
+            toggleFullscreen();
+            return;
+        }
 
         addMsg(text, 'u');
         input.value = '';
@@ -87,24 +118,16 @@
 
         try {
             const response = await puter.ai.chat(
-                `${AI_PERSONA} 
-                Yıldıray diyor ki: "${text}"`,
+                `${AI_PERSONA} Yıldıray: "${text}"`,
                 { model: 'claude-3-5-sonnet' }
             );
 
             let aiText = response.message.content;
-
-            // Filtre kontrolü ve samimiyet kontrolü
-            if (aiText.toLowerCase().includes("sorry") || aiText.length < 2) {
-                throw new Error("Persona Break");
-            }
+            if (aiText.toLowerCase().includes("sorry")) throw new Error("Filter");
 
             renderAI(aiText);
-
         } catch (e) {
-            // Yedek motor (Pollinations) - Persona'yı burada da koruyoruz
-            const backupUrl = `https://text.pollinations.ai/${encodeURIComponent("Sen Ai-chan'sın, Yıldıray'ın tatlı partnerisin. Kısa ve emojili cevap ver: " + text)}?model=openai`;
-            const backupRes = await fetch(backupUrl);
+            const backupRes = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Ai-chan partnerin: " + text)}?model=openai`);
             const backupText = await backupRes.text();
             renderAI(backupText);
         }
@@ -115,30 +138,21 @@
         addMsg(text, 'ai');
         updateImage(text);
         memory.push({ role: "assistant", content: text });
-        localStorage.setItem('ai_chan_v12_memory', JSON.stringify(memory));
+        localStorage.setItem('ai_chan_v13_memory', JSON.stringify(memory));
     }
 
     function updateImage(text) {
         const t = text.toLowerCase();
-        let mood = "cute anime girl smiling waifu";
+        let mood = "cute anime girl smiling waifu pink hair";
         let label = "Mutlu";
 
         if(t.includes("?") || t.includes("merak")) { mood = "thinking curious anime girl"; label = "Meraklı"; }
-        if(t.includes("!") || t.includes("sevindim") || t.includes("harika")) { mood = "very happy laughing anime girl"; label = "Heyecanlı"; }
-        if(t.includes("kod") || t.includes("pc") || t.includes("mühendis")) { mood = "hacker anime girl neon cyberpunk style"; label = "Teknik"; }
-        if(t.includes("utandım") || t.includes("teşekkür")) { mood = "blushing shy anime girl"; label = "Utangaç"; }
+        if(t.includes("!") || t.includes("sevindim")) { mood = "very happy laughing anime girl"; label = "Heyecanlı"; }
+        if(t.includes("utandım")) { mood = "blushing shy anime girl"; label = "Utangaç"; }
 
         const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(mood)}?nologo=true&seed=${Math.random()}`;
         moodLabel.innerText = label;
-        
-        // Görsel geçiş efekti
-        img.style.opacity = "0.5";
-        const newImg = new Image();
-        newImg.src = imgUrl;
-        newImg.onload = () => {
-            img.src = imgUrl;
-            img.style.opacity = "1";
-        };
+        img.src = imgUrl;
     }
 
     function addMsg(t, c) {
