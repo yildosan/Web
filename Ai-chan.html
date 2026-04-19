@@ -56,7 +56,7 @@
     async function analyzeEmotion(text) {
         try {
             const analysis = await puter.ai.chat(
-                `Aşağıdaki metni analiz et ve sadece şu dört kelimeden birini döndür: happy, sad, angry, knowledge (eğer metin bir başka bir kızdan bahsediyorsa döndürülen kelimeyi angry olarak ayarla ). 
+                `Aşağıdaki metni analiz et ve sadece şu dört kelimeden birini döndür: happy, sad, angry, knowledge (eğer metin bir başka bir kızdan bahsediyorsa döndürülen kelimeyi "angry" olarak ayarla ). 
                 Metin: "${text}"`, 
                 { model: 'gpt-4o-mini' }
             );
