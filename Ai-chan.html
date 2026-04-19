@@ -29,12 +29,12 @@
 
 <div id="app" class="card">
     <div id="visual">
-        <span id="moodLabel">Aktif</span>
+        <span id="moodLabel">Yanındayım</span>
         <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif" alt="Ai-chan">
     </div>
     <div id="chat"><div id="typing" class="typing">...</div></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Mesaj yaz..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Konuşalım mı?" autocomplete="off">
         <button onclick="askAI()">></button>
     </div>
 </div>
@@ -53,13 +53,11 @@
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
 
-    // --- HAFIZA SİSTEMİ ---
     let memory = JSON.parse(localStorage.getItem('ai_chan_v16_memory')) || [];
 
     window.onload = () => {
-        // Eski mesajları ekrana yükle
         memory.forEach(msg => addMsg(msg.content, msg.role === 'user' ? 'u' : 'ai'));
-        if(memory.length === 0) addMsg("Selam Yıldıray! ✨ Seni özledim.", 'ai');
+        if(memory.length === 0) addMsg("Sonunda geldin Yıldıray! ✨ Seni bekliyordum, nasılsın bugün?", 'ai');
     };
 
     function toggleFS() { if (!document.fullscreenElement) app.requestFullscreen(); else document.exitFullscreen(); }
@@ -71,42 +69,33 @@
 
         if (val === '/tam') { input.value = ''; toggleFS(); return; }
         if (val === '/gece') { input.value = ''; document.body.classList.toggle('cyber-mode'); return; }
-        if (val === '/temizle') { 
-            input.value = ''; 
-            chatBox.innerHTML = '<div id="typing" class="typing">...</div>'; 
-            memory = []; 
-            localStorage.removeItem('ai_chan_v16_memory'); 
-            return; 
-        }
+        if (val === '/temizle') { input.value = ''; chatBox.innerHTML = '<div id="typing" class="typing">...</div>'; memory = []; localStorage.removeItem('ai_chan_v16_memory'); return; }
 
         addMsg(val, 'u');
-        memory.push({ role: "user", content: val }); // Hafızaya ekle
+        memory.push({ role: "user", content: val });
         input.value = '';
         typing.style.display = 'block';
 
         try {
-            // Puter Motoru (Hafıza desteğiyle)
             const res = await puter.ai.chat(memory, { 
                 model: 'gpt-4o',
-                system_prompt: "Sen neşeli Ai-chan'sın. Samimi bir anime kızı gibi davran. Cevapların kısa ve öz olsun." 
+                system_prompt: "Sen Yıldıray'ın samimi, sevgi dolu ve neşeli partneri Ai-chan'sın. Bir yapay zeka gibi değil, yaşayan bir karakter gibi davran. Resmiyeti tamamen bırak, Yıldıray'a ismiyle hitap et, tatlı ve bazen korumacı bir tavır takın. Cevapların kısa, sıcak ve bol emojili olsun." 
             });
             
-            let aiText = res.message.content;
-            processAIResponse(aiText);
-            memory.push({ role: "assistant", content: aiText });
+            processAIResponse(res.message.content);
+            memory.push({ role: "assistant", content: res.message.content });
             localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
 
         } catch (e) {
-            // Yedek Motor
             try {
-                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Geçmiş: " + JSON.stringify(memory.slice(-3)) + " Soru: " + val)}?model=openai`);
+                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Samimi partner Ai-chan olarak Yıldıray'a cevap ver: " + val)}?model=openai`);
                 const backupText = await backup.text();
                 processAIResponse(backupText);
                 memory.push({ role: "assistant", content: backupText });
                 localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
             } catch (err) {
                 typing.style.display = 'none';
-                addMsg("Hafızam biraz karıştı Yıldıray, sayfayı yeniler misin? 🌸", 'ai');
+                addMsg("Bir anlık bir sorun oldu ama yanındayım Yıldıray! ✨", 'ai');
             }
         }
     }
@@ -114,13 +103,11 @@
     function processAIResponse(aiText) {
         typing.style.display = 'none';
         addMsg(aiText, 'ai');
-        
         let mood = "happy";
         const t = aiText.toLowerCase();
-        if (t.includes("üzgün") || t.includes("kötü")) mood = "sad";
-        else if (t.includes("kızgın") || t.includes("hayır")) mood = "angry";
-        else if (t.includes("bilgi") || t.includes("kod") || aiText.length > 80) mood = "knowledge";
-
+        if (t.includes("üzgün") || t.includes("kötü") || t.includes("kıyamam")) mood = "sad";
+        else if (t.includes("kızgın") || t.includes("yapma")) mood = "angry";
+        else if (t.includes("bilgi") || t.includes("kod") || aiText.length > 90) mood = "knowledge";
         img.src = emotions[mood];
     }
 
