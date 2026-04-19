@@ -3,23 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai-chan v12.0 - Puter Powered</title>
+    <title>Ai-chan v12.1 - Hybrid Engine</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
         body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; }
+        
         .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; }
+        
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; transition: 0.8s ease; }
         .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, var(--card)); }
+        
         #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); color: var(--p); padding: 5px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; }
+        #timeDisplay { position: absolute; top: 15px; right: 15px; font-size: 10px; color: #94a3b8; font-weight: bold; background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 10px; }
+
         #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
         .m { padding: 12px 16px; border-radius: 20px; font-size: 14px; max-width: 80%; word-wrap: break-word; line-height: 1.5; animation: pop 0.3s ease; }
         @keyframes pop { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .ai { background: var(--p); color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
+        
+        .ai { background: var(--p); color: white; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 4px 12px rgba(255, 77, 109, 0.2); }
         .u { background: #334155; color: #f1f5f9; align-self: flex-end; border-bottom-right-radius: 2px; }
+
         .input-area { padding: 15px 20px; display: flex; gap: 10px; background: #1e293b; border-top: 1px solid #334155; }
-        input { flex: 1; background: #0f172a; border: 1px solid #475569; color: white; padding: 12px; border-radius: 12px; outline: none; }
+        input { flex: 1; background: #0f172a; border: 1px solid #475569; color: white; padding: 12px; border-radius: 12px; outline: none; transition: 0.3s; }
         button { background: var(--p); border: none; color: white; padding: 0 18px; border-radius: 12px; cursor: pointer; font-weight: bold; }
         .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; font-weight: bold; }
     </style>
@@ -29,14 +36,17 @@
 <div class="card">
     <div id="visual">
         <span id="moodLabel">Nötr</span>
+        <div id="timeDisplay">00:00</div>
         <img id="charImg" src="https://image.pollinations.ai/prompt/cute%20anime%20girl%20smiling%20waifu?nologo=true" alt="Ai-chan">
         <div class="overlay"></div>
     </div>
+    
     <div id="chat">
         <div id="typing" class="typing">AI-CHAN DÜŞÜNÜYOR...</div>
     </div>
+
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Grok altyapısıyla konuş..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Ai-chan ile konuş..." autocomplete="off">
         <button onclick="askAI()">Gönder</button>
     </div>
 </div>
@@ -47,11 +57,20 @@
     const img = document.getElementById('charImg');
     const typing = document.getElementById('typing');
     const moodLabel = document.getElementById('moodLabel');
+    const timeDisplay = document.getElementById('timeDisplay');
 
-    let memory = JSON.parse(localStorage.getItem('ai_chan_puter_memory')) || [];
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v12_memory')) || [];
+
+    function updateTime() {
+        const now = new Date();
+        timeDisplay.innerText = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        return now.getHours();
+    }
+    setInterval(updateTime, 1000);
 
     window.onload = () => {
-        addMsg("Selam Yıldıray! ✨ Puter ve Grok altyapısıyla artık çok daha zekiyim. Neler yapıyoruz?", 'ai');
+        updateTime();
+        addMsg("Selam Yıldıray! ✨ Puter zekasıyla güncellendim. Bugün neler yapıyoruz?", 'ai');
     };
 
     async function askAI() {
@@ -63,29 +82,46 @@
         typing.style.display = 'block';
 
         memory.push({ role: "user", content: text });
-        if (memory.length > 12) memory.shift();
+        if (memory.length > 10) memory.shift();
 
         try {
-            // Puter AI Chat sistemini kullanıyoruz
+            // ANA MOTOR: Puter (Zeki cevaplar için)
             const response = await puter.ai.chat(
-                `Sen Ai-chan adında tatlı, zeki ve Grok tarzında esprili bir anime kızısın. 
-                 Kullanıcı adın Yıldıray. Kısa ve samimi cevaplar ver. 
-                 Mevcut konuşma: ${JSON.stringify(memory)}`,
-                { model: 'gpt-4o' } // Not: Puter'da 'grok-beta' her zaman açık olmayabilir, 'gpt-4o' en stabili.
+                `Kullanıcı: Yıldıray. Sen tatlı ve zeki bir asistan Ai-chan'sın. 
+                 Samimi ve kısa cevaplar ver. 
+                 Mesaj: ${text}`,
+                { model: 'claude-3-5-sonnet' }
             );
 
-            const aiText = response.message.content;
-            typing.style.display = 'none';
-            addMsg(aiText, 'ai');
-            updateImage(aiText);
+            let aiText = response.message.content;
 
-            memory.push({ role: "assistant", content: aiText });
-            localStorage.setItem('ai_chan_puter_memory', JSON.stringify(memory));
+            // Filtre kontrolü: Eğer model "yardım edemem" derse yedek sisteme geç
+            if (aiText.toLowerCase().includes("sorry") || aiText.toLowerCase().includes("cannot help")) {
+                throw new Error("Puter Filter Hit");
+            }
+
+            processResponse(aiText);
+
         } catch (e) {
-            console.error(e);
-            typing.style.display = 'none';
-            addMsg("Puter devrelerimde bir sorun oluştu Yıldıray! 🌸", 'ai');
+            console.warn("Yedek sisteme geçiliyor...");
+            // YEDEK MOTOR: Pollinations (Asla reddetmez)
+            try {
+                const backupResponse = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Yıldıray ile konuşan tatlı Ai-chan: " + text)}?model=openai`);
+                const backupText = await backupResponse.text();
+                processResponse(backupText);
+            } catch (err) {
+                typing.style.display = 'none';
+                addMsg("Bağlantıda bir sorun oldu Yıldıray! ✨", 'ai');
+            }
         }
+    }
+
+    function processResponse(text) {
+        typing.style.display = 'none';
+        addMsg(text, 'ai');
+        updateImage(text);
+        memory.push({ role: "assistant", content: text });
+        localStorage.setItem('ai_chan_v12_memory', JSON.stringify(memory));
     }
 
     function updateImage(text) {
@@ -95,7 +131,7 @@
 
         if(t.includes("?") || text.length > 55) { mood = "thinking anime girl, curious"; label = "Düşünceli"; }
         if(t.includes("!") || t.includes("😊")) { mood = "very happy anime girl, laughing"; label = "Heyecanlı"; }
-        if(t.includes("kod") || t.includes("mühendis")) { mood = "hacker anime girl neon lights"; label = "Teknik"; }
+        if(t.includes("kod") || t.includes("pc") || t.includes("mühendis")) { mood = "hacker anime girl neon lights"; label = "Teknik"; }
 
         const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(mood)}?nologo=true&seed=${Math.random()}`;
         moodLabel.innerText = label;
