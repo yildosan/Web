@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai-chan - GIF Edition</title>
+    <title>Ai-chan</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
@@ -13,8 +13,7 @@
         .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; transition: all 0.5s ease; }
         
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
-        #charImg { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s; opacity: 1; }
-        .img-loading { opacity: 0.3 !important; }
+        #charImg { width: 100%; height: 100%; object-fit: cover; }
 
         #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: var(--p); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; }
         #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
@@ -37,8 +36,9 @@
 
 <div id="app" class="card">
     <div id="visual">
-        <span id="moodLabel">Online</span>
-        <img id="charImg" src="https://media.giphy.com/media/3o7TKubA2h3uP9ySJW/giphy.gif" alt="Ai-chan"> </div>
+        <span id="moodLabel">Aktif</span>
+        <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif" alt="Ai-chan">
+    </div>
     <div id="chat">
         <div id="typing" class="typing">...</div>
     </div>
@@ -56,41 +56,25 @@
     const moodLabel = document.getElementById('moodLabel');
     const app = document.getElementById('app');
 
-    // GIF URL'leri (Duyguya göre güncelle)
-    const gifs = {
-        happy: "https://media.giphy.com/media/3o7TKubA2h3uP9ySJW/giphy.gif",
-        sad: "https://media.giphy.com/media/3o6gb59I5v7wYyO04E/giphy.gif",
-        angry: "https://media.giphy.com/media/l41YmQj5A1S30048U/giphy.gif",
-        blush: "https://media.giphy.com/media/3o7TKr6573O1yD0V9y/giphy.gif",
-        excited: "https://media.giphy.com/media/3o7TKubA2h3uP9ySJW/giphy.gif"
+    // Belirlediğin Rias Gremory Görselleri
+    const emotions = {
+        angry: "https://media.tenor.com/d50EH_7IpgQAAAAM/rias-huh.gif",
+        happy: "https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif",
+        sad: "https://gifdb.com/images/high/red-hair-anime-rias-gremory-high-school-dxd-bzpd8p6e83okozcb.gif",
+        knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
 
-    let memory = JSON.parse(localStorage.getItem('ai_chan_v15_memory')) || [];
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v16_memory')) || [];
 
     window.onload = () => {
-        addMsg("Selam Yıldıray. ✨ Neler yapıyoruz bugün?", 'ai');
+        addMsg("Selam Yıldıray. ✨ Senin için buradayım.", 'ai');
     };
-
-    // --- GIF ÖN YÜKLEME VE GEÇİŞ SİSTEMİ ---
-    function updateCharGif(mood) {
-        const newUrl = gifs[mood];
-        
-        img.classList.add('img-loading'); // Mevcut GIF'i hafif karart
-        
-        const tempImg = new Image();
-        tempImg.src = newUrl;
-        tempImg.onload = () => {
-            img.src = newUrl;
-            img.classList.remove('img-loading'); // Yeni GIF tam yüklendiğinde göster
-        };
-    }
 
     function toggleFS() {
         if (!document.fullscreenElement) app.requestFullscreen();
         else document.exitFullscreen();
     }
 
-    // F tuşu tam ekran (Easter Egg)
     document.addEventListener('keydown', (e) => {
         if (e.key.toLowerCase() === 'f' && document.activeElement !== input) toggleFS();
     });
@@ -99,12 +83,12 @@
         const val = input.value.trim();
         if (!val) return;
 
-        // GİZLİ KODLAR (Görünmez Mantık)
+        // Gizli Kodlar
         if (val === '/tam') { input.value = ''; toggleFS(); return; }
         if (val === '/gece') { input.value = ''; document.body.classList.toggle('cyber-mode'); return; }
         if (val === '/temizle') { 
             input.value = ''; chatBox.innerHTML = '<div id="typing" class="typing">...</div>';
-            memory = []; localStorage.removeItem('ai_chan_v15_memory'); return; 
+            memory = []; localStorage.removeItem('ai_chan_v16_memory'); return; 
         }
 
         addMsg(val, 'u');
@@ -114,7 +98,7 @@
 
         try {
             const res = await puter.ai.chat(
-                `Sen Ai-chan'sın, Yıldıray'ın samimi anime partnerisin. Kısa ve samimi cevap ver: ${val}`,
+                `Sen Ai-chan'sın, Yıldıray'ın partnerisin. Kısa ve samimi cevap ver: ${val}`,
                 { model: 'claude-3-5-sonnet' }
             );
             const aiText = res.message.content;
@@ -122,19 +106,26 @@
             typing.style.display = 'none';
             addMsg(aiText, 'ai');
             
-            // Cevabın içeriğine göre duyguyu belirle ve GIF'i güncelle
-            let mood = "happy";
-            if (aiText.includes("üzgün") || aiText.includes("malesef")) { mood = "sad"; }
-            if (aiText.includes("kızgın") || aiText.includes("sinirli")) { mood = "angry"; }
-            if (aiText.includes("utandım") || aiText.includes("teşekkür")) { mood = "blush"; }
-            if (aiText.includes("harika") || aiText.includes("muhteşem")) { mood = "excited"; }
-            updateCharGif(mood);
+            // Duygu Analizi ve Görsel Güncelleme
+            let selectedMood = "happy"; // Varsayılan
+            const t = aiText.toLowerCase();
+
+            if (t.includes("üzgün") || t.includes("malesef") || t.includes("kötü")) {
+                selectedMood = "sad";
+            } else if (t.includes("kızgın") || t.includes("hayır") || t.includes("yapma")) {
+                selectedMood = "angry";
+            } else if (t.includes("bilgi") || t.includes("kod") || t.includes("şöyle") || t.includes("açıklayayım")) {
+                selectedMood = "knowledge";
+            }
+
+            img.src = emotions[selectedMood];
+            moodLabel.innerText = selectedMood.toUpperCase();
             
             memory.push({ role: "assistant", content: aiText });
-            localStorage.setItem('ai_chan_v15_memory', JSON.stringify(memory));
+            localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
         } catch (e) {
             typing.style.display = 'none';
-            addMsg("Bir saniye, hemen geliyorum... ✨", 'ai');
+            addMsg("Bir saniye Yıldıray, hemen geliyorum... ✨", 'ai');
         }
     }
 
