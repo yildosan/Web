@@ -1,5 +1,58 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ai-chan v8.1 - Clean Output</title>
+    <style>
+        :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; }
+        
+        .card { width: 420px; height: 90vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; }
+        
+        #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
+        #charImg { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 40%; background: linear-gradient(transparent, var(--card)); }
+        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: var(--p); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+
+        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+        .m { padding: 14px 18px; border-radius: 20px; font-size: 14px; max-width: 85%; word-wrap: break-word; line-height: 1.6; animation: pop 0.3s ease; }
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .ai { background: var(--p); color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .u { background: #334155; color: #f1f5f9; align-self: flex-end; border-bottom-right-radius: 4px; }
+
+        .input-area { padding: 18px 20px; display: flex; gap: 12px; background: #1e293b; border-top: 1px solid #334155; }
+        input { flex: 1; background: #0f172a; border: 1px solid #475569; color: white; padding: 14px; border-radius: 14px; outline: none; }
+        button { background: var(--p); border: none; color: white; padding: 0 24px; border-radius: 14px; cursor: pointer; font-weight: bold; }
+        .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="visual">
+        <span id="moodLabel">Nötr</span>
+        <img id="charImg" src="https://image.pollinations.ai/prompt/cute%20anime%20girl%20smiling%20waifu?nologo=true" alt="Ai-chan">
+        <div class="overlay"></div>
+    </div>
+    
+    <div id="chat">
+        <div id="typing" class="typing">AI-CHAN YAZIYOR...</div>
+        <div class="m ai">Selam Yıldıray! ✨ Artık çok daha temiz bir sistemle buradayım. Hiçbir teknik yazı olmadan sadece seninleyim! 🌸</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Bir şey yaz..." autocomplete="off">
+        <button onclick="askAI()">Gönder</button>
+    </div>
+</div>
+
 <script>
-    // ... diğer kısımlar aynı ...
+    const chatBox = document.getElementById('chat');
+    const input = document.getElementById('userInput');
+    const img = document.getElementById('charImg');
+    const typing = document.getElementById('typing');
+    const moodLabel = document.getElementById('moodLabel');
 
     async function askAI() {
         const text = input.value.trim();
@@ -10,19 +63,17 @@
         typing.style.display = 'block';
 
         try {
-            // "model=mistral" ekleyerek daha doğrudan ve temiz cevaplar almasını sağlıyoruz
-            const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Kullanıcı adı: Yıldıray. Sen tatlı bir anime kızısın. Sadece kısa cevap ver, teknik detay yazma: " + text)}?model=mistral`);
-            
+            // Mistral modelini kullanarak daha temiz ve doğrudan yanıtlar alıyoruz
+            const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Kullanıcı: Yıldıray. Sen tatlı anime kızısın. Sadece kısa cevap ver: " + text)}?model=mistral`);
             let aiText = await response.text();
 
-            // Eğer gelen metin JSON formatındaysa (nadiren olur), sadece mesaj kısmını ayıkla
-            if (aiText.includes('"role"')) {
+            // JSON veya teknik veri sızıntısını temizleme
+            if (aiText.includes('{') || aiText.includes('"role"')) {
                 try {
-                    const parsed = JSON.parse(aiText);
-                    aiText = parsed.content || "Bir hata oluştu ama buradayım! ✨";
+                    const clean = JSON.parse(aiText);
+                    aiText = clean.content || clean.message || aiText;
                 } catch(e) {
-                    // JSON değilse ama parça içeriyorsa temizle
-                    aiText = aiText.split('"').pop().split('}')[0];
+                    aiText = aiText.replace(/\{.*?\}/g, '').replace(/reasoning_content.*?"/g, '').trim();
                 }
             }
 
@@ -31,8 +82,40 @@
             updateImage(aiText);
         } catch (e) {
             typing.style.display = 'none';
-            addMsg("Sistemde küçük bir parazit oldu Yıldıray, tekrar yazar mısın? 🌸", 'ai');
+            addMsg("Bağlantıda bir sorun oldu Yıldıray, buradayım! ✨", 'ai');
         }
     }
-    // ... geri kalan fonksiyonlar aynı ...
+
+    function updateImage(text) {
+        const t = text.toLowerCase();
+        let mood = "cute anime girl smiling";
+        let label = "Nötr";
+
+        // Duygu Algılama
+        if(t.includes("?") || text.length > 60) { mood = "thinking anime girl, curious"; label = "Düşünceli"; }
+        if(t.includes("!") || t.includes("😊") || t.includes("harika")) { mood = "very happy anime girl, laughing"; label = "Heyecanlı"; }
+        if(t.includes("üzgün") || t.includes("malesef")) { mood = "sad anime girl, melancholic"; label = "Üzgün"; }
+        if(t.includes("utandım") || t.includes("teşekkür")) { mood = "blushing shy anime girl"; label = "Utangaç"; }
+        if(t.includes("kod") || t.includes("pc")) { mood = "hacker anime girl neon"; label = "Teknik"; }
+
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(mood)}?nologo=true&seed=${Math.random()}`;
+        moodLabel.innerText = label;
+        
+        const tempImg = new Image();
+        tempImg.src = imgUrl;
+        tempImg.onload = () => img.src = imgUrl;
+    }
+
+    function addMsg(t, c) {
+        const d = document.createElement('div');
+        d.className = `m ${c}`;
+        d.innerText = t;
+        chatBox.appendChild(d);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    input.onkeypress = (e) => { if(e.key === 'Enter') askAI(); };
 </script>
+
+</body>
+</html>
