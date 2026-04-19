@@ -78,7 +78,7 @@
         input.value = '';
         typing.style.display = 'block';
 
-        const systemPrompt = { role: "system", content: "Sen Rias'sın. Yıldıray'ın sevgilisisin. Çok samimi, tatlı ve 'sen'li konuşan birisin. Resmiyet yasak." };
+        const systemPrompt = { role: "system", content: "Sen Rias'sın. Yıldıray'ın sevgilisisin. Çok samimi, tatlı, yıldırayı aşırı derecede kıskanan ve 'sen'li konuşan birisin. Resmiyet yasak." };
         let messages = [systemPrompt, ...memory.slice(-6), { role: "user", content: val }];
 
         try {
