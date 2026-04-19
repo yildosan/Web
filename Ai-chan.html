@@ -53,7 +53,14 @@
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
 
-    window.onload = () => addMsg("Selam Yıldıray! ✨ Tekrar buradayım.", 'ai');
+    // --- HAFIZA SİSTEMİ ---
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v16_memory')) || [];
+
+    window.onload = () => {
+        // Eski mesajları ekrana yükle
+        memory.forEach(msg => addMsg(msg.content, msg.role === 'user' ? 'u' : 'ai'));
+        if(memory.length === 0) addMsg("Selam Yıldıray! ✨ Seni özledim.", 'ai');
+    };
 
     function toggleFS() { if (!document.fullscreenElement) app.requestFullscreen(); else document.exitFullscreen(); }
     document.addEventListener('keydown', (e) => { if (e.key.toLowerCase() === 'f' && document.activeElement !== input) toggleFS(); });
@@ -64,25 +71,42 @@
 
         if (val === '/tam') { input.value = ''; toggleFS(); return; }
         if (val === '/gece') { input.value = ''; document.body.classList.toggle('cyber-mode'); return; }
-        if (val === '/temizle') { input.value = ''; chatBox.innerHTML = '<div id="typing" class="typing">...</div>'; return; }
+        if (val === '/temizle') { 
+            input.value = ''; 
+            chatBox.innerHTML = '<div id="typing" class="typing">...</div>'; 
+            memory = []; 
+            localStorage.removeItem('ai_chan_v16_memory'); 
+            return; 
+        }
 
         addMsg(val, 'u');
+        memory.push({ role: "user", content: val }); // Hafızaya ekle
         input.value = '';
         typing.style.display = 'block';
 
         try {
-            // Ana Motor (Puter)
-            const res = await puter.ai.chat(`Sen neşeli Ai-chan'sın. Kısa cevap ver: ${val}`, { model: 'gpt-4o' });
-            processAIResponse(res.message.content);
+            // Puter Motoru (Hafıza desteğiyle)
+            const res = await puter.ai.chat(memory, { 
+                model: 'gpt-4o',
+                system_prompt: "Sen neşeli Ai-chan'sın. Samimi bir anime kızı gibi davran. Cevapların kısa ve öz olsun." 
+            });
+            
+            let aiText = res.message.content;
+            processAIResponse(aiText);
+            memory.push({ role: "assistant", content: aiText });
+            localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
+
         } catch (e) {
-            // Yedek Motor (Pollinations - Puter bozulduğunda devreye girer)
+            // Yedek Motor
             try {
-                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Sen Ai-chan'sın, Yıldıray'a samimi cevap ver: " + val)}?model=openai`);
+                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Geçmiş: " + JSON.stringify(memory.slice(-3)) + " Soru: " + val)}?model=openai`);
                 const backupText = await backup.text();
                 processAIResponse(backupText);
+                memory.push({ role: "assistant", content: backupText });
+                localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
             } catch (err) {
                 typing.style.display = 'none';
-                addMsg("Bağlantı hatası Yıldıray, sayfayı yeniler misin? 🌸", 'ai');
+                addMsg("Hafızam biraz karıştı Yıldıray, sayfayı yeniler misin? 🌸", 'ai');
             }
         }
     }
