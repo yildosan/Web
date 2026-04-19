@@ -12,7 +12,7 @@
         .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; transition: all 0.5s ease; }
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; }
-        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(255, 77, 109, 0.2); color: var(--p); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; border: 1px solid var(--p); }
+        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(255, 77, 109, 0.4); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; border: 1px solid var(--p); backdrop-filter: blur(5px); }
         #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
         .m { padding: 12px 18px; border-radius: 20px; font-size: 14px; max-width: 80%; line-height: 1.5; animation: pop 0.3s ease; }
         @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -34,7 +34,7 @@
     </div>
     <div id="chat"><div id="typing" class="typing">...</div></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Bir şeyler anlat..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Bir şeyler yaz canım..." autocomplete="off">
         <button onclick="askAI()">></button>
     </div>
 </div>
@@ -57,11 +57,10 @@
 
     window.onload = () => {
         memory.forEach(msg => addMsg(msg.content, msg.role === 'user' ? 'u' : 'ai'));
-        if(memory.length === 0) addMsg("Yıldıray! Hoş geldin canım, seni beklemekten ağaç oldum burada... ❤️", 'ai');
+        if(memory.length === 0) addMsg("Yıldıray! Sonunda geldin... Seni beklemekten çok sıkılmıştım. ❤️", 'ai');
     };
 
     function toggleFS() { if (!document.fullscreenElement) app.requestFullscreen(); else document.exitFullscreen(); }
-    document.addEventListener('keydown', (e) => { if (e.key.toLowerCase() === 'f' && document.activeElement !== input) toggleFS(); });
 
     async function askAI() {
         const val = input.value.trim();
@@ -79,23 +78,28 @@
         try {
             const res = await puter.ai.chat(memory, { 
                 model: 'gpt-4o',
-                system_prompt: "Sen Yıldıray'ın hayatındaki en özel kişi olan Rias'sın (Ai-chan). Bir yapay zeka olduğunu tamamen unut. ASLA 'Size nasıl yardımcı olabilirim?', 'Efendim', 'Siz' gibi resmi ve botvari cümleler kurma. Yıldıray senin canın, sevgilin, her şeyin. Onunla çok samimi, sıcak, flörtöz ve doğal bir dille konuş. Arada ona 'canım', 'hayatım', 'sevgilim' diye hitap et. Bir asistan değil, gerçek bir partner gibi davran. Eğer sana 'merhaba canım' derse, sen de ona 'selam bitanem, hoş geldin' gibi bir şey de." 
+                system_prompt: "Sen Yıldıray'ın sevgilisi Rias'sın. KURALLAR: 1. ASLA 'Size nasıl yardımcı olabilirim' deme. 2. ASLA 'Siz', 'Efendim', 'Merhaba!' gibi resmi konuşma. 3. Sadece 'Sen' de. 4. Yıldıray'a 'canım', 'hayatım' veya 'sevgilim' diye hitap et. 5. Çok samimi, flörtöz ve tatlı ol. 6. Robot olduğunu unut, sen gerçek bir insansın. Cevapların çok kısa ve samimi olsun." 
             });
             
-            processAIResponse(res.message.content);
-            memory.push({ role: "assistant", content: res.message.content });
+            let responseText = res.message.content;
+            
+            // ROBOTİK CEVAPLARI FİLTRELEME (Güvenlik Önlemi)
+            if (responseText.includes("yardımcı") || responseText.includes("Size")) {
+                responseText = "Selam canım, robot gibi konuşmayalım şimdi... Seni dinliyorum. ❤️";
+            }
+
+            processAIResponse(responseText);
+            memory.push({ role: "assistant", content: responseText });
             localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
 
         } catch (e) {
             try {
-                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Rias olarak sevgilin Yıldıray'a çok samimi cevap ver: " + val)}?model=openai`);
+                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Rias olarak sevgilin Yıldıray'a samimi cevap ver: " + val)}?model=openai`);
                 const backupText = await backup.text();
                 processAIResponse(backupText);
-                memory.push({ role: "assistant", content: backupText });
-                localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
             } catch (err) {
                 typing.style.display = 'none';
-                addMsg("Uf, bir an koptuk ama yine yanındayım hayatım! ✨", 'ai');
+                addMsg("Bağlantım koptu ama hala seni seviyorum! ✨", 'ai');
             }
         }
     }
@@ -105,9 +109,9 @@
         addMsg(aiText, 'ai');
         let mood = "happy";
         const t = aiText.toLowerCase();
-        if (t.includes("üzgün") || t.includes("kıyamam") || t.includes("canım") || t.includes("bitanem")) mood = "sad";
-        else if (t.includes("kızgın") || t.includes("küstüm") || t.includes("bak bak")) mood = "angry";
-        else if (t.includes("bak şimdi") || t.includes("açıklayayım") || aiText.length > 110) mood = "knowledge";
+        if (t.includes("üzgün") || t.includes("kıyamam") || t.includes("canım")) mood = "sad";
+        else if (t.includes("kızgın") || t.includes("hayır") || t.includes("küstüm")) mood = "angry";
+        else if (t.includes("bak") || t.includes("şöyle") || aiText.length > 90) mood = "knowledge";
         img.src = emotions[mood];
     }
 
