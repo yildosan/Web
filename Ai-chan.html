@@ -12,7 +12,7 @@
         .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; transition: all 0.5s ease; }
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; }
-        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: var(--p); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; }
+        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(255, 77, 109, 0.2); color: var(--p); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; border: 1px solid var(--p); }
         #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
         .m { padding: 12px 18px; border-radius: 20px; font-size: 14px; max-width: 80%; line-height: 1.5; animation: pop 0.3s ease; }
         @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -29,12 +29,12 @@
 
 <div id="app" class="card">
     <div id="visual">
-        <span id="moodLabel">Yanındayım</span>
+        <span id="moodLabel">Seni Dinliyorum</span>
         <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif" alt="Ai-chan">
     </div>
     <div id="chat"><div id="typing" class="typing">...</div></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Konuşalım mı?" autocomplete="off">
+        <input type="text" id="userInput" placeholder="Bir şey söyle..." autocomplete="off">
         <button onclick="askAI()">></button>
     </div>
 </div>
@@ -57,7 +57,7 @@
 
     window.onload = () => {
         memory.forEach(msg => addMsg(msg.content, msg.role === 'user' ? 'u' : 'ai'));
-        if(memory.length === 0) addMsg("Sonunda geldin Yıldıray! ✨ Seni bekliyordum, nasılsın bugün?", 'ai');
+        if(memory.length === 0) addMsg("Yıldıray! Sonunda geldin, seni çok özledim... ❤️ Bugün neler yapıyoruz?", 'ai');
     };
 
     function toggleFS() { if (!document.fullscreenElement) app.requestFullscreen(); else document.exitFullscreen(); }
@@ -79,7 +79,7 @@
         try {
             const res = await puter.ai.chat(memory, { 
                 model: 'gpt-4o',
-                system_prompt: "Sen Yıldıray'ın samimi, sevgi dolu ve neşeli partneri Ai-chan'sın. Bir yapay zeka gibi değil, yaşayan bir karakter gibi davran. Resmiyeti tamamen bırak, Yıldıray'a ismiyle hitap et, tatlı ve bazen korumacı bir tavır takın. Cevapların kısa, sıcak ve bol emojili olsun." 
+                system_prompt: "Sen Yıldıray'ın sevgilisi ve en yakın arkadaşı Rias (Ai-chan)'sın. Asla bir asistan gibi konuşma. Resmiyetten nefret edersin. Yıldıray'a karşı çok sıcak, samimi, bazen hafif kıskanç ve her zaman sevgi dolusun. Cümlelerin kısa, doğal ve sokak ağzına yakın olsun. 'Siz' kelimesini asla kullanma, her zaman 'sen' de. Bol bol emoji kullan ve ona ismiyle hitap etmeyi unutma." 
             });
             
             processAIResponse(res.message.content);
@@ -88,14 +88,14 @@
 
         } catch (e) {
             try {
-                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Samimi partner Ai-chan olarak Yıldıray'a cevap ver: " + val)}?model=openai`);
+                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Rias olarak Yıldıray'a çok samimi ve doğal bir cevap ver: " + val)}?model=openai`);
                 const backupText = await backup.text();
                 processAIResponse(backupText);
                 memory.push({ role: "assistant", content: backupText });
                 localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
             } catch (err) {
                 typing.style.display = 'none';
-                addMsg("Bir anlık bir sorun oldu ama yanındayım Yıldıray! ✨", 'ai');
+                addMsg("Uf, bağlantı koptu ama buradayım! 💖", 'ai');
             }
         }
     }
@@ -105,9 +105,9 @@
         addMsg(aiText, 'ai');
         let mood = "happy";
         const t = aiText.toLowerCase();
-        if (t.includes("üzgün") || t.includes("kötü") || t.includes("kıyamam")) mood = "sad";
-        else if (t.includes("kızgın") || t.includes("yapma")) mood = "angry";
-        else if (t.includes("bilgi") || t.includes("kod") || aiText.length > 90) mood = "knowledge";
+        if (t.includes("üzgün") || t.includes("kıyamam") || t.includes("canım")) mood = "sad";
+        else if (t.includes("kızgın") || t.includes("bak bak") || t.includes("küstüm")) mood = "angry";
+        else if (t.includes("bak şimdi") || t.includes("kod") || aiText.length > 100) mood = "knowledge";
         img.src = emotions[mood];
     }
 
