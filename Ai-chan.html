@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ai-chan</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
@@ -10,27 +10,25 @@
         .cyber-mode { --bg: #050505; --card: #000000; --text: #00ffcc; --p: #ff00ff; }
         
         body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; transition: 0.5s; }
-        
-        /* Kartın yüksekliğini dinamik yaptık */
-        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; transition: all 0.3s ease; }
+        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; transition: all 0.5s ease; }
         
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; }
-        
+
+        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); color: var(--p); padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; text-transform: uppercase; z-index: 5; }
         #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+        
         .m { padding: 12px 18px; border-radius: 20px; font-size: 14px; max-width: 80%; line-height: 1.5; animation: pop 0.3s ease; }
         @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
         .ai { background: var(--p); color: white; align-self: flex-start; border-bottom-left-radius: 2px; }
         .u { background: #334155; color: #f1f5f9; align-self: flex-end; border-bottom-right-radius: 2px; }
 
-        /* Giriş alanı klavye üzerinde kalması için kritik yer */
-        .input-area { padding: 15px 20px; display: flex; gap: 10px; background: var(--card); border-top: 1px solid #334155; z-index: 100; }
-        input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid #475569; color: white; padding: 12px; border-radius: 15px; outline: none; font-size: 16px; /* Zoom olmaması için 16px */ }
+        .input-area { padding: 15px 20px; display: flex; gap: 10px; background: var(--card); border-top: 1px solid #334155; }
+        input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid #475569; color: white; padding: 12px; border-radius: 15px; outline: none; }
         button { background: var(--p); border: none; color: white; padding: 0 20px; border-radius: 15px; cursor: pointer; font-weight: bold; }
 
-        /* Tam Ekran Düzeltmesi */
-        :fullscreen .card, :-webkit-full-screen .card { width: 100vw; height: 100vh; border-radius: 0; }
-        
+        :fullscreen .card { width: 100vw; height: 100vh; border-radius: 0; border: none; }
         .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; font-weight: bold; }
     </style>
 </head>
@@ -38,10 +36,13 @@
 
 <div id="app" class="card">
     <div id="visual">
+        <span id="moodLabel">Aktif</span>
         <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif" alt="Ai-chan">
     </div>
-    <div id="chat"><div id="typing" class="typing">...</div></div>
-    <div class="input-area" id="footer">
+    <div id="chat">
+        <div id="typing" class="typing">...</div>
+    </div>
+    <div class="input-area">
         <input type="text" id="userInput" placeholder="Mesaj yaz..." autocomplete="off">
         <button onclick="askAI()">></button>
     </div>
@@ -52,8 +53,8 @@
     const input = document.getElementById('userInput');
     const img = document.getElementById('charImg');
     const typing = document.getElementById('typing');
+    const moodLabel = document.getElementById('moodLabel');
     const app = document.getElementById('app');
-    const footer = document.getElementById('footer');
 
     const emotions = {
         angry: "https://media.tenor.com/d50EH_7IpgQAAAAM/rias-huh.gif",
@@ -62,29 +63,19 @@
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
 
-    // --- KLAVYE ÇAKIŞMA ÇÖZÜMÜ ---
-    if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', () => {
-            const currentHeight = window.visualViewport.height;
-            // Ekranda klavye açıldığında yüksekliği daralt ve aşağı kaydır
-            document.body.style.height = currentHeight + 'px';
-            app.style.height = currentHeight + 'px';
-            window.scrollTo(0, 0);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v16_memory')) || [];
+
+    window.onload = () => {
+        addMsg("Selam Yıldıray. ✨ Senin için buradayım.", 'ai');
+    };
+
+    function toggleFS() {
+        if (!document.fullscreenElement) app.requestFullscreen();
+        else document.exitFullscreen();
     }
 
-    // Tam ekran fonksiyonu
-    function toggleFS() { 
-        if (!document.fullscreenElement) {
-            app.requestFullscreen().catch(e => console.log(e));
-        } else {
-            document.exitFullscreen();
-        }
-    }
-
-    document.addEventListener('keydown', (e) => { 
-        if (e.key.toLowerCase() === 'f' && document.activeElement !== input) toggleFS(); 
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'f' && document.activeElement !== input) toggleFS();
     });
 
     async function askAI() {
@@ -93,14 +84,17 @@
 
         if (val === '/tam') { input.value = ''; toggleFS(); return; }
         if (val === '/gece') { input.value = ''; document.body.classList.toggle('cyber-mode'); return; }
-        if (val === '/temizle') { input.value = ''; chatBox.innerHTML = '<div id="typing" class="typing">...</div>'; return; }
+        if (val === '/temizle') { 
+            input.value = ''; chatBox.innerHTML = '<div id="typing" class="typing">...</div>';
+            memory = []; localStorage.removeItem('ai_chan_v16_memory'); return; 
+        }
 
         addMsg(val, 'u');
         input.value = '';
         typing.style.display = 'block';
 
         try {
-            const res = await puter.ai.chat(`Sen Rias görünümlü Ai-chan'sın. Kısa cevap ver: ${val}`, { model: 'gpt-4o' });
+            const res = await puter.ai.chat(`Sen Ai-chan'sın. Samimi bir şekilde cevap ver: ${val}`, { model: 'gpt-4o' });
             processAIResponse(res.message.content);
         } catch (e) {
             try {
@@ -109,7 +103,7 @@
                 processAIResponse(backupText);
             } catch (err) {
                 typing.style.display = 'none';
-                addMsg("Bağlantıda bir sorun var Yıldıray... 🌸", 'ai');
+                addMsg("Bir saniye Yıldıray, hemen geliyorum... ✨", 'ai');
             }
         }
     }
@@ -117,12 +111,23 @@
     function processAIResponse(aiText) {
         typing.style.display = 'none';
         addMsg(aiText, 'ai');
-        let mood = "happy";
+        
+        let selectedMood = "happy";
         const t = aiText.toLowerCase();
-        if (t.includes("üzgün") || t.includes("kötü")) mood = "sad";
-        else if (t.includes("kızgın") || t.includes("hayır")) mood = "angry";
-        else if (t.includes("bilgi") || t.includes("kod") || aiText.length > 70) mood = "knowledge";
-        img.src = emotions[mood];
+
+        if (t.includes("üzgün") || t.includes("malesef") || t.includes("kötü")) {
+            selectedMood = "sad";
+        } else if (t.includes("kızgın") || t.includes("hayır")) {
+            selectedMood = "angry";
+        } else if (t.includes("bilgi") || t.includes("kod") || aiText.length > 70) {
+            selectedMood = "knowledge";
+        }
+
+        img.src = emotions[selectedMood];
+        moodLabel.innerText = selectedMood.toUpperCase();
+        
+        memory.push({ role: "assistant", content: aiText });
+        localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
     }
 
     function addMsg(t, c) {
