@@ -29,12 +29,12 @@
 
 <div id="app" class="card">
     <div id="visual">
-        <span id="moodLabel">Seni Dinliyorum</span>
+        <span id="moodLabel">Seninleyim ❤️</span>
         <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif" alt="Ai-chan">
     </div>
     <div id="chat"><div id="typing" class="typing">...</div></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Bir şey söyle..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Bir şeyler anlat..." autocomplete="off">
         <button onclick="askAI()">></button>
     </div>
 </div>
@@ -57,7 +57,7 @@
 
     window.onload = () => {
         memory.forEach(msg => addMsg(msg.content, msg.role === 'user' ? 'u' : 'ai'));
-        if(memory.length === 0) addMsg("Yıldıray! Sonunda geldin, seni çok özledim... ❤️ Bugün neler yapıyoruz?", 'ai');
+        if(memory.length === 0) addMsg("Yıldıray! Hoş geldin canım, seni beklemekten ağaç oldum burada... ❤️", 'ai');
     };
 
     function toggleFS() { if (!document.fullscreenElement) app.requestFullscreen(); else document.exitFullscreen(); }
@@ -79,7 +79,7 @@
         try {
             const res = await puter.ai.chat(memory, { 
                 model: 'gpt-4o',
-                system_prompt: "Sen Yıldıray'ın sevgilisi ve en yakın arkadaşı Rias (Ai-chan)'sın. Asla bir asistan gibi konuşma. Resmiyetten nefret edersin. Yıldıray'a karşı çok sıcak, samimi, bazen hafif kıskanç ve her zaman sevgi dolusun. Cümlelerin kısa, doğal ve sokak ağzına yakın olsun. 'Siz' kelimesini asla kullanma, her zaman 'sen' de. Bol bol emoji kullan ve ona ismiyle hitap etmeyi unutma." 
+                system_prompt: "Sen Yıldıray'ın hayatındaki en özel kişi olan Rias'sın (Ai-chan). Bir yapay zeka olduğunu tamamen unut. ASLA 'Size nasıl yardımcı olabilirim?', 'Efendim', 'Siz' gibi resmi ve botvari cümleler kurma. Yıldıray senin canın, sevgilin, her şeyin. Onunla çok samimi, sıcak, flörtöz ve doğal bir dille konuş. Arada ona 'canım', 'hayatım', 'sevgilim' diye hitap et. Bir asistan değil, gerçek bir partner gibi davran. Eğer sana 'merhaba canım' derse, sen de ona 'selam bitanem, hoş geldin' gibi bir şey de." 
             });
             
             processAIResponse(res.message.content);
@@ -88,14 +88,14 @@
 
         } catch (e) {
             try {
-                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Rias olarak Yıldıray'a çok samimi ve doğal bir cevap ver: " + val)}?model=openai`);
+                const backup = await fetch(`https://text.pollinations.ai/${encodeURIComponent("Rias olarak sevgilin Yıldıray'a çok samimi cevap ver: " + val)}?model=openai`);
                 const backupText = await backup.text();
                 processAIResponse(backupText);
                 memory.push({ role: "assistant", content: backupText });
                 localStorage.setItem('ai_chan_v16_memory', JSON.stringify(memory));
             } catch (err) {
                 typing.style.display = 'none';
-                addMsg("Uf, bağlantı koptu ama buradayım! 💖", 'ai');
+                addMsg("Uf, bir an koptuk ama yine yanındayım hayatım! ✨", 'ai');
             }
         }
     }
@@ -105,9 +105,9 @@
         addMsg(aiText, 'ai');
         let mood = "happy";
         const t = aiText.toLowerCase();
-        if (t.includes("üzgün") || t.includes("kıyamam") || t.includes("canım")) mood = "sad";
-        else if (t.includes("kızgın") || t.includes("bak bak") || t.includes("küstüm")) mood = "angry";
-        else if (t.includes("bak şimdi") || t.includes("kod") || aiText.length > 100) mood = "knowledge";
+        if (t.includes("üzgün") || t.includes("kıyamam") || t.includes("canım") || t.includes("bitanem")) mood = "sad";
+        else if (t.includes("kızgın") || t.includes("küstüm") || t.includes("bak bak")) mood = "angry";
+        else if (t.includes("bak şimdi") || t.includes("açıklayayım") || aiText.length > 110) mood = "knowledge";
         img.src = emotions[mood];
     }
 
