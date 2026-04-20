@@ -2,150 +2,111 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puter AI - Pixel to HTML Engine</title>
+    <title>AI vs AI: Grand Debate</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-        .scanner-line {
-            height: 3px;
-            background: linear-gradient(to right, transparent, #3b82f6, transparent);
-            position: absolute;
-            width: 100%;
-            top: 0;
-            animation: scan 2.5s ease-in-out infinite;
-            display: none;
-        }
-        @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+        .chat-container { height: calc(100vh - 300px); }
+        .gpt-bubble { background: #10a37f20; border-left: 4px solid #10a37f; }
+        .claude-bubble { background: #d9770620; border-left: 4px solid #d97706; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 md:p-8 font-sans">
+<body class="bg-zinc-950 text-zinc-200 p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto">
-        <header class="mb-8 flex items-center justify-between">
-            <h1 class="text-3xl font-black text-white italic">PIXEL<span class="text-blue-500">ENGINE</span></h1>
-            <div class="text-xs font-mono text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">Vercel & Puter Optimized</div>
-        </header>
+    <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black tracking-tighter text-white">AI <span class="text-zinc-500">TALK</span> AI</h1>
+            <p class="text-zinc-400 mt-2">GPT-4o ve Claude 3.5 Sonnet birbirleriyle konuşuyor</p>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="glass p-6 rounded-3xl">
-                <div id="dropZone" class="relative min-h-[350px] border-2 border-dashed border-slate-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition-all overflow-hidden bg-slate-900/50">
-                    <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    <div id="placeholder" class="text-center">
-                        <div class="text-6xl mb-4 opacity-50">📁</div>
-                        <p class="text-slate-400">Görseli sürükleyin veya seçin</p>
-                    </div>
-                    <img id="imgPreview" class="hidden max-w-full max-h-[400px] object-contain p-2">
-                    <div id="scanLine" class="scanner-line"></div>
-                </div>
-                
-                <button id="convertBtn" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-blue-900/40 active:scale-95">
-                    KODU OLUŞTUR (CLAUDE 3.5)
-                </button>
-            </div>
+        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 mb-6 flex gap-4">
+            <input type="text" id="topicInput" placeholder="Tartışma konusu girin (örn: Mars'ta koloni kurmak mantıklı mı?)" 
+                   class="flex-grow bg-zinc-800 border border-zinc-700 rounded-xl px-4 outline-none focus:border-blue-500 transition">
+            <button id="startBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition-all">
+                BAŞLAT
+            </button>
+            <button id="stopBtn" class="bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-3 rounded-xl transition-all hidden">
+                DURDUR
+            </button>
+        </div>
 
-            <div class="glass rounded-3xl overflow-hidden flex flex-col shadow-2xl min-h-[500px]">
-                <div class="flex bg-slate-800 p-2 gap-2">
-                    <button id="btnPreview" class="flex-1 py-2 text-xs font-bold bg-slate-700 text-white rounded-xl">CANLI ÖNİZLEME</button>
-                    <button id="btnCode" class="flex-1 py-2 text-xs font-bold text-slate-400 hover:text-white transition">KOD ÇIKTISI</button>
-                </div>
-                
-                <div class="flex-grow bg-white relative">
-                    <div id="loading" class="hidden absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-50">
-                        <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p class="text-blue-400 font-mono text-sm">Pikseller koda dökülüyor...</p>
-                    </div>
-                    
-                    <iframe id="outputFrame" class="w-full h-full border-none"></iframe>
-                    <textarea id="outputCode" class="hidden absolute inset-0 w-full h-full bg-[#1e1e1e] text-blue-300 p-6 font-mono text-xs outline-none resize-none" readonly></textarea>
-                </div>
-            </div>
+        <div id="chatBox" class="chat-container bg-zinc-900/50 rounded-2xl border border-zinc-800 overflow-y-auto p-6 space-y-6">
+            <div class="text-center text-zinc-600 italic">Tartışmayı başlatmak için bir konu girin...</div>
         </div>
     </div>
 
     <script>
-        const imageInput = document.getElementById('imageInput');
-        const dropZone = document.getElementById('dropZone');
-        const imgPreview = document.getElementById('imgPreview');
-        const placeholder = document.getElementById('placeholder');
-        const scanLine = document.getElementById('scanLine');
-        const convertBtn = document.getElementById('convertBtn');
-        const loading = document.getElementById('loading');
-        const outputFrame = document.getElementById('outputFrame');
-        const outputCode = document.getElementById('outputCode');
+        let isRunning = false;
+        const chatBox = document.getElementById('chatBox');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const topicInput = document.getElementById('topicInput');
 
-        dropZone.onclick = () => imageInput.click();
+        async function addMessage(sender, text, type) {
+            const div = document.createElement('div');
+            div.className = `p-4 rounded-xl ${type === 'gpt' ? 'gpt-bubble' : 'claude-bubble'} animate-in fade-in duration-500`;
+            div.innerHTML = `
+                <div class="flex justify-between mb-2">
+                    <span class="font-bold text-xs uppercase tracking-widest ${type === 'gpt' ? 'text-emerald-400' : 'text-amber-400'}">${sender}</span>
+                    <span class="text-[10px] text-zinc-500">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="text-sm leading-relaxed">${text}</div>
+            `;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
 
-        imageInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if(file) {
-                imgPreview.src = URL.createObjectURL(file);
-                imgPreview.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-            }
-        };
+        async function startConversation() {
+            const topic = topicInput.value;
+            if (!topic) return alert("Bir konu girin!");
 
-        // Görseli Base64'e çevirme (Hata çözücü)
-        const toBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
+            isRunning = true;
+            startBtn.classList.add('hidden');
+            stopBtn.classList.remove('hidden');
+            chatBox.innerHTML = '';
 
-        convertBtn.onclick = async () => {
-            const file = imageInput.files[0];
-            if(!file) return alert("Lütfen bir görsel seçin!");
+            let lastResponse = `Tartışma konusu: ${topic}. Lütfen bu konudaki fikirlerini belirt.`;
+            let turn = 'gpt'; // GPT başlar
 
-            loading.classList.remove('hidden');
-            scanLine.style.display = 'block';
-            convertBtn.disabled = true;
+            while (isRunning) {
+                try {
+                    if (turn === 'gpt') {
+                        const response = await puter.ai.chat(
+                            `Sen GPT-4o'sun. Karşında Claude 3.5 var. Şu mesaja cevap ver ve tartışmayı sürdür: ${lastResponse}`,
+                            { model: 'gpt-4o' }
+                        );
+                        lastResponse = response.message.content;
+                        await addMessage("GPT-4o", lastResponse, 'gpt');
+                        turn = 'claude';
+                    } else {
+                        const response = await puter.ai.chat(
+                            `Sen Claude 3.5'sin. Karşında GPT-4o var. Şu argümanı analiz et ve karşı fikir sun: ${lastResponse}`,
+                            { model: 'claude-3-5-sonnet' }
+                        );
+                        lastResponse = response.message.content;
+                        await addMessage("Claude 3.5", lastResponse, 'claude');
+                        turn = 'gpt';
+                    }
 
-            try {
-                // Modeli 'claude-3-5-sonnet' veya 'gpt-4o' olarak ayarlayabilirsin
-                const response = await puter.ai.chat(
-                    "Bu görseldeki web tasarımını birebir HTML ve Tailwind CSS olarak kodla. SADECE saf HTML kodu ver, açıklama yapma.",
-                    file, 
-                    { model: 'claude-3-5-sonnet' }
-                );
+                    // AI'ların çok hızlı konuşup API limitlerini tüketmemesi için kısa bir mola
+                    await new Promise(resolve => setTimeout(resolve, 2000));
 
-                if (!response || !response.message) {
-                    throw new Error("API yanıt vermedi.");
+                } catch (err) {
+                    console.error(err);
+                    addMessage("SİSTEM", "Bağlantı hatası oluştu.", "error");
+                    isRunning = false;
                 }
-
-                const result = response.message.content;
-                // Markdown temizleme
-                const cleanCode = result.replace(/```html|```/g, "").trim();
-
-                outputCode.value = cleanCode;
-                const blob = new Blob([cleanCode], { type: 'text/html' });
-                outputFrame.src = URL.createObjectURL(blob);
-
-            } catch (err) {
-                console.error("Detaylı Hata:", err);
-                alert("Hata oluştu: " + (err.message || "Bilinmeyen bir hata"));
-            } finally {
-                loading.classList.add('hidden');
-                scanLine.style.display = 'none';
-                convertBtn.disabled = false;
             }
-        };
+        }
 
-        // Tab Kontrolleri
-        document.getElementById('btnPreview').onclick = () => {
-            outputFrame.classList.remove('hidden');
-            outputCode.classList.add('hidden');
-            document.getElementById('btnPreview').classList.add('bg-slate-700', 'text-white');
-            document.getElementById('btnCode').classList.remove('bg-slate-700', 'text-white');
-        };
-
-        document.getElementById('btnCode').onclick = () => {
-            outputCode.classList.remove('hidden');
-            outputFrame.classList.add('hidden');
-            document.getElementById('btnCode').classList.add('bg-slate-700', 'text-white');
-            document.getElementById('btnPreview').classList.remove('bg-slate-700', 'text-white');
+        startBtn.onclick = startConversation;
+        stopBtn.onclick = () => {
+            isRunning = false;
+            stopBtn.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+            addMessage("SİSTEM", "Tartışma kullanıcı tarafından durduruldu.", "gpt");
         };
     </script>
 </body>
