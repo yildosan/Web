@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsApp Grup</title>
+    <title>WhatsApp Grup Simülasyonu</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,29 +12,33 @@
         .chat-area { height: calc(100vh - 130px); }
         .my-bubble { background-color: #005c4b; border-radius: 8px 0 8px 8px; align-self: flex-end; }
         .ai-bubble { background-color: #202c33; border-radius: 0 8px 8px 8px; align-self: flex-start; }
-        .typing { font-style: italic; font-size: 11px; color: #00a884; }
+        .typing { font-style: italic; font-size: 11px; color: #00a884; height: 16px; }
+        /* Scrollbar Gizleme */
+        .chat-area::-webkit-scrollbar { width: 0px; }
     </style>
 </head>
 <body class="wa-bg overflow-hidden">
 
     <header class="h-16 bg-[#202c33] flex items-center px-4 gap-3 border-b border-gray-700 shadow-lg sticky top-0 z-50">
-        <div class="w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center text-white text-xl">👥</div>
+        <div class="w-10 h-10 rounded-full bg-[#128c7e] flex items-center justify-center text-white text-xl shadow-inner">👥</div>
         <div class="flex flex-col">
-            <span class="text-white font-semibold text-sm">Geyik Muhabbeti 🚀</span>
-            <span id="typingStatus" class="typing h-4"></span>
+            <span class="text-white font-semibold text-[14px]">Ali, Ayşe, Sen</span>
+            <span id="typingStatus" class="typing"></span>
         </div>
     </header>
 
     <main id="chatBox" class="chat-area overflow-y-auto p-4 space-y-3 flex flex-col">
-        <div class="self-center bg-[#182229] text-[#8696a0] text-[11px] px-3 py-1 rounded-md mb-4">
-            BUGÜN
+        <div class="self-center bg-[#182229] text-[#8696a0] text-[11px] px-3 py-1 rounded-md mb-4 uppercase tracking-wider">
+            Grup oluşturuldu
         </div>
     </main>
 
     <footer class="h-16 bg-[#202c33] flex items-center px-3 gap-2 sticky bottom-0">
-        <input type="text" id="userInput" placeholder="Mesaj yazın..." 
-               class="flex-grow bg-[#2a3942] text-white rounded-full px-5 py-2 outline-none text-sm border-none">
-        <button id="sendBtn" class="bg-[#00a884] w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
+        <div class="flex-grow bg-[#2a3942] rounded-full flex items-center px-4 py-1">
+            <input type="text" id="userInput" placeholder="Mesaj yazın..." 
+                   class="w-full bg-transparent text-white outline-none text-[15px] py-1 border-none">
+        </div>
+        <button id="sendBtn" class="bg-[#00a884] w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg active:scale-90 transition-all">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
         </button>
     </footer>
@@ -45,49 +49,53 @@
         const sendBtn = document.getElementById('sendBtn');
         const typingStatus = document.getElementById('typingStatus');
 
-        // Mesaj geçmişini tutan dizi
-        let conversationLog = "";
+        let conversationHistory = []; // AI'nın birbirini okuması için temiz dizi
 
-        function addMessageToUI(sender, text, isMe) {
+        function addMessage(sender, text, isMe) {
             const wrapper = document.createElement('div');
-            wrapper.className = isMe ? 'my-bubble p-2 px-3 shadow-md max-w-[85%]' : 'ai-bubble p-2 px-3 shadow-md max-w-[85%]';
+            wrapper.className = isMe ? 'my-bubble p-2 px-3 shadow-sm max-w-[85%]' : 'ai-bubble p-2 px-3 shadow-sm max-w-[85%]';
             
             const color = sender === 'Ali' ? '#3498db' : (sender === 'Ayşe' ? '#e91e63' : '#00a884');
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             wrapper.innerHTML = `
-                ${!isMe ? `<div style="color:${color}; font-weight:bold; font-size:12px; margin-bottom:2px;">${sender}</div>` : ''}
-                <div class="text-white text-[14px] leading-snug">${text}</div>
-                <div class="text-[10px] text-gray-400 text-right mt-1">${time}</div>
+                ${!isMe ? `<div style="color:${color}; font-weight:600; font-size:12px; margin-bottom:1px;">${sender}</div>` : ''}
+                <div class="text-[#e9edef] text-[14.5px] leading-relaxed">${text}</div>
+                <div class="text-[10px] text-[#8696a0] text-right mt-1">${time}</div>
             `;
             
             chatBox.appendChild(wrapper);
             chatBox.scrollTop = chatBox.scrollHeight;
             
-            // AI için log oluştur
-            conversationLog += `${sender}: ${text}\n`;
+            // Konuşma hafızasına ekle
+            conversationHistory.push(`${sender}: ${text}`);
+            if (conversationHistory.length > 20) conversationHistory.shift(); // Hafızayı taze tut
         }
 
-        async function triggerAI(botName) {
+        async function botTurn(botName) {
             typingStatus.innerText = `${botName} yazıyor...`;
             
             try {
-                // Karakter ve Bağlam Tanımı
-                const systemInstructions = `
-                WhatsApp grubundasın. Adın ${botName}. 
-                Grupta Ali, Ayşe ve "Sen" (kullanıcı) var. 
-                KARAKTER: Doğal, samimi Türk genci, emoji kullanır, kısaltmalar (slm, tmm, naber) yapabilir.
-                DİKKAT: Sadece kendi mesajını yaz. Başına "${botName}:" ekleme. 
-                Önceki konuşma geçmişi şudur:
-                ${conversationLog}
+                // Diğer botların ve senin ne yazdığını görmesini sağlayan komut
+                const context = conversationHistory.join("\n");
+                const prompt = `
+                    Sen bir WhatsApp grubundaki ${botName} isimli karakterisin. 
+                    GRUPTAKİLER: Ali, Ayşe ve "Sen" (Kullanıcı).
+                    GÖREV: Gruptaki son mesajları oku. Eğer son mesaj sana hitap ediyorsa cevap ver, 
+                    başkasına hitap ediyorsa araya girip yorum yap veya muhabbeti devam ettir. 
+                    KARAKTER: Samimi, Türk genci argosu/emoji kullanımı (abartmadan), doğal.
+                    DİKKAT: Sadece kendi mesajını gönder. Başına ismini yazma.
+                    
+                    KONUŞMA GEÇMİŞİ:
+                    ${context}
                 `;
 
-                const response = await puter.ai.chat(systemInstructions, { model: 'gpt-4o' });
+                const response = await puter.ai.chat(prompt, { model: 'gpt-4o' });
                 const reply = response.message.content.trim();
                 
                 typingStatus.innerText = '';
                 if(reply) {
-                    addMessageToUI(botName, reply, false);
+                    addMessage(botName, reply, false);
                 }
             } catch (err) {
                 console.error("AI Hatası:", err);
@@ -95,20 +103,31 @@
             }
         }
 
-        async function handleAction() {
-            const val = userInput.value.trim();
-            if (!val) return;
+        async function sendMessage() {
+            const msg = userInput.value.trim();
+            if (!msg) return;
 
             userInput.value = '';
-            addMessageToUI('Sen', val, true);
+            addMessage('Sen', msg, true);
 
-            // Rastgele gecikmelerle cevaplar gelsin
-            setTimeout(() => triggerAI('Ali'), 1500);
-            setTimeout(() => triggerAI('Ayşe'), 4000);
+            // Dinamik yanıt döngüsü
+            // Önce Ali tepki verir (1.5 sn sonra)
+            setTimeout(() => {
+                botTurn('Ali').then(() => {
+                    // Ali yazdıktan 2.5 sn sonra Ayşe hem senin hem Ali'nin yazdığını görüp cevap verir
+                    setTimeout(() => botTurn('Ayşe'), 2500);
+                });
+            }, 1500);
         }
 
-        sendBtn.onclick = handleAction;
-        userInput.onkeypress = (e) => { if(e.key === 'Enter') handleAction(); };
+        sendBtn.onclick = sendMessage;
+        userInput.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
+
+        // Sayfa yüklendiğinde bir merhaba desinler
+        window.onload = () => {
+            setTimeout(() => addMessage('Ali', 'Selam millet, naber? 👋', false), 1000);
+            setTimeout(() => addMessage('Ayşe', 'Selam Ali, iyidir senden? Bizimki de burada mı? 😄', false), 2500);
+        };
     </script>
 </body>
 </html>
