@@ -2,95 +2,118 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puter AI - Görselden Koda</title>
+    <title>Piksel Hassasiyetli HTML Mimarı</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50 min-h-screen p-4 md:p-10">
+<body class="bg-zinc-900 text-zinc-100 min-h-screen">
 
-    <div class="max-w-5xl mx-auto border border-gray-200 bg-white shadow-2xl rounded-2xl overflow-hidden">
-        <div class="bg-blue-600 p-6 text-white text-center">
-            <h1 class="text-3xl font-extrabold tracking-tight">AI Vision-to-HTML</h1>
-            <p class="mt-2 opacity-80">Görseli yükle, GPT-4o saniyeler içinde kodlasın.</p>
-        </div>
+    <div class="container mx-auto py-10 px-4">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                PIXEL-TO-HTML SCANNER
+            </h1>
+            <p class="text-zinc-400 mt-2">Görseli piksel bazlı tarayıp yapısal koda dönüştürür.</p>
+        </header>
 
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="space-y-4">
-                <label class="block text-sm font-semibold text-gray-700">Tasarım Görselini Seçin</label>
-                <input type="file" id="imageInput" accept="image/*" class="w-full p-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400">
-                
-                <button id="runBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95">
-                    Kodu Üret (GPT-4o)
-                </button>
-
-                <div id="status" class="hidden text-sm text-blue-600 font-medium animate-pulse">
-                    AI Tasarımı inceliyor, lütfen bekleyin...
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-zinc-800 p-6 rounded-2xl border border-zinc-700 shadow-xl">
+                <div class="flex flex-col items-center justify-center border-2 border-dashed border-zinc-600 rounded-xl p-8 mb-6 hover:border-blue-500 transition-colors cursor-pointer" id="dropZone">
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                    <p id="fileName" class="text-zinc-500 italic">Görseli buraya sürükleyin veya tıklayın</p>
+                    <img id="preview" class="mt-4 max-h-48 rounded hidden">
                 </div>
+
+                <button id="scanBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-3">
+                    <span>GÖRSELİ PİKSEL TARA VE KODLA</span>
+                </button>
             </div>
 
-            <div class="flex flex-col h-full border rounded-xl overflow-hidden">
-                <div class="bg-gray-100 px-4 py-2 text-xs font-mono border-b flex justify-between items-center">
-                    <span>ÇIKTI ÖNİZLEME</span>
-                    <button onclick="copyCode()" class="text-blue-600 hover:underline">Kodu Kopyala</button>
+            <div class="bg-zinc-800 rounded-2xl border border-zinc-700 shadow-xl flex flex-col overflow-hidden">
+                <div class="flex border-b border-zinc-700">
+                    <button id="tabPreview" class="flex-1 py-3 bg-zinc-700 font-bold">ÖNİZLEME</button>
+                    <button id="tabCode" class="flex-1 py-3 hover:bg-zinc-700 transition-colors">KOD (HTML/CSS)</button>
                 </div>
-                <div id="outputContainer" class="flex-grow min-h-[300px] p-2 bg-white overflow-auto text-sm">
-                    <div id="placeholder" class="text-gray-400 flex items-center justify-center h-full italic">
-                        Henüz bir çıktı üretilmedi.
+                
+                <div class="flex-grow min-h-[450px] relative">
+                    <div id="loading" class="absolute inset-0 bg-zinc-800/90 z-10 hidden flex items-center justify-center flex-col">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                        <p class="mt-4 text-sm text-blue-400 font-mono tracking-widest">TARANIYOR...</p>
                     </div>
-                    <iframe id="previewIframe" class="w-full h-full border-none hidden"></iframe>
+                    <iframe id="outputFrame" class="w-full h-full bg-white"></iframe>
+                    <textarea id="outputCode" class="w-full h-full bg-zinc-900 text-emerald-500 p-4 font-mono text-xs hidden outline-none" readonly></textarea>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let lastGeneratedCode = "";
+        const imageInput = document.getElementById('imageInput');
+        const dropZone = document.getElementById('dropZone');
+        const preview = document.getElementById('preview');
+        const scanBtn = document.getElementById('scanBtn');
+        const outputFrame = document.getElementById('outputFrame');
+        const outputCode = document.getElementById('outputCode');
+        const loading = document.getElementById('loading');
 
-        document.getElementById('runBtn').onclick = async () => {
-            const file = document.getElementById('imageInput').files[0];
-            const status = document.getElementById('status');
-            const previewIframe = document.getElementById('previewIframe');
-            const placeholder = document.getElementById('placeholder');
-
-            if (!file) {
-                alert("Lütfen önce bir görsel dosyası seçin!");
-                return;
-            }
-
-            status.classList.remove('hidden');
-            
-            try {
-                // Puter.js v2'nin en güçlü özelliği: 
-                // Otomatik session yönetimi sayesinde API Key istemez.
-                const response = await puter.ai.chat(
-                    "Bu görseldeki arayüzü modern HTML ve Tailwind CSS kullanarak kodla. Sadece HTML çıktısını ver, açıklama yapma. Responsive olsun.",
-                    file,
-                    { model: "gpt-4o" }
-                );
-
-                const result = response.message.content;
-                lastGeneratedCode = result;
-
-                // Iframe içine bas ve önizlemeyi göster
-                const blob = new Blob([result], { type: 'text/html' });
-                previewIframe.src = URL.createObjectURL(blob);
-                previewIframe.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-
-            } catch (err) {
-                console.error(err);
-                alert("Hata: " + err.message);
-            } finally {
-                status.classList.add('hidden');
+        // Dosya seçme mantığı
+        dropZone.onclick = () => imageInput.click();
+        imageInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if(file) {
+                preview.src = URL.createObjectURL(file);
+                preview.classList.remove('hidden');
+                document.getElementById('fileName').innerText = file.name;
             }
         };
 
-        function copyCode() {
-            if (!lastGeneratedCode) return alert("Kopyalanacak kod yok!");
-            navigator.clipboard.writeText(lastGeneratedCode);
-            alert("Kod panoya kopyalandı!");
-        }
+        scanBtn.onclick = async () => {
+            const file = imageInput.files[0];
+            if(!file) return alert("Lütfen bir görsel yükleyin!");
+
+            loading.classList.remove('hidden');
+
+            try {
+                // GPT-4o'ya piksel tarama emri veren kritik prompt
+                const response = await puter.ai.chat(
+                    `Bir frontend uzmanı ve UI tarayıcı gibi davran. Gönderdiğim görseli piksel piksel analiz et:
+                    1. Önce görselin genel grid yapısını (layout) belirle.
+                    2. Tüm renk kodlarını (HEX) görselden tam olarak çek.
+                    3. Butonlar, inputlar ve görsellerin konumlarını (padding/margin) piksel hassasiyetinde tahmin et.
+                    4. Tipografiyi (font büyüklüğü, kalınlık) en yakın modern Google Font ile eşleştir.
+                    5. Sonuç olarak SADECE saf HTML ve Tailwind CSS kodunu ver. Kod içinde açıklama veya markdown bloğu kullanma.`,
+                    file,
+                    { model: 'gpt-4o' }
+                );
+
+                const generatedCode = response.message.content;
+                
+                // Çıktıları işle
+                outputCode.value = generatedCode;
+                const blob = new Blob([generatedCode], { type: 'text/html' });
+                outputFrame.src = URL.createObjectURL(blob);
+
+            } catch (err) {
+                console.error(err);
+                alert("Tarama başarısız oldu.");
+            } finally {
+                loading.classList.add('hidden');
+            }
+        };
+
+        // Tab geçişleri
+        document.getElementById('tabPreview').onclick = () => {
+            outputFrame.classList.remove('hidden');
+            outputCode.classList.add('hidden');
+            document.getElementById('tabPreview').classList.add('bg-zinc-700');
+            document.getElementById('tabCode').classList.remove('bg-zinc-700');
+        };
+        document.getElementById('tabCode').onclick = () => {
+            outputCode.classList.remove('hidden');
+            outputFrame.classList.add('hidden');
+            document.getElementById('tabCode').classList.add('bg-zinc-700');
+            document.getElementById('tabPreview').classList.remove('bg-zinc-700');
+        };
     </script>
 </body>
 </html>
