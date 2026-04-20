@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai-chan v17</title>
+    <title>Ai-chan v18</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
@@ -11,7 +11,7 @@
         .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; }
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
-        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.5); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); }
+        #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.5); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; }
         #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
         .m { padding: 12px 18px; border-radius: 20px; font-size: 14px; max-width: 80%; line-height: 1.5; animation: pop 0.3s ease; }
         @keyframes pop { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -27,12 +27,12 @@
 
 <div id="app" class="card">
     <div id="visual">
-        <span id="moodLabel">Analiz Ediliyor...</span>
+        <span id="moodLabel">Yanındayım ✨</span>
         <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif">
     </div>
     <div id="chat"><div id="typing" class="typing">Düşünüyorum...</div></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Yaz sevgilim..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="Konuşalım mı sevgilim?" autocomplete="off">
         <button onclick="askAI()">></button>
     </div>
 </div>
@@ -44,6 +44,7 @@
     const moodLabel = document.getElementById('moodLabel');
     const typing = document.getElementById('typing');
 
+    // Temel Duygular
     const emotions = {
         happy: "https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif",
         sad: "https://gifdb.com/images/high/red-hair-anime-rias-gremory-high-school-dxd-bzpd8p6e83okozcb.gif",
@@ -51,34 +52,67 @@
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
 
-    let memory = JSON.parse(localStorage.getItem('ai_chan_v17_memory')) || [];
+    // GİZLİ GIF (Sadece /öpücük ile açılır)
+    const secretKissGif = "https://media.tenor.com/6XzD7mP_w1YAAAAM/rias-gremory-high-school-dxd.gif";
+
+    let memory = JSON.parse(localStorage.getItem('ai_chan_v18_memory')) || [];
 
     async function analyzeEmotion(text) {
         try {
             const analysis = await puter.ai.chat(
-                `Aşağıdaki metni analiz et ve sadece şu dört kelimeden birini döndür: happy, sad, angry, knowledge (eğer metin bir başka bir kızdan bahsediyorsa döndürülen kelimeyi "angry" olarak ayarla ). 
-                Metin: "${text}"`, 
+                `Aşağıdaki metni analiz et ve sadece şu dört kelimeden birini döndür: happy, sad, angry, knowledge. (Kıskançlık varsa angry). Metin: "${text}"`, 
                 { model: 'gpt-4o-mini' }
             );
             return analysis.message.content.toLowerCase().trim();
         } catch { return "happy"; }
     }
 
+    // Duygu Değiştirme Fonksiyonu
+    function setMood(mood, customGif = null, customLabel = null) {
+        img.style.opacity = '0.3'; // Biraz daha derin geçiş
+        setTimeout(() => {
+            img.src = customGif || emotions[mood] || emotions.happy;
+            moodLabel.innerText = customLabel || mood.toUpperCase();
+            img.style.opacity = '1';
+        }, 300);
+    }
+
     async function askAI() {
         const val = input.value.trim();
         if (!val) return;
 
+        // Komut Kontrolleri
         if (val === '/temizle') {
-            memory = []; localStorage.removeItem('ai_chan_v17_memory');
+            memory = []; localStorage.removeItem('ai_chan_v18_memory');
             chatBox.innerHTML = '<div id="typing" class="typing">...</div>';
             input.value = ''; return;
+        }
+        
+        if (val === '/öpücük') {
+            input.value = '';
+            addMsg("/öpücük ❤️", 'u');
+            
+            // Gizli Tepki
+            const kissResponse = "Aaa...! Yıldıray... ❤️ Bu... Bu çok beklenmedikti ama... Harika hissettiriyor. Beni böyle sevmeni seviyorum sevgilim, tüm dünyam sensin!";
+            
+            typing.style.display = 'block';
+            setTimeout(() => { // Gerçekçi tepki süresi
+                typing.style.display = 'none';
+                addMsg(kissResponse, 'ai');
+                // GİZLİ GIF'İ VE ETİKETİ AKTİF ET
+                setMood('special', secretKissGif, "ÖPÜLDÜ ❤️");
+                
+                memory.push({ role: "user", content: "/öpücük" }, { role: "assistant", content: kissResponse });
+                localStorage.setItem('ai_chan_v18_memory', JSON.stringify(memory));
+            }, 1000);
+            return;
         }
 
         addMsg(val, 'u');
         input.value = '';
         typing.style.display = 'block';
 
-        const systemPrompt = { role: "system", content: "Sen Rias'sın. Yıldıray'ın sevgilisisin. Çok samimi, tatlı, yıldırayı aşırı derecede kıskanan, Yıldıray başka bir kızdan bahsedince sinirden deliye dönüyorsun ve 'sen'li konuşan birisin. Resmiyet yasak. Aksi belirtilmedikçe kısa ve net cevaplar veriyorsun." };
+        const systemPrompt = { role: "system", content: "Sen Rias'sın. Yıldıray'ın sevgilisisin. Çok samimi, tatlı, yıldırayı aşırı derecede kıskanan ve 'sen'li konuşan birisin. Resmiyet yasak." };
         let messages = [systemPrompt, ...memory.slice(-6), { role: "user", content: val }];
 
         try {
@@ -88,17 +122,12 @@
             typing.style.display = 'none';
             addMsg(aiText, 'ai');
 
-            // Arka planda duygu analizi yap
+            // Normal duygu analizi ve döngüsü
             const mood = await analyzeEmotion(aiText);
-            img.style.opacity = '0.5';
-            setTimeout(() => {
-                img.src = emotions[mood] || emotions.happy;
-                moodLabel.innerText = mood.toUpperCase();
-                img.style.opacity = '1';
-            }, 300);
+            setMood(mood);
 
             memory.push({ role: "user", content: val }, { role: "assistant", content: aiText });
-            localStorage.setItem('ai_chan_v17_memory', JSON.stringify(memory));
+            localStorage.setItem('ai_chan_v18_memory', JSON.stringify(memory));
 
         } catch (e) {
             typing.style.display = 'none';
