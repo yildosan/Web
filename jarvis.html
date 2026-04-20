@@ -3,153 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS v20.3 | Integrated Vision & Web</title>
+    <title>Puter AI + GPT-4o Image to Code</title>
     <script src="https://js.puter.com/v2/"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --jarvis: #00e6fe; --bg: #030a13; --border: rgba(0, 230, 254, 0.2); }
-        body { background: var(--bg); color: var(--jarvis); font-family: 'Roboto Mono', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .card { width: 600px; height: 95vh; background: rgba(3, 10, 19, 0.95); border-radius: 20px; box-shadow: 0 0 40px rgba(0, 230, 254, 0.2); display: flex; flex-direction: column; border: 2px solid var(--border); position: relative; backdrop-filter: blur(15px); }
-        #visual { height: 180px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); background: radial-gradient(circle, rgba(0,230,254,0.1) 0%, transparent 75%); }
-        #orb { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--jarvis); box-shadow: 0 0 20px var(--jarvis); transition: 0.5s; position: relative; }
-        #orb::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--jarvis); opacity: 0.5; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.6); opacity: 0; } }
-        #chat { flex-grow: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
-        .m { padding: 12px 18px; border-radius: 12px; font-size: 13px; max-width: 85%; line-height: 1.6; animation: fadeIn 0.4s ease; word-wrap: break-word; border: 1px solid transparent; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .ai { background: rgba(0, 230, 254, 0.05); border-left: 3px solid var(--jarvis); align-self: flex-start; color: #e0fbfc; }
-        .u { background: rgba(255, 255, 255, 0.03); align-self: flex-end; color: #fff; border-right: 2px solid rgba(255,255,255,0.2); }
-        .link-btn { display: inline-block; margin: 10px 8px 0 0; padding: 8px 16px; background: var(--jarvis); color: #000; text-decoration: none; border-radius: 6px; font-size: 11px; font-weight: bold; transition: 0.3s; }
-        .link-btn:hover { background: #fff; box-shadow: 0 0 15px var(--jarvis); transform: translateY(-2px); }
-        .input-area { padding: 20px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.4); border-top: 1px solid var(--border); }
-        .controls { display: flex; gap: 10px; }
-        input { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--jarvis); padding: 12px; border-radius: 10px; outline: none; font-family: inherit; }
-        .btn { background: var(--jarvis); border: none; color: #000; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; height: 45px; }
-        .btn-file { background: transparent; border: 1px solid var(--jarvis); color: var(--jarvis); font-size: 20px; display: flex; align-items: center; justify-content: center; width: 45px; }
-        .btn:hover { box-shadow: 0 0 20px var(--jarvis); }
-        .status { position: absolute; top: 15px; left: 20px; font-size: 10px; letter-spacing: 1px; opacity: 0.6; }
-        #preview { max-width: 100px; max-height: 100px; display: none; border-radius: 8px; border: 1px solid var(--jarvis); margin-bottom: 5px; }
+        #preview-container iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen p-8">
 
-<div class="card">
-    <div id="visual">
-        <div class="status" id="sysStatus">CORE: READY | VISION: ACTIVE</div>
-        <div id="orb"></div>
-    </div>
-    <div id="chat"></div>
-    <div class="input-area">
-        <img id="preview" />
-        <div class="controls">
-            <input type="file" id="fileInput" style="display:none" accept="image/*">
-            <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">+</button>
-            <input type="text" id="userInput" placeholder="Görsel ekleyin veya bir komut yazın, Sir..." autocomplete="off">
-            <button class="btn" onclick="askAI()">EXECUTE</button>
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <h1 class="text-2xl font-bold mb-4 text-gray-800">Görselden HTML Kodu Oluşturucu</h1>
+        <p class="text-gray-600 mb-6">Bir görsel yükleyin, Puter ve GPT-4o bunu modern bir HTML/Tailwind koduna dönüştürsün.</p>
+
+        <div class="flex flex-col gap-4 mb-8">
+            <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            <button id="generateBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400">
+                Kodu Oluştur
+            </button>
+        </div>
+
+        <div id="loading" class="hidden text-center py-4">
+            <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-2"></div>
+            <p class="text-blue-600">AI görseli analiz ediyor ve kod yazıyor...</p>
+        </div>
+
+        <div id="resultArea" class="hidden">
+            <h2 class="text-lg font-semibold mb-2">Önizleme:</h2>
+            <div id="preview-container" class="mb-6">
+                <iframe id="livePreview"></iframe>
+            </div>
+            
+            <h2 class="text-lg font-semibold mb-2">HTML Kodu:</h2>
+            <pre id="codeOutput" class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"></pre>
         </div>
     </div>
-</div>
 
-<script>
-    const chatBox = document.getElementById('chat');
-    const input = document.getElementById('userInput');
-    const fileInput = document.getElementById('fileInput');
-    const preview = document.getElementById('preview');
-    const sysStatus = document.getElementById('sysStatus');
-    const orb = document.getElementById('orb');
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const imageInput = document.getElementById('imageInput');
+        const loading = document.getElementById('loading');
+        const resultArea = document.getElementById('resultArea');
+        const codeOutput = document.getElementById('codeOutput');
+        const livePreview = document.getElementById('livePreview');
 
-    let memory = [];
-    let selectedImage = null;
-
-    // Görsel seçildiğinde önizleme yap
-    fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            selectedImage = file;
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                preview.src = f.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    function parseLinks(text) {
-        // googleusercontent linklerini engelle, gerçek linkleri yakala
-        const mdLink = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g;
-        return text.replace(mdLink, (match, title, url) => {
-            if(url.includes("googleusercontent")) return `<em>(Veri doğrulanıyor...)</em>`;
-            return `<a href="${url}" target="_blank" class="link-btn">🔗 ${title}</a>`;
-        });
-    }
-
-    async function askAI() {
-        const textVal = input.value.trim();
-        if (!textVal && !selectedImage) return;
-
-        addMsg(textVal || "Görsel analiz ediliyor...", 'u');
-        input.value = '';
-        preview.style.display = 'none';
-        
-        orb.style.boxShadow = "0 0 50px #ff4d6d";
-        orb.style.borderColor = "#ff4d6d";
-        sysStatus.innerText = "CORE: ANALYZING MULTIMODAL DATA...";
-
-        try {
-            let messages = [
-                { 
-                    role: "system", 
-                    content: "Sen Jarvis'sin. Sir'e (Yıldıray) hizmet ediyorsun. Görüntüleri analiz edebilir ve internette araştırma yapabilirsin. TALİMATLAR: 1- 'googleusercontent.com' linklerini kullanma, her zaman asıl kaynağın (YouTube, Maps vb.) gerçek URL'sini bul. 2- Her zaman 'Sir' diye hitap et. 3- Analitik ve profesyonel ol." 
-                },
-                ...memory
-            ];
-
-            // Görsel varsa mesaj içeriğine ekle
-            if (selectedImage) {
-                messages.push({
-                    role: "user",
-                    content: [
-                        { type: "text", text: textVal || "Bu görselde ne görüyorsun Sir için analiz et." },
-                        { type: "image_url", image_url: { url: preview.src } }
-                    ]
-                });
-            } else {
-                messages.push({ role: "user", content: textVal });
+        generateBtn.addEventListener('click', async () => {
+            const file = imageInput.files[0];
+            if (!file) {
+                alert("Lütfen önce bir görsel seçin!");
+                return;
             }
 
-            const res = await puter.ai.chat(messages, {
-                model: 'gpt-4o',
-                web_browser: true
-            });
+            // UI Hazırlığı
+            loading.classList.remove('hidden');
+            resultArea.classList.add('hidden');
+            generateBtn.disabled = true;
 
-            const reply = res.message.content;
-            addMsg(parseLinks(reply), 'ai', true);
+            try {
+                // Puter AI Chat API Çağrısı
+                const response = await puter.ai.chat(
+                    `Sana gönderdiğim bu görseldeki arayüzü HTML ve Tailwind CSS kullanarak birebir oluştur. 
+                     Sadece kod çıktısı ver, markdown blokları (\`\`\`) kullanma. 
+                     Görseldeki renkleri, fontları ve düzeni taklit et.`,
+                    file,
+                    { model: 'gpt-4o' }
+                );
 
-            memory.push({ role: "user", content: textVal || "Görsel analizi" }, { role: "assistant", content: reply });
-            if(memory.length > 10) memory.splice(0, 2);
+                const generatedCode = response.message.content;
 
-        } catch (e) {
-            addMsg("Sistem hatası, Sir. Veri akışı kesildi.", 'ai');
-        } finally {
-            selectedImage = null;
-            fileInput.value = "";
-            orb.style.boxShadow = "0 0 20px var(--jarvis)";
-            orb.style.borderColor = "var(--jarvis)";
-            sysStatus.innerText = "CORE: READY | VISION: ACTIVE";
-        }
-    }
+                // Sonuçları Yazdır
+                codeOutput.textContent = generatedCode;
+                
+                // Iframe içinde canlı önizleme oluştur
+                const blob = new Blob([generatedCode], { type: 'text/html' });
+                livePreview.src = URL.createObjectURL(blob);
 
-    function addMsg(t, c, isHTML = false) {
-        const d = document.createElement('div');
-        d.className = `m ${c}`;
-        if(isHTML) d.innerHTML = t;
-        else d.innerText = t;
-        chatBox.appendChild(d);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    input.onkeypress = (e) => { if(e.key === 'Enter') askAI(); };
-    window.onload = () => addMsg("Görsel tanıma ve Web sistemleri senkronize edildi. Emrinizdeyim Sir.", 'ai');
-</script>
+                resultArea.classList.remove('hidden');
+            } catch (error) {
+                console.error("Hata:", error);
+                alert("Bir hata oluştu: " + error.message);
+            } finally {
+                loading.classList.add('hidden');
+                generateBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
