@@ -3,95 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puter AI + GPT-4o Image to Code</title>
+    <title>Puter AI - Görselden Koda</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        #preview-container iframe {
-            width: 100%;
-            height: 500px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-    </style>
 </head>
-<body class="bg-gray-100 min-h-screen p-8">
+<body class="bg-slate-50 min-h-screen p-4 md:p-10">
 
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg">
-        <h1 class="text-2xl font-bold mb-4 text-gray-800">Görselden HTML Kodu Oluşturucu</h1>
-        <p class="text-gray-600 mb-6">Bir görsel yükleyin, Puter ve GPT-4o bunu modern bir HTML/Tailwind koduna dönüştürsün.</p>
-
-        <div class="flex flex-col gap-4 mb-8">
-            <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-            <button id="generateBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:bg-gray-400">
-                Kodu Oluştur
-            </button>
+    <div class="max-w-5xl mx-auto border border-gray-200 bg-white shadow-2xl rounded-2xl overflow-hidden">
+        <div class="bg-blue-600 p-6 text-white text-center">
+            <h1 class="text-3xl font-extrabold tracking-tight">AI Vision-to-HTML</h1>
+            <p class="mt-2 opacity-80">Görseli yükle, GPT-4o saniyeler içinde kodlasın.</p>
         </div>
 
-        <div id="loading" class="hidden text-center py-4">
-            <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-2"></div>
-            <p class="text-blue-600">AI görseli analiz ediyor ve kod yazıyor...</p>
-        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+                <label class="block text-sm font-semibold text-gray-700">Tasarım Görselini Seçin</label>
+                <input type="file" id="imageInput" accept="image/*" class="w-full p-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400">
+                
+                <button id="runBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95">
+                    Kodu Üret (GPT-4o)
+                </button>
 
-        <div id="resultArea" class="hidden">
-            <h2 class="text-lg font-semibold mb-2">Önizleme:</h2>
-            <div id="preview-container" class="mb-6">
-                <iframe id="livePreview"></iframe>
+                <div id="status" class="hidden text-sm text-blue-600 font-medium animate-pulse">
+                    AI Tasarımı inceliyor, lütfen bekleyin...
+                </div>
             </div>
-            
-            <h2 class="text-lg font-semibold mb-2">HTML Kodu:</h2>
-            <pre id="codeOutput" class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm"></pre>
+
+            <div class="flex flex-col h-full border rounded-xl overflow-hidden">
+                <div class="bg-gray-100 px-4 py-2 text-xs font-mono border-b flex justify-between items-center">
+                    <span>ÇIKTI ÖNİZLEME</span>
+                    <button onclick="copyCode()" class="text-blue-600 hover:underline">Kodu Kopyala</button>
+                </div>
+                <div id="outputContainer" class="flex-grow min-h-[300px] p-2 bg-white overflow-auto text-sm">
+                    <div id="placeholder" class="text-gray-400 flex items-center justify-center h-full italic">
+                        Henüz bir çıktı üretilmedi.
+                    </div>
+                    <iframe id="previewIframe" class="w-full h-full border-none hidden"></iframe>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const generateBtn = document.getElementById('generateBtn');
-        const imageInput = document.getElementById('imageInput');
-        const loading = document.getElementById('loading');
-        const resultArea = document.getElementById('resultArea');
-        const codeOutput = document.getElementById('codeOutput');
-        const livePreview = document.getElementById('livePreview');
+        let lastGeneratedCode = "";
 
-        generateBtn.addEventListener('click', async () => {
-            const file = imageInput.files[0];
+        document.getElementById('runBtn').onclick = async () => {
+            const file = document.getElementById('imageInput').files[0];
+            const status = document.getElementById('status');
+            const previewIframe = document.getElementById('previewIframe');
+            const placeholder = document.getElementById('placeholder');
+
             if (!file) {
-                alert("Lütfen önce bir görsel seçin!");
+                alert("Lütfen önce bir görsel dosyası seçin!");
                 return;
             }
 
-            // UI Hazırlığı
-            loading.classList.remove('hidden');
-            resultArea.classList.add('hidden');
-            generateBtn.disabled = true;
-
+            status.classList.remove('hidden');
+            
             try {
-                // Puter AI Chat API Çağrısı
+                // Puter.js v2'nin en güçlü özelliği: 
+                // Otomatik session yönetimi sayesinde API Key istemez.
                 const response = await puter.ai.chat(
-                    `Sana gönderdiğim bu görseldeki arayüzü HTML ve Tailwind CSS kullanarak birebir oluştur. 
-                     Sadece kod çıktısı ver, markdown blokları (\`\`\`) kullanma. 
-                     Görseldeki renkleri, fontları ve düzeni taklit et.`,
+                    "Bu görseldeki arayüzü modern HTML ve Tailwind CSS kullanarak kodla. Sadece HTML çıktısını ver, açıklama yapma. Responsive olsun.",
                     file,
-                    { model: 'gpt-4o' }
+                    { model: "gpt-4o" }
                 );
 
-                const generatedCode = response.message.content;
+                const result = response.message.content;
+                lastGeneratedCode = result;
 
-                // Sonuçları Yazdır
-                codeOutput.textContent = generatedCode;
-                
-                // Iframe içinde canlı önizleme oluştur
-                const blob = new Blob([generatedCode], { type: 'text/html' });
-                livePreview.src = URL.createObjectURL(blob);
+                // Iframe içine bas ve önizlemeyi göster
+                const blob = new Blob([result], { type: 'text/html' });
+                previewIframe.src = URL.createObjectURL(blob);
+                previewIframe.classList.remove('hidden');
+                placeholder.classList.add('hidden');
 
-                resultArea.classList.remove('hidden');
-            } catch (error) {
-                console.error("Hata:", error);
-                alert("Bir hata oluştu: " + error.message);
+            } catch (err) {
+                console.error(err);
+                alert("Hata: " + err.message);
             } finally {
-                loading.classList.add('hidden');
-                generateBtn.disabled = false;
+                status.classList.add('hidden');
             }
-        });
+        };
+
+        function copyCode() {
+            if (!lastGeneratedCode) return alert("Kopyalanacak kod yok!");
+            navigator.clipboard.writeText(lastGeneratedCode);
+            alert("Kod panoya kopyalandı!");
+        }
     </script>
 </body>
 </html>
