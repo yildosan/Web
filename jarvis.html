@@ -3,101 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS v20.2 | Link Fix Edition</title>
+    <title>JARVIS v20.3 | Integrated Vision & Web</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --jarvis: #00e6fe; --bg: #030a13; --border: rgba(0, 230, 254, 0.2); }
         body { background: var(--bg); color: var(--jarvis); font-family: 'Roboto Mono', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .card { width: 550px; height: 95vh; background: rgba(3, 10, 19, 0.95); border-radius: 20px; box-shadow: 0 0 30px rgba(0, 230, 254, 0.3); display: flex; flex-direction: column; border: 2px solid var(--border); position: relative; }
-        #visual { height: 180px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); }
-        #orb { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--jarvis); box-shadow: 0 0 20px var(--jarvis); position: relative; }
-        #orb::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--jarvis); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
-        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .m { padding: 12px 18px; border-radius: 12px; font-size: 13px; max-width: 85%; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .ai { background: rgba(0, 230, 254, 0.08); border-left: 3px solid var(--jarvis); align-self: flex-start; }
-        .u { background: rgba(255, 255, 255, 0.05); align-self: flex-end; color: #fff; }
-        /* Link Butonu Stili */
-        .link-btn { display: inline-block; margin: 10px 5px 0 0; padding: 8px 15px; background: var(--jarvis); color: #000; text-decoration: none; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid transparent; }
-        .link-btn:hover { background: #fff; box-shadow: 0 0 15px var(--jarvis); }
-        .input-area { padding: 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
-        input { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--jarvis); padding: 12px; border-radius: 10px; outline: none; }
-        button { background: var(--jarvis); border: none; color: #000; padding: 0 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        .status { position: absolute; top: 15px; left: 20px; font-size: 10px; opacity: 0.6; }
+        .card { width: 600px; height: 95vh; background: rgba(3, 10, 19, 0.95); border-radius: 20px; box-shadow: 0 0 40px rgba(0, 230, 254, 0.2); display: flex; flex-direction: column; border: 2px solid var(--border); position: relative; backdrop-filter: blur(15px); }
+        #visual { height: 180px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); background: radial-gradient(circle, rgba(0,230,254,0.1) 0%, transparent 75%); }
+        #orb { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--jarvis); box-shadow: 0 0 20px var(--jarvis); transition: 0.5s; position: relative; }
+        #orb::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--jarvis); opacity: 0.5; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.6); opacity: 0; } }
+        #chat { flex-grow: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .m { padding: 12px 18px; border-radius: 12px; font-size: 13px; max-width: 85%; line-height: 1.6; animation: fadeIn 0.4s ease; word-wrap: break-word; border: 1px solid transparent; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .ai { background: rgba(0, 230, 254, 0.05); border-left: 3px solid var(--jarvis); align-self: flex-start; color: #e0fbfc; }
+        .u { background: rgba(255, 255, 255, 0.03); align-self: flex-end; color: #fff; border-right: 2px solid rgba(255,255,255,0.2); }
+        .link-btn { display: inline-block; margin: 10px 8px 0 0; padding: 8px 16px; background: var(--jarvis); color: #000; text-decoration: none; border-radius: 6px; font-size: 11px; font-weight: bold; transition: 0.3s; }
+        .link-btn:hover { background: #fff; box-shadow: 0 0 15px var(--jarvis); transform: translateY(-2px); }
+        .input-area { padding: 20px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.4); border-top: 1px solid var(--border); }
+        .controls { display: flex; gap: 10px; }
+        input { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--jarvis); padding: 12px; border-radius: 10px; outline: none; font-family: inherit; }
+        .btn { background: var(--jarvis); border: none; color: #000; padding: 0 20px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; height: 45px; }
+        .btn-file { background: transparent; border: 1px solid var(--jarvis); color: var(--jarvis); font-size: 20px; display: flex; align-items: center; justify-content: center; width: 45px; }
+        .btn:hover { box-shadow: 0 0 20px var(--jarvis); }
+        .status { position: absolute; top: 15px; left: 20px; font-size: 10px; letter-spacing: 1px; opacity: 0.6; }
+        #preview { max-width: 100px; max-height: 100px; display: none; border-radius: 8px; border: 1px solid var(--jarvis); margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div id="visual">
-        <div class="status" id="sysStatus">SYSTEM: READY</div>
+        <div class="status" id="sysStatus">CORE: READY | VISION: ACTIVE</div>
         <div id="orb"></div>
     </div>
     <div id="chat"></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Bir şey emredin, Sir..." autocomplete="off">
-        <button onclick="askAI()">EXECUTE</button>
+        <img id="preview" />
+        <div class="controls">
+            <input type="file" id="fileInput" style="display:none" accept="image/*">
+            <button class="btn btn-file" onclick="document.getElementById('fileInput').click()">+</button>
+            <input type="text" id="userInput" placeholder="Görsel ekleyin veya bir komut yazın, Sir..." autocomplete="off">
+            <button class="btn" onclick="askAI()">EXECUTE</button>
+        </div>
     </div>
 </div>
 
 <script>
     const chatBox = document.getElementById('chat');
     const input = document.getElementById('userInput');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
     const sysStatus = document.getElementById('sysStatus');
+    const orb = document.getElementById('orb');
+
     let memory = [];
+    let selectedImage = null;
 
-    // Linkleri tespit edip butona çeviren fonksiyon
-    function formatLinks(text) {
-        // Markdown [Text](URL) formatını yakalar
-        const markdownLink = /\[([^\]]+)\]\(([^)]+)\)/g;
-        // Ham URL'leri yakalar (http/https ile başlayan)
-        const rawUrl = /(https?:\/\/[^\s]+)/g;
+    // Görsel seçildiğinde önizleme yap
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            selectedImage = file;
+            const reader = new FileReader();
+            reader.onload = (f) => {
+                preview.src = f.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
-        let formatted = text.replace(markdownLink, (match, title, url) => {
-            // Eğer link geçici bir proxy linkiyse AI'ya tekrar sormasını söyleyen bir not ekleyebiliriz
-            if(url.includes("googleusercontent")) return `<em>(Veri çekiliyor...)</em>`;
+    function parseLinks(text) {
+        // googleusercontent linklerini engelle, gerçek linkleri yakala
+        const mdLink = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g;
+        return text.replace(mdLink, (match, title, url) => {
+            if(url.includes("googleusercontent")) return `<em>(Veri doğrulanıyor...)</em>`;
             return `<a href="${url}" target="_blank" class="link-btn">🔗 ${title}</a>`;
         });
-
-        return formatted;
     }
 
     async function askAI() {
-        const val = input.value.trim();
-        if (!val) return;
+        const textVal = input.value.trim();
+        if (!textVal && !selectedImage) return;
 
-        addMsg(val, 'u');
+        addMsg(textVal || "Görsel analiz ediliyor...", 'u');
         input.value = '';
-        sysStatus.innerText = "SYSTEM: SEARCHING REAL-TIME DATA...";
+        preview.style.display = 'none';
+        
+        orb.style.boxShadow = "0 0 50px #ff4d6d";
+        orb.style.borderColor = "#ff4d6d";
+        sysStatus.innerText = "CORE: ANALYZING MULTIMODAL DATA...";
 
         try {
-            const res = await puter.ai.chat([
+            let messages = [
                 { 
                     role: "system", 
-                    content: `Sen Jarvis'sin. Sir'e (Yıldıray) hizmet ediyorsun. 
-                    KRİTİK TALİMAT: Web sonuçlarında gelen 'googleusercontent.com' linklerini ASLA kullanma. 
-                    Bunlar yerine bulduğun içeriğin asıl kaynağındaki (YouTube.com, Maps.google.com, vb.) GERÇEK URL'leri bulmaya çalış. 
-                    Eğer sadece proxy linki bulabiliyorsan, Sir'e linki doğrudan veremediğini ama içeriği açıklayabileceğini söyle. 
-                    Gerçek linkleri '[Başlık](URL)' formatında ver. Hitap: Sir.` 
+                    content: "Sen Jarvis'sin. Sir'e (Yıldıray) hizmet ediyorsun. Görüntüleri analiz edebilir ve internette araştırma yapabilirsin. TALİMATLAR: 1- 'googleusercontent.com' linklerini kullanma, her zaman asıl kaynağın (YouTube, Maps vb.) gerçek URL'sini bul. 2- Her zaman 'Sir' diye hitap et. 3- Analitik ve profesyonel ol." 
                 },
-                ...memory,
-                { role: "user", content: val }
-            ], {
+                ...memory
+            ];
+
+            // Görsel varsa mesaj içeriğine ekle
+            if (selectedImage) {
+                messages.push({
+                    role: "user",
+                    content: [
+                        { type: "text", text: textVal || "Bu görselde ne görüyorsun Sir için analiz et." },
+                        { type: "image_url", image_url: { url: preview.src } }
+                    ]
+                });
+            } else {
+                messages.push({ role: "user", content: textVal });
+            }
+
+            const res = await puter.ai.chat(messages, {
                 model: 'gpt-4o',
-                web_browser: true 
+                web_browser: true
             });
 
             const reply = res.message.content;
-            addMsg(formatLinks(reply), 'ai', true);
+            addMsg(parseLinks(reply), 'ai', true);
 
-            memory.push({ role: "user", content: val }, { role: "assistant", content: reply });
+            memory.push({ role: "user", content: textVal || "Görsel analizi" }, { role: "assistant", content: reply });
             if(memory.length > 10) memory.splice(0, 2);
-            sysStatus.innerText = "SYSTEM: READY";
 
         } catch (e) {
-            sysStatus.innerText = "SYSTEM: ERROR";
-            addMsg("Bağlantı hatası, Sir. Tekrar denemek ister misiniz?", 'ai');
+            addMsg("Sistem hatası, Sir. Veri akışı kesildi.", 'ai');
+        } finally {
+            selectedImage = null;
+            fileInput.value = "";
+            orb.style.boxShadow = "0 0 20px var(--jarvis)";
+            orb.style.borderColor = "var(--jarvis)";
+            sysStatus.innerText = "CORE: READY | VISION: ACTIVE";
         }
     }
 
@@ -111,7 +149,7 @@
     }
 
     input.onkeypress = (e) => { if(e.key === 'Enter') askAI(); };
-    window.onload = () => addMsg("Sistem çevrimiçi. Veri tabanları ve web erişimi aktif, Sir.", 'ai');
+    window.onload = () => addMsg("Görsel tanıma ve Web sistemleri senkronize edildi. Emrinizdeyim Sir.", 'ai');
 </script>
 </body>
 </html>
