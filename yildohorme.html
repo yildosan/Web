@@ -2,165 +2,78 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobil Web Tarayıcı</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazuri-Turkuli Çeviri (GPT-4o)</title>
+    <script src="https://js.puter.com/v2/"></script>
     <style>
-        /* Temel Sıfırlama */
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        body { 
-            margin: 0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
-            background: #1a1a1a;
-            overflow: hidden;
-        }
-
-        /* Mobil Uyumlu Üst Panel */
-        .toolbar {
-            background: #2d2d2d;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            z-index: 10;
-        }
-
-        /* Butonları mobilde daha büyük ve dokunmatik dostu yaptık */
-        .btn {
-            background: #3d3d3d;
-            border: none;
-            color: white;
-            font-size: 20px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .btn:active {
-            background: #555;
-            transform: scale(0.95);
-        }
-
-        /* Adres Çubuğu */
-        .address-bar {
-            flex-grow: 1;
-            padding: 10px 15px;
-            border-radius: 25px;
-            border: 1px solid #444;
-            background: #121212;
-            color: #e0e0e0;
-            font-size: 14px;
-            outline: none;
-            width: 100%;
-        }
-
-        /* İçerik Alanı (Iframe) */
-        .browser-container {
-            flex-grow: 1;
-            position: relative;
-            background: white;
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        /* Alt Bilgi (Opsiyonel Mobil Navigasyon) */
-        .bottom-bar {
-            background: #2d2d2d;
-            height: 45px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid #444;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: #4caf50;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        
-        .status-text {
-            color: #aaa;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a1a; color: #eee; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #2a2a2a; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 90%; max-width: 500px; }
+        h2 { text-align: center; color: #00d1b2; margin-bottom: 1.5rem; }
+        select, textarea, button { width: 100%; margin-bottom: 1rem; padding: 12px; border-radius: 6px; border: none; font-size: 1rem; box-sizing: border-box; }
+        textarea { height: 120px; background: #3d3d3d; color: white; resize: none; }
+        button { background-color: #00d1b2; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #00b8a0; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        #output { padding: 12px; background: #1a1a1a; border-left: 4px solid #00d1b2; min-height: 50px; white-space: pre-wrap; }
+        .loader { font-size: 0.8rem; color: #888; text-align: center; display: none; }
     </style>
 </head>
 <body>
 
-    <div class="toolbar">
-        <input type="text" id="urlInput" class="address-bar" placeholder="Site adresi girin..." onkeydown="checkEnter(event)">
-        <button class="btn" onclick="loadUrl()">➔</button>
-    </div>
+<div class="container">
+    <h2>Lazuri Çeviri 4o</h2>
+    
+    <select id="direction">
+        <option value="tr-laz">Türkçe ➔ Lazca</option>
+        <option value="laz-tr">Lazca ➔ Türkçe</option>
+    </select>
 
-    <div class="browser-container">
-        <iframe id="browserFrame" src="https://www.bing.com"></iframe>
-    </div>
+    <textarea id="inputText" placeholder="Metni buraya yazın..."></textarea>
+    
+    <button id="translateBtn">Çevir</button>
+    
+    <div class="loader" id="loader">Puter AI işliyor...</div>
+    <div id="output">Çeviri burada görünecek...</div>
+</div>
 
-    <div class="bottom-bar">
-        <button class="btn" style="background:none; font-size: 16px;" onclick="goBack()">◀</button>
-        <div style="display: flex; align-items: center;">
-            <div class="status-dot"></div>
-            <span class="status-text">Canlı</span>
-        </div>
-        <button class="btn" style="background:none; font-size: 16px;" onclick="reload()">↻</button>
-    </div>
+<script>
+    const translateBtn = document.getElementById('translateBtn');
+    const inputText = document.getElementById('inputText');
+    const outputDiv = document.getElementById('output');
+    const direction = document.getElementById('direction');
+    const loader = document.getElementById('loader');
 
-    <script>
-        const frame = document.getElementById('browserFrame');
-        const urlInput = document.getElementById('urlInput');
+    translateBtn.onclick = async () => {
+        const text = inputText.value.trim();
+        if (!text) return;
 
-        function loadUrl() {
-            let url = urlInput.value.trim();
-            if (url === "") return;
-            
-            // Eğer protokol yoksa ekle
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                url = 'https://' + url;
-            }
-            
-            frame.src = url;
-            urlInput.value = url; // Temizlenmiş URL'yi geri yaz
-            urlInput.blur(); // Mobilde klavyeyi kapatır
+        translateBtn.disabled = true;
+        loader.style.display = 'block';
+        outputDiv.innerText = "Düşünüyor...";
+
+        const promptDirection = direction.value === 'tr-laz' ? "Türkçe'den Lazca'ya" : "Lazca'dan Türkçe'ye";
+        
+        const systemPrompt = `Sen profesyonel bir Lazca çevirmensin. 
+        Görevin verilen metni ${promptDirection} çevirmektir. 
+        Lazca alfabesini (ç’, gğ, k’, p’, t’, ž gibi harfler) doğru kullan. 
+        Sadece çeviriyi döndür, açıklama yapma.`;
+
+        try {
+            // Puter.js v2 chat kullanımı (Model: gpt-4o)
+            const response = await puter.ai.chat(
+                `${systemPrompt}\n\nÇevrilecek metin: ${text}`,
+                { model: 'gpt-4o' }
+            );
+
+            outputDiv.innerText = response.toString();
+        } catch (error) {
+            outputDiv.innerText = "Hata oluştu: " + error.message;
+        } finally {
+            translateBtn.disabled = false;
+            loader.style.display = 'none';
         }
+    };
+</script>
 
-        function checkEnter(event) {
-            if (event.key === 'Enter') {
-                loadUrl();
-            }
-        }
-
-        function reload() {
-            frame.src = frame.src;
-        }
-
-        function goBack() {
-            // Iframe içi geçmiş bazen güvenlik nedeniyle engellenebilir
-            try {
-                window.history.back();
-            } catch (e) {
-                console.error("Geri gidilemedi.");
-            }
-        }
-    </script>
 </body>
 </html>
