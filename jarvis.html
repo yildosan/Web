@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS v20.1 | Vision & Web Integrated</title>
+    <title>JARVIS v20.2 | Link Fix Edition</title>
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --jarvis: #00e6fe; --bg: #030a13; --border: rgba(0, 230, 254, 0.2); }
         body { background: var(--bg); color: var(--jarvis); font-family: 'Roboto Mono', monospace; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        .card { width: 550px; height: 95vh; background: rgba(3, 10, 19, 0.95); border-radius: 20px; box-shadow: 0 0 30px rgba(0, 230, 254, 0.3); display: flex; flex-direction: column; border: 2px solid var(--border); position: relative; backdrop-filter: blur(10px); }
-        #visual { height: 220px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); background: radial-gradient(circle, rgba(0,230,254,0.1) 0%, transparent 70%); }
-        #orb { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--jarvis); box-shadow: 0 0 25px var(--jarvis); transition: 0.3s; position: relative; }
-        #orb::after { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; border: 1px solid var(--jarvis); opacity: 0.3; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(1.2); opacity: 0.1; } 100% { transform: scale(1); opacity: 0.3; } }
-        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
-        .m { padding: 12px 18px; border-radius: 12px; font-size: 13px; max-width: 85%; line-height: 1.6; animation: fadeIn 0.3s ease; word-wrap: break-word; }
+        .card { width: 550px; height: 95vh; background: rgba(3, 10, 19, 0.95); border-radius: 20px; box-shadow: 0 0 30px rgba(0, 230, 254, 0.3); display: flex; flex-direction: column; border: 2px solid var(--border); position: relative; }
+        #visual { height: 180px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid var(--border); }
+        #orb { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--jarvis); box-shadow: 0 0 20px var(--jarvis); position: relative; }
+        #orb::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--jarvis); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 100% { transform: scale(1.5); opacity: 0; } }
+        #chat { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .m { padding: 12px 18px; border-radius: 12px; font-size: 13px; max-width: 85%; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        .ai { background: rgba(0, 230, 254, 0.08); border-left: 3px solid var(--jarvis); align-self: flex-start; color: #e0fbfc; }
-        .u { background: rgba(255, 255, 255, 0.05); align-self: flex-end; color: #fff; border-right: 2px solid rgba(255,255,255,0.2); }
-        .link-btn { display: inline-block; margin: 8px 5px 0 0; padding: 6px 12px; background: var(--jarvis); color: #000; text-decoration: none; border-radius: 5px; font-size: 11px; font-weight: bold; transition: 0.2s; }
-        .link-btn:hover { background: #fff; box-shadow: 0 0 10px #fff; }
-        .input-area { padding: 20px; display: flex; gap: 10px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); }
-        input { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--jarvis); padding: 12px; border-radius: 10px; outline: none; font-family: inherit; }
-        button { background: var(--jarvis); border: none; color: #000; padding: 0 25px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        button:hover { box-shadow: 0 0 15px var(--jarvis); }
-        .status { position: absolute; top: 15px; left: 20px; font-size: 10px; letter-spacing: 1px; opacity: 0.7; }
+        .ai { background: rgba(0, 230, 254, 0.08); border-left: 3px solid var(--jarvis); align-self: flex-start; }
+        .u { background: rgba(255, 255, 255, 0.05); align-self: flex-end; color: #fff; }
+        /* Link Butonu Stili */
+        .link-btn { display: inline-block; margin: 10px 5px 0 0; padding: 8px 15px; background: var(--jarvis); color: #000; text-decoration: none; border-radius: 6px; font-size: 11px; font-weight: bold; border: 1px solid transparent; }
+        .link-btn:hover { background: #fff; box-shadow: 0 0 15px var(--jarvis); }
+        .input-area { padding: 20px; display: flex; gap: 10px; border-top: 1px solid var(--border); }
+        input { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--jarvis); padding: 12px; border-radius: 10px; outline: none; }
+        button { background: var(--jarvis); border: none; color: #000; padding: 0 25px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .status { position: absolute; top: 15px; left: 20px; font-size: 10px; opacity: 0.6; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div id="visual">
-        <div class="status" id="sysStatus">CORE: ONLINE | WEB: CONNECTED</div>
+        <div class="status" id="sysStatus">SYSTEM: READY</div>
         <div id="orb"></div>
     </div>
     <div id="chat"></div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Emriniz nedir, Sir?" autocomplete="off">
+        <input type="text" id="userInput" placeholder="Bir şey emredin, Sir..." autocomplete="off">
         <button onclick="askAI()">EXECUTE</button>
     </div>
 </div>
@@ -45,26 +45,22 @@
     const chatBox = document.getElementById('chat');
     const input = document.getElementById('userInput');
     const sysStatus = document.getElementById('sysStatus');
-    const orb = document.getElementById('orb');
-
     let memory = [];
 
-    // Markdown Linklerini Butona Çevirme
-    function parseMarkdownLinks(text) {
-        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-        return text.replace(linkRegex, '<a href="$2" target="_blank" class="link-btn">🔗 $1</a>');
-    }
+    // Linkleri tespit edip butona çeviren fonksiyon
+    function formatLinks(text) {
+        // Markdown [Text](URL) formatını yakalar
+        const markdownLink = /\[([^\]]+)\]\(([^)]+)\)/g;
+        // Ham URL'leri yakalar (http/https ile başlayan)
+        const rawUrl = /(https?:\/\/[^\s]+)/g;
 
-    function updateOrb(state) {
-        if(state === 'think') {
-            orb.style.boxShadow = "0 0 50px #ff4d6d";
-            orb.style.borderColor = "#ff4d6d";
-            sysStatus.innerText = "CORE: PROCESSING DATA...";
-        } else {
-            orb.style.boxShadow = "0 0 25px var(--jarvis)";
-            orb.style.borderColor = "var(--jarvis)";
-            sysStatus.innerText = "CORE: ONLINE | WEB: CONNECTED";
-        }
+        let formatted = text.replace(markdownLink, (match, title, url) => {
+            // Eğer link geçici bir proxy linkiyse AI'ya tekrar sormasını söyleyen bir not ekleyebiliriz
+            if(url.includes("googleusercontent")) return `<em>(Veri çekiliyor...)</em>`;
+            return `<a href="${url}" target="_blank" class="link-btn">🔗 ${title}</a>`;
+        });
+
+        return formatted;
     }
 
     async function askAI() {
@@ -73,32 +69,35 @@
 
         addMsg(val, 'u');
         input.value = '';
-        updateOrb('think');
+        sysStatus.innerText = "SYSTEM: SEARCHING REAL-TIME DATA...";
 
         try {
             const res = await puter.ai.chat([
                 { 
                     role: "system", 
-                    content: "Sen Jarvis'sin. Yıldıray (Sir) için çalışan dahi bir yapay zekasın. Web erişimin ve görsel analiz yeteneğin var. Güncel veri istendiğinde web_browser kullanarak en taze bilgileri bul ve linkleri [Başlık](URL) formatında paylaş. Her zaman 'Sir' diye hitap et ve analitik, profesyonel bir ton kullan." 
+                    content: `Sen Jarvis'sin. Sir'e (Yıldıray) hizmet ediyorsun. 
+                    KRİTİK TALİMAT: Web sonuçlarında gelen 'googleusercontent.com' linklerini ASLA kullanma. 
+                    Bunlar yerine bulduğun içeriğin asıl kaynağındaki (YouTube.com, Maps.google.com, vb.) GERÇEK URL'leri bulmaya çalış. 
+                    Eğer sadece proxy linki bulabiliyorsan, Sir'e linki doğrudan veremediğini ama içeriği açıklayabileceğini söyle. 
+                    Gerçek linkleri '[Başlık](URL)' formatında ver. Hitap: Sir.` 
                 },
                 ...memory,
                 { role: "user", content: val }
             ], {
-                model: 'gpt-4o', // Vision ve Web Search için en güçlü model
+                model: 'gpt-4o',
                 web_browser: true 
             });
 
             const reply = res.message.content;
-            addMsg(parseMarkdownLinks(reply), 'ai', true);
+            addMsg(formatLinks(reply), 'ai', true);
 
             memory.push({ role: "user", content: val }, { role: "assistant", content: reply });
-            if(memory.length > 12) memory.splice(0, 2);
-            
-            updateOrb('ready');
+            if(memory.length > 10) memory.splice(0, 2);
+            sysStatus.innerText = "SYSTEM: READY";
 
         } catch (e) {
-            updateOrb('ready');
-            addMsg("Sistem çekirdeğinde bir anomali oluştu, Sir. Tekrar denemenizi öneririm.", 'ai');
+            sysStatus.innerText = "SYSTEM: ERROR";
+            addMsg("Bağlantı hatası, Sir. Tekrar denemek ister misiniz?", 'ai');
         }
     }
 
@@ -112,11 +111,7 @@
     }
 
     input.onkeypress = (e) => { if(e.key === 'Enter') askAI(); };
-    
-    // Açılış mesajı
-    window.onload = () => {
-        setTimeout(() => addMsg("Sistemler %100 kapasite ile aktif. Emrinizdeyim Sir.", 'ai'), 500);
-    };
+    window.onload = () => addMsg("Sistem çevrimiçi. Veri tabanları ve web erişimi aktif, Sir.", 'ai');
 </script>
 </body>
 </html>
