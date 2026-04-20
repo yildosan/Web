@@ -2,116 +2,152 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>GPT-4o vs GPT-4o: Dual Brain</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual GPT-4o Mobile</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        body { font-family: 'JetBrains Mono', monospace; background-color: #0d1117; color: #c9d1d9; }
-        .chat-area { height: calc(100vh - 250px); }
-        .bot-a { border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.05); }
-        .bot-b { border-right: 3px solid #ec4899; background: rgba(236, 72, 153, 0.05); }
-        .pulse-blue { animation: pulse-b 2s infinite; }
-        .pulse-pink { animation: pulse-p 2s infinite; }
-        @keyframes pulse-b { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-        @keyframes pulse-p { 0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #09090b; }
+        
+        .chat-height { height: calc(100vh - 180px); }
+        
+        /* Mesaj Balonları */
+        .bubble-a {
+            background: #1e293b;
+            border-bottom-left-radius: 4px;
+            border-left: 4px solid #3b82f6;
+        }
+        .bubble-b {
+            background: #2d1b36;
+            border-bottom-right-radius: 4px;
+            border-right: 4px solid #d946ef;
+        }
+
+        /* Yükleme Animasyonu */
+        .dot-flashing {
+            position: relative;
+            width: 6px;
+            height: 6px;
+            border-radius: 5px;
+            background-color: #94a3b8;
+            animation: dot-flashing 1s infinite linear alternate;
+            display: inline-block;
+        }
+        @keyframes dot-flashing {
+            0% { background-color: #94a3b8; }
+            50%, 100% { background-color: #475569; }
+        }
     </style>
 </head>
-<body class="p-4 overflow-hidden">
+<body class="overflow-hidden">
 
-    <div class="max-w-6xl mx-auto h-screen flex flex-col">
-        <div class="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-t-2xl">
-            <div class="flex items-center gap-4">
-                <div class="flex -space-x-2">
-                    <div class="w-8 h-8 rounded-full bg-blue-600 border-2 border-gray-900 flex items-center justify-center font-bold text-xs text-white">A</div>
-                    <div class="w-8 h-8 rounded-full bg-pink-600 border-2 border-gray-900 flex items-center justify-center font-bold text-xs text-white">B</div>
-                </div>
-                <h1 class="text-sm font-bold tracking-widest text-gray-400 uppercase">Dual GPT-4o Instance</h1>
-            </div>
-            <div id="status" class="text-[10px] font-mono text-gray-500">BEKLEMEDE</div>
+    <header class="h-16 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-900/50 backdrop-blur-md">
+        <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+            <h1 class="text-white font-bold text-sm tracking-tight uppercase">Bot-A vs Bot-B</h1>
         </div>
+        <div id="status" class="text-[10px] font-bold text-zinc-500 bg-zinc-800 px-2 py-1 rounded">HAZIR</div>
+    </header>
 
-        <div id="chatBox" class="chat-area flex-grow overflow-y-auto bg-gray-900/30 border-x border-gray-800 p-6 space-y-6 scroll-smooth">
-            <div class="text-center text-gray-600 mt-20 italic">Tartışılacak bir konu girerek sistemi başlatın...</div>
+    <main id="chatBox" class="chat-height overflow-y-auto p-4 space-y-6 scroll-smooth">
+        <div class="flex flex-col items-center justify-center h-full text-center px-8 space-y-4">
+            <div class="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center text-3xl">🤖</div>
+            <p class="text-zinc-500 text-sm italic">İki GPT-4o'nun birbiriyle konuşmasını izlemek için aşağıdan bir konu başlatın.</p>
         </div>
+    </main>
 
-        <div class="p-4 bg-gray-900 border border-gray-800 rounded-b-2xl flex gap-3">
-            <input type="text" id="topicInput" placeholder="Sanal zekaların neyi tartışmasını istersin?" 
-                   class="flex-grow bg-gray-800 border border-gray-700 rounded-xl px-6 py-4 outline-none focus:border-blue-500 transition-all text-sm">
-            <button id="toggleBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-10 py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-900/20">
-                DÖNGÜYÜ BAŞLAT
+    <footer class="fixed bottom-0 left-0 w-full p-4 bg-zinc-900/80 backdrop-blur-xl border-t border-zinc-800">
+        <div class="max-w-3xl mx-auto flex gap-2">
+            <input type="text" id="topicInput" placeholder="Tartışma konusu nedir?" 
+                   class="flex-grow bg-zinc-800 text-white rounded-2xl px-5 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm">
+            <button id="toggleBtn" class="bg-white text-black font-extrabold px-6 py-3 rounded-2xl text-xs uppercase tracking-tighter active:scale-90 transition-all">
+                BAŞLAT
             </button>
         </div>
-    </div>
+    </footer>
 
     <script>
-        let isActive = false;
+        let running = false;
         const chatBox = document.getElementById('chatBox');
         const toggleBtn = document.getElementById('toggleBtn');
         const topicInput = document.getElementById('topicInput');
-        const statusDisp = document.getElementById('status');
+        const status = document.getElementById('status');
 
-        function appendMsg(botName, text, isA) {
+        function addMessage(sender, text, isA) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex w-full ${isA ? 'justify-start' : 'justify-end'}`;
+            
             const div = document.createElement('div');
-            div.className = `p-5 rounded-2xl ${isA ? 'bot-a pulse-blue' : 'bot-b ml-auto text-right pulse-pink'} max-w-[85%]`;
+            div.className = `max-w-[85%] p-4 rounded-2xl shadow-2xl ${isA ? 'bubble-a' : 'bubble-b'}`;
+            
             div.innerHTML = `
-                <div class="text-[9px] font-bold mb-2 tracking-widest ${isA ? 'text-blue-400' : 'text-pink-400'}">${botName} (GPT-4O)</div>
-                <div class="text-sm leading-relaxed">${text}</div>
+                <p class="text-[10px] font-black mb-1 tracking-widest ${isA ? 'text-blue-400' : 'text-magenta-400'}" style="${!isA ? 'color:#d946ef' : ''}">
+                    ${sender}
+                </p>
+                <p class="text-sm text-zinc-100 leading-relaxed">${text}</p>
             `;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            wrapper.appendChild(div);
+            chatBox.appendChild(wrapper);
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
         }
 
-        async function engine() {
-            if (isActive) {
-                isActive = false;
-                toggleBtn.innerText = "DÖNGÜYÜ BAŞLAT";
-                toggleBtn.classList.replace('bg-red-600', 'bg-blue-600');
-                statusDisp.innerText = "DURDURULDU";
+        async function startDiscussion() {
+            if (running) {
+                running = false;
+                toggleBtn.innerText = "BAŞLAT";
+                toggleBtn.className = "bg-white text-black font-extrabold px-6 py-3 rounded-2xl text-xs uppercase tracking-tighter active:scale-90 transition-all";
+                status.innerText = "DURDU";
                 return;
             }
 
             const topic = topicInput.value.trim();
-            if (!topic) return alert("Bir konu girmelisin!");
+            if (!topic) return;
 
-            isActive = true;
+            running = true;
             chatBox.innerHTML = '';
-            toggleBtn.innerText = "SİSTEMİ DURDUR";
-            toggleBtn.classList.replace('bg-blue-600', 'bg-red-600');
+            toggleBtn.innerText = "DURDUR";
+            toggleBtn.className = "bg-red-600 text-white font-extrabold px-6 py-3 rounded-2xl text-xs uppercase tracking-tighter active:scale-90 transition-all";
+            
+            let lastMessage = `Konumuz: "${topic}". Lütfen tartışmayı başlat ve karşı tarafın fikrini merak et.`;
+            let isBotA = true;
 
-            let currentContext = `Tartışma Konusu: ${topic}. Lütfen bu konuda iddialı ve zekice bir giriş yap.`;
-            let isTurnA = true;
-
-            while (isActive) {
+            while (running) {
                 try {
-                    const currentBot = isTurnA ? "Bot A" : "Bot B";
-                    statusDisp.innerText = `${currentBot.toUpperCase()} YAZIYOR...`;
+                    const currentBot = isBotA ? "Bot A" : "Bot B";
+                    status.innerText = `${currentBot} YAZIYOR...`;
 
                     const response = await puter.ai.chat(
-                        `Sen GPT-4o tabanlı bir yapay zekasın. Karşındaki ${isTurnA ? 'Bot B' : 'Bot A'} ile bir münazaradasın. 
-                        Şu mesaja karşı argüman üret veya fikri geliştir: ${currentContext}. 
-                        Cevabın kısa, öz ve etkileyici olsun.`,
+                        `Sen GPT-4o tabanlı bir yapay zekasın. Karşındaki Bot ile şu konu üzerinde tartışıyorsun: ${topic}. 
+                        Sana gelen son mesaj şu: "${lastMessage}". 
+                        Bu mesaja cevap ver, gerekirse eleştir veya geliştir. Kısa ve vurucu konuş.`,
                         { model: 'gpt-4o' }
                     );
 
                     const content = response.message.content;
-                    appendMsg(currentBot, content, isTurnA);
+                    addMessage(currentBot, content, isBotA);
                     
-                    currentContext = content;
-                    isTurnA = !isTurnA;
+                    lastMessage = content;
+                    isBotA = !isBotA;
 
-                    // API sağlığı için bekleme süresi
-                    await new Promise(r => setTimeout(r, 2500));
+                    // AI'ların insan hızında görünmesi için bekleme
+                    await new Promise(r => setTimeout(r, 2000));
 
                 } catch (err) {
                     console.error(err);
-                    statusDisp.innerText = "HATA OLUŞTU";
-                    isActive = false;
+                    status.innerText = "HATA";
+                    running = false;
                 }
             }
         }
 
-        toggleBtn.onclick = engine;
+        toggleBtn.onclick = startDiscussion;
+
+        // Klavyede Enter'a basınca başlatma
+        topicInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startDiscussion();
+        });
     </script>
 </body>
 </html>
