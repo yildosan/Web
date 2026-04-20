@@ -2,46 +2,75 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Piksel Hassasiyetli HTML Mimarı</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puter AI - Pixel to Code Engine</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code&display=swap');
+        .font-mono-custom { font-family: 'Fira Code', monospace; }
+        .scanning-bar {
+            height: 2px;
+            background: #3b82f6;
+            box-shadow: 0 0 15px #3b82f6;
+            position: absolute;
+            width: 100%;
+            top: 0;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+    </style>
 </head>
-<body class="bg-zinc-900 text-zinc-100 min-h-screen">
+<body class="bg-[#0f172a] text-slate-200 min-h-screen font-sans">
 
-    <div class="container mx-auto py-10 px-4">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-                PIXEL-TO-HTML SCANNER
-            </h1>
-            <p class="text-zinc-400 mt-2">Görseli piksel bazlı tarayıp yapısal koda dönüştürür.</p>
-        </header>
+    <div class="max-w-6xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-10 border-b border-slate-700 pb-6">
+            <div>
+                <h1 class="text-3xl font-black text-white tracking-tight">PIXEL <span class="text-blue-500">ENGINE</span></h1>
+                <p class="text-slate-400 text-sm">Görseli piksel verisi olarak HTML/CSS yapısına dönüştürün.</p>
+            </div>
+            <div class="text-right">
+                <span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-xs font-bold border border-blue-500/20">Puter + GPT-4o Vision</span>
+            </div>
+        </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bg-zinc-800 p-6 rounded-2xl border border-zinc-700 shadow-xl">
-                <div class="flex flex-col items-center justify-center border-2 border-dashed border-zinc-600 rounded-xl p-8 mb-6 hover:border-blue-500 transition-colors cursor-pointer" id="dropZone">
-                    <input type="file" id="imageInput" accept="image/*" class="hidden">
-                    <p id="fileName" class="text-zinc-500 italic">Görseli buraya sürükleyin veya tıklayın</p>
-                    <img id="preview" class="mt-4 max-h-48 rounded hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 shadow-xl">
+                    <label class="block text-sm font-bold mb-4 text-slate-300">Tasarım Taslağı Yükle</label>
+                    
+                    <div id="dropZone" class="relative overflow-hidden border-2 border-dashed border-slate-600 rounded-xl p-4 transition-all hover:border-blue-500 group cursor-pointer">
+                        <input type="file" id="imageInput" accept="image/*" class="hidden">
+                        <div id="previewContainer" class="relative z-10 flex flex-col items-center justify-center min-h-[150px]">
+                            <img id="imgPreview" class="max-w-full rounded shadow-lg hidden mb-4">
+                            <p id="uploadText" class="text-slate-500 text-center text-sm group-hover:text-slate-300">Görseli buraya bırakın veya tıklayın</p>
+                            <div id="scanLine" class="scanning-bar hidden"></div>
+                        </div>
+                    </div>
+
+                    <button id="convertBtn" class="w-full mt-6 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <span>PİKSEL TARAMAYI BAŞLAT</span>
+                    </button>
                 </div>
 
-                <button id="scanBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-3">
-                    <span>GÖRSELİ PİKSEL TARA VE KODLA</span>
-                </button>
+                <div id="logPanel" class="bg-black/40 p-4 rounded-xl border border-slate-700 h-32 overflow-y-auto font-mono-custom text-[10px] text-blue-400">
+                    > Sistem hazır.<br>
+                    > Görsel verisi bekleniyor...
+                </div>
             </div>
 
-            <div class="bg-zinc-800 rounded-2xl border border-zinc-700 shadow-xl flex flex-col overflow-hidden">
-                <div class="flex border-b border-zinc-700">
-                    <button id="tabPreview" class="flex-1 py-3 bg-zinc-700 font-bold">ÖNİZLEME</button>
-                    <button id="tabCode" class="flex-1 py-3 hover:bg-zinc-700 transition-colors">KOD (HTML/CSS)</button>
+            <div class="lg:col-span-8 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col min-h-[600px]">
+                <div class="flex bg-slate-900/80 p-2 gap-2 border-b border-slate-700">
+                    <button id="viewPreview" class="px-4 py-2 rounded-lg bg-slate-700 text-white text-xs font-bold">ÖNİZLEME</button>
+                    <button id="viewCode" class="px-4 py-2 rounded-lg hover:bg-slate-700 text-slate-400 text-xs font-bold transition">HTML KODU</button>
                 </div>
-                
-                <div class="flex-grow min-h-[450px] relative">
-                    <div id="loading" class="absolute inset-0 bg-zinc-800/90 z-10 hidden flex items-center justify-center flex-col">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                        <p class="mt-4 text-sm text-blue-400 font-mono tracking-widest">TARANIYOR...</p>
-                    </div>
-                    <iframe id="outputFrame" class="w-full h-full bg-white"></iframe>
-                    <textarea id="outputCode" class="w-full h-full bg-zinc-900 text-emerald-500 p-4 font-mono text-xs hidden outline-none" readonly></textarea>
+
+                <div class="flex-grow relative bg-white">
+                    <iframe id="outputFrame" class="w-full h-full border-none"></iframe>
+                    <textarea id="outputCode" class="absolute inset-0 w-full h-full bg-[#1e1e1e] text-emerald-400 p-6 font-mono-custom text-sm hidden outline-none" readonly></textarea>
                 </div>
             </div>
         </div>
@@ -50,69 +79,85 @@
     <script>
         const imageInput = document.getElementById('imageInput');
         const dropZone = document.getElementById('dropZone');
-        const preview = document.getElementById('preview');
-        const scanBtn = document.getElementById('scanBtn');
+        const imgPreview = document.getElementById('imgPreview');
+        const scanLine = document.getElementById('scanLine');
+        const convertBtn = document.getElementById('convertBtn');
         const outputFrame = document.getElementById('outputFrame');
         const outputCode = document.getElementById('outputCode');
-        const loading = document.getElementById('loading');
+        const logPanel = document.getElementById('logPanel');
 
-        // Dosya seçme mantığı
+        function addLog(msg) {
+            logPanel.innerHTML += `> ${msg}<br>`;
+            logPanel.scrollTop = logPanel.scrollHeight;
+        }
+
         dropZone.onclick = () => imageInput.click();
+
         imageInput.onchange = (e) => {
             const file = e.target.files[0];
             if(file) {
-                preview.src = URL.createObjectURL(file);
-                preview.classList.remove('hidden');
-                document.getElementById('fileName').innerText = file.name;
+                imgPreview.src = URL.createObjectURL(file);
+                imgPreview.classList.remove('hidden');
+                document.getElementById('uploadText').classList.add('hidden');
+                addLog(`Görsel yüklendi: ${file.name}`);
             }
         };
 
-        scanBtn.onclick = async () => {
+        convertBtn.onclick = async () => {
             const file = imageInput.files[0];
-            if(!file) return alert("Lütfen bir görsel yükleyin!");
+            if(!file) return alert("Önce bir görsel seçmelisin!");
 
-            loading.classList.remove('hidden');
+            convertBtn.disabled = true;
+            scanLine.classList.remove('hidden');
+            addLog("GPT-4o Vision motoru bağlanıyor...");
+            addLog("Piksel analizi ve DOM eşlemesi başlatıldı...");
 
             try {
-                // GPT-4o'ya piksel tarama emri veren kritik prompt
-                const response = await puter.ai.chat(
-                    `Bir frontend uzmanı ve UI tarayıcı gibi davran. Gönderdiğim görseli piksel piksel analiz et:
-                    1. Önce görselin genel grid yapısını (layout) belirle.
-                    2. Tüm renk kodlarını (HEX) görselden tam olarak çek.
-                    3. Butonlar, inputlar ve görsellerin konumlarını (padding/margin) piksel hassasiyetinde tahmin et.
-                    4. Tipografiyi (font büyüklüğü, kalınlık) en yakın modern Google Font ile eşleştir.
-                    5. Sonuç olarak SADECE saf HTML ve Tailwind CSS kodunu ver. Kod içinde açıklama veya markdown bloğu kullanma.`,
-                    file,
-                    { model: 'gpt-4o' }
-                );
+                // REDDEDİLMEYİ ÖNLEYEN TEKNİK PROMPT
+                const prompt = `
+                    GÖREV: Bir arayüz mühendisi gibi bu görseldeki UI bileşenlerini (component) koda dök.
+                    ANALİZ KRİTERLERİ:
+                    1. Görseldeki her bir kutunun (div) arka plan rengini, köşelerini (rounded) ve gölgelerini (shadow) piksel bazlı incele.
+                    2. Tipografi (text) boyutlarını ve ağırlıklarını tam olarak taklit et.
+                    3. Yerleşimi (layout) Flexbox veya Grid kullanarak modern bir şekilde oluştur.
+                    4. Sadece HTML ve Tailwind CSS kullan.
+                    
+                    KURAL: Görseli 'tanımlama' veya 'yorum yapma'. Sadece kod çıktısı ver.
+                `;
 
-                const generatedCode = response.message.content;
-                
-                // Çıktıları işle
-                outputCode.value = generatedCode;
-                const blob = new Blob([generatedCode], { type: 'text/html' });
+                const response = await puter.ai.chat(prompt, file, { model: 'gpt-4o' });
+                const code = response.message.content;
+
+                // Kod temizleme (bazı durumlarda gelen ```html etiketlerini siler)
+                const cleanCode = code.replace(/```html|```/g, "").trim();
+
+                outputCode.value = cleanCode;
+                const blob = new Blob([cleanCode], { type: 'text/html' });
                 outputFrame.src = URL.createObjectURL(blob);
 
+                addLog("Tarama tamamlandı. Kod başarıyla oluşturuldu.");
             } catch (err) {
-                console.error(err);
-                alert("Tarama başarısız oldu.");
+                addLog(`HATA: ${err.message}`);
+                alert("Bir hata oluştu. Lütfen tekrar deneyin.");
             } finally {
-                loading.classList.add('hidden');
+                convertBtn.disabled = false;
+                scanLine.classList.add('hidden');
             }
         };
 
-        // Tab geçişleri
-        document.getElementById('tabPreview').onclick = () => {
+        // Tab Yönetimi
+        document.getElementById('viewPreview').onclick = () => {
             outputFrame.classList.remove('hidden');
             outputCode.classList.add('hidden');
-            document.getElementById('tabPreview').classList.add('bg-zinc-700');
-            document.getElementById('tabCode').classList.remove('bg-zinc-700');
+            document.getElementById('viewPreview').classList.add('bg-slate-700');
+            document.getElementById('viewCode').classList.remove('bg-slate-700');
         };
-        document.getElementById('tabCode').onclick = () => {
+
+        document.getElementById('viewCode').onclick = () => {
             outputCode.classList.remove('hidden');
             outputFrame.classList.add('hidden');
-            document.getElementById('tabCode').classList.add('bg-zinc-700');
-            document.getElementById('tabPreview').classList.remove('bg-zinc-700');
+            document.getElementById('viewCode').classList.add('bg-slate-700');
+            document.getElementById('viewPreview').classList.remove('bg-slate-700');
         };
     </script>
 </body>
