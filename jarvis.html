@@ -2,112 +2,127 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AI vs AI: Grand Debate</title>
+    <title>AI Dialogue: GPT-4o vs Gemini</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .chat-container { height: calc(100vh - 300px); }
-        .gpt-bubble { background: #10a37f20; border-left: 4px solid #10a37f; }
-        .claude-bubble { background: #d9770620; border-left: 4px solid #d97706; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #050505; }
+        .chat-scroll { height: calc(100vh - 280px); scroll-behavior: smooth; }
+        .gpt-msg { border-right: 4px solid #10a37f; background: linear-gradient(to left, #10a37f15, transparent); }
+        .gemini-msg { border-left: 4px solid #4285f4; background: linear-gradient(to right, #4285f415, transparent); }
+        .writing-indicator { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
 </head>
-<body class="bg-zinc-950 text-zinc-200 p-4 md:p-8">
+<body class="text-zinc-300 p-4 md:p-6">
 
-    <div class="max-w-5xl mx-auto">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-black tracking-tighter text-white">AI <span class="text-zinc-500">TALK</span> AI</h1>
-            <p class="text-zinc-400 mt-2">GPT-4o ve Claude 3.5 Sonnet birbirleriyle konuşuyor</p>
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8 bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800">
+            <div>
+                <h1 class="text-2xl font-black text-white flex items-center gap-2">
+                    <span class="text-emerald-500">GPT-4o</span> 
+                    <span class="text-zinc-600">×</span> 
+                    <span class="text-blue-500">Gemini</span>
+                </h1>
+                <p class="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-1">Otonom Yapay Zeka Diyaloğu</p>
+            </div>
+            <div id="statusBadge" class="px-4 py-1 bg-zinc-800 rounded-full text-[10px] font-bold text-zinc-500 border border-zinc-700">BEKLİYOR</div>
         </div>
 
-        <div class="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 mb-6 flex gap-4">
-            <input type="text" id="topicInput" placeholder="Tartışma konusu girin (örn: Mars'ta koloni kurmak mantıklı mı?)" 
-                   class="flex-grow bg-zinc-800 border border-zinc-700 rounded-xl px-4 outline-none focus:border-blue-500 transition">
-            <button id="startBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition-all">
+        <div class="flex gap-3 mb-6">
+            <input type="text" id="topicInput" placeholder="Bir tartışma konusu veya başlangıç cümlesi yaz..." 
+                   class="flex-grow bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4 outline-none focus:border-emerald-500/50 transition-all text-white shadow-2xl">
+            <button id="toggleBtn" class="bg-white text-black font-black px-10 py-4 rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 shadow-lg shadow-emerald-500/10">
                 BAŞLAT
             </button>
-            <button id="stopBtn" class="bg-red-600 hover:bg-red-500 text-white font-bold px-8 py-3 rounded-xl transition-all hidden">
-                DURDUR
-            </button>
         </div>
 
-        <div id="chatBox" class="chat-container bg-zinc-900/50 rounded-2xl border border-zinc-800 overflow-y-auto p-6 space-y-6">
-            <div class="text-center text-zinc-600 italic">Tartışmayı başlatmak için bir konu girin...</div>
+        <div id="chatBox" class="chat-scroll overflow-y-auto space-y-4 pr-2">
+            <div class="text-center py-20 text-zinc-700 font-medium">
+                <p>İki yapay zeka arasındaki etkileşimi görmek için bir konu belirleyin.</p>
+            </div>
         </div>
     </div>
 
     <script>
-        let isRunning = false;
+        let running = false;
         const chatBox = document.getElementById('chatBox');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const statusBadge = document.getElementById('statusBadge');
         const topicInput = document.getElementById('topicInput');
 
-        async function addMessage(sender, text, type) {
+        function createMessage(sender, text, side) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${side === 'left' ? 'justify-start' : 'justify-end'} w-full`;
+            
             const div = document.createElement('div');
-            div.className = `p-4 rounded-xl ${type === 'gpt' ? 'gpt-bubble' : 'claude-bubble'} animate-in fade-in duration-500`;
+            div.className = `max-w-[80%] p-5 rounded-3xl ${side === 'right' ? 'gpt-msg text-right' : 'gemini-msg text-left'}`;
+            
             div.innerHTML = `
-                <div class="flex justify-between mb-2">
-                    <span class="font-bold text-xs uppercase tracking-widest ${type === 'gpt' ? 'text-emerald-400' : 'text-amber-400'}">${sender}</span>
-                    <span class="text-[10px] text-zinc-500">${new Date().toLocaleTimeString()}</span>
-                </div>
-                <div class="text-sm leading-relaxed">${text}</div>
+                <div class="text-[10px] font-black mb-2 tracking-tighter ${side === 'right' ? 'text-emerald-400' : 'text-blue-400'}">${sender.toUpperCase()}</div>
+                <div class="text-sm leading-relaxed text-zinc-200">${text}</div>
             `;
-            chatBox.appendChild(div);
+            
+            wrapper.appendChild(div);
+            chatBox.appendChild(wrapper);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        async function startConversation() {
-            const topic = topicInput.value;
-            if (!topic) return alert("Bir konu girin!");
+        async function startTalk() {
+            if (running) {
+                running = false;
+                toggleBtn.innerText = "BAŞLAT";
+                toggleBtn.className = "bg-white text-black font-black px-10 py-4 rounded-2xl hover:bg-emerald-400 transition-all";
+                statusBadge.innerText = "DURDURULDU";
+                return;
+            }
 
-            isRunning = true;
-            startBtn.classList.add('hidden');
-            stopBtn.classList.remove('hidden');
+            const topic = topicInput.value.trim();
+            if (!topic) return alert("Lütfen bir konu girin!");
+
+            running = true;
             chatBox.innerHTML = '';
+            toggleBtn.innerText = "DURDUR";
+            toggleBtn.className = "bg-red-600 text-white font-black px-10 py-4 rounded-2xl hover:bg-red-500 transition-all";
+            statusBadge.innerText = "AKTİF";
 
-            let lastResponse = `Tartışma konusu: ${topic}. Lütfen bu konudaki fikirlerini belirt.`;
-            let turn = 'gpt'; // GPT başlar
+            let currentPrompt = `Konumuz: "${topic}". Lütfen bu konu hakkında derinlemesine bir giriş yap ve tartışmayı başlat.`;
+            let turn = 'gemini'; // Gemini başlasın
 
-            while (isRunning) {
+            while (running) {
                 try {
-                    if (turn === 'gpt') {
-                        const response = await puter.ai.chat(
-                            `Sen GPT-4o'sun. Karşında Claude 3.5 var. Şu mesaja cevap ver ve tartışmayı sürdür: ${lastResponse}`,
-                            { model: 'gpt-4o' }
-                        );
-                        lastResponse = response.message.content;
-                        await addMessage("GPT-4o", lastResponse, 'gpt');
-                        turn = 'claude';
-                    } else {
-                        const response = await puter.ai.chat(
-                            `Sen Claude 3.5'sin. Karşında GPT-4o var. Şu argümanı analiz et ve karşı fikir sun: ${lastResponse}`,
-                            { model: 'claude-3-5-sonnet' }
-                        );
-                        lastResponse = response.message.content;
-                        await addMessage("Claude 3.5", lastResponse, 'claude');
-                        turn = 'gpt';
-                    }
+                    const model = turn === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o';
+                    const senderName = turn === 'gemini' ? 'Gemini 1.5' : 'GPT-4o';
+                    const side = turn === 'gemini' ? 'left' : 'right';
 
-                    // AI'ların çok hızlı konuşup API limitlerini tüketmemesi için kısa bir mola
-                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    // AI Cevap Bekleniyor Logu
+                    statusBadge.innerText = `${senderName} DÜŞÜNÜYOR...`;
+
+                    const response = await puter.ai.chat(
+                        `Sen ${senderName} modelisin. Karşındaki diğer AI ile bir tartışma içerisindesin. 
+                        Şu son mesaja göre kendi fikirlerini savun veya karşı argüman üret: ${currentPrompt}`,
+                        { model: model }
+                    );
+
+                    const reply = response.message.content;
+                    createMessage(senderName, reply, side);
+                    
+                    currentPrompt = reply; // Bir sonraki AI için girdi
+                    turn = turn === 'gemini' ? 'gpt' : 'gemini'; // Sırayı değiştir
+
+                    // Hızı dengelemek için kısa bekleme
+                    await new Promise(r => setTimeout(r, 1500));
 
                 } catch (err) {
                     console.error(err);
-                    addMessage("SİSTEM", "Bağlantı hatası oluştu.", "error");
-                    isRunning = false;
+                    createMessage("SİSTEM", "Bir bağlantı kopukluğu yaşandı. Tekrar deneniyor...", "left");
+                    await new Promise(r => setTimeout(r, 3000));
                 }
             }
         }
 
-        startBtn.onclick = startConversation;
-        stopBtn.onclick = () => {
-            isRunning = false;
-            stopBtn.classList.add('hidden');
-            startBtn.classList.remove('hidden');
-            addMessage("SİSTEM", "Tartışma kullanıcı tarafından durduruldu.", "gpt");
-        };
+        toggleBtn.onclick = startTalk;
     </script>
 </body>
 </html>
