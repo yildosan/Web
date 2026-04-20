@@ -2,127 +2,116 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>AI Dialogue: GPT-4o vs Gemini</title>
+    <title>GPT-4o vs GPT-4o: Dual Brain</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #050505; }
-        .chat-scroll { height: calc(100vh - 280px); scroll-behavior: smooth; }
-        .gpt-msg { border-right: 4px solid #10a37f; background: linear-gradient(to left, #10a37f15, transparent); }
-        .gemini-msg { border-left: 4px solid #4285f4; background: linear-gradient(to right, #4285f415, transparent); }
-        .writing-indicator { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { font-family: 'JetBrains Mono', monospace; background-color: #0d1117; color: #c9d1d9; }
+        .chat-area { height: calc(100vh - 250px); }
+        .bot-a { border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        .bot-b { border-right: 3px solid #ec4899; background: rgba(236, 72, 153, 0.05); }
+        .pulse-blue { animation: pulse-b 2s infinite; }
+        .pulse-pink { animation: pulse-p 2s infinite; }
+        @keyframes pulse-b { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        @keyframes pulse-p { 0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(236, 72, 153, 0); } 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); } }
     </style>
 </head>
-<body class="text-zinc-300 p-4 md:p-6">
+<body class="p-4 overflow-hidden">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-8 bg-zinc-900/50 p-6 rounded-3xl border border-zinc-800">
-            <div>
-                <h1 class="text-2xl font-black text-white flex items-center gap-2">
-                    <span class="text-emerald-500">GPT-4o</span> 
-                    <span class="text-zinc-600">×</span> 
-                    <span class="text-blue-500">Gemini</span>
-                </h1>
-                <p class="text-xs text-zinc-500 font-medium uppercase tracking-widest mt-1">Otonom Yapay Zeka Diyaloğu</p>
+    <div class="max-w-6xl mx-auto h-screen flex flex-col">
+        <div class="flex items-center justify-between p-4 bg-gray-900 border border-gray-800 rounded-t-2xl">
+            <div class="flex items-center gap-4">
+                <div class="flex -space-x-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-600 border-2 border-gray-900 flex items-center justify-center font-bold text-xs text-white">A</div>
+                    <div class="w-8 h-8 rounded-full bg-pink-600 border-2 border-gray-900 flex items-center justify-center font-bold text-xs text-white">B</div>
+                </div>
+                <h1 class="text-sm font-bold tracking-widest text-gray-400 uppercase">Dual GPT-4o Instance</h1>
             </div>
-            <div id="statusBadge" class="px-4 py-1 bg-zinc-800 rounded-full text-[10px] font-bold text-zinc-500 border border-zinc-700">BEKLİYOR</div>
+            <div id="status" class="text-[10px] font-mono text-gray-500">BEKLEMEDE</div>
         </div>
 
-        <div class="flex gap-3 mb-6">
-            <input type="text" id="topicInput" placeholder="Bir tartışma konusu veya başlangıç cümlesi yaz..." 
-                   class="flex-grow bg-zinc-900 border border-zinc-800 rounded-2xl px-6 py-4 outline-none focus:border-emerald-500/50 transition-all text-white shadow-2xl">
-            <button id="toggleBtn" class="bg-white text-black font-black px-10 py-4 rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 shadow-lg shadow-emerald-500/10">
-                BAŞLAT
+        <div id="chatBox" class="chat-area flex-grow overflow-y-auto bg-gray-900/30 border-x border-gray-800 p-6 space-y-6 scroll-smooth">
+            <div class="text-center text-gray-600 mt-20 italic">Tartışılacak bir konu girerek sistemi başlatın...</div>
+        </div>
+
+        <div class="p-4 bg-gray-900 border border-gray-800 rounded-b-2xl flex gap-3">
+            <input type="text" id="topicInput" placeholder="Sanal zekaların neyi tartışmasını istersin?" 
+                   class="flex-grow bg-gray-800 border border-gray-700 rounded-xl px-6 py-4 outline-none focus:border-blue-500 transition-all text-sm">
+            <button id="toggleBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-10 py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-900/20">
+                DÖNGÜYÜ BAŞLAT
             </button>
-        </div>
-
-        <div id="chatBox" class="chat-scroll overflow-y-auto space-y-4 pr-2">
-            <div class="text-center py-20 text-zinc-700 font-medium">
-                <p>İki yapay zeka arasındaki etkileşimi görmek için bir konu belirleyin.</p>
-            </div>
         </div>
     </div>
 
     <script>
-        let running = false;
+        let isActive = false;
         const chatBox = document.getElementById('chatBox');
         const toggleBtn = document.getElementById('toggleBtn');
-        const statusBadge = document.getElementById('statusBadge');
         const topicInput = document.getElementById('topicInput');
+        const statusDisp = document.getElementById('status');
 
-        function createMessage(sender, text, side) {
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex ${side === 'left' ? 'justify-start' : 'justify-end'} w-full`;
-            
+        function appendMsg(botName, text, isA) {
             const div = document.createElement('div');
-            div.className = `max-w-[80%] p-5 rounded-3xl ${side === 'right' ? 'gpt-msg text-right' : 'gemini-msg text-left'}`;
-            
+            div.className = `p-5 rounded-2xl ${isA ? 'bot-a pulse-blue' : 'bot-b ml-auto text-right pulse-pink'} max-w-[85%]`;
             div.innerHTML = `
-                <div class="text-[10px] font-black mb-2 tracking-tighter ${side === 'right' ? 'text-emerald-400' : 'text-blue-400'}">${sender.toUpperCase()}</div>
-                <div class="text-sm leading-relaxed text-zinc-200">${text}</div>
+                <div class="text-[9px] font-bold mb-2 tracking-widest ${isA ? 'text-blue-400' : 'text-pink-400'}">${botName} (GPT-4O)</div>
+                <div class="text-sm leading-relaxed">${text}</div>
             `;
-            
-            wrapper.appendChild(div);
-            chatBox.appendChild(wrapper);
+            chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        async function startTalk() {
-            if (running) {
-                running = false;
-                toggleBtn.innerText = "BAŞLAT";
-                toggleBtn.className = "bg-white text-black font-black px-10 py-4 rounded-2xl hover:bg-emerald-400 transition-all";
-                statusBadge.innerText = "DURDURULDU";
+        async function engine() {
+            if (isActive) {
+                isActive = false;
+                toggleBtn.innerText = "DÖNGÜYÜ BAŞLAT";
+                toggleBtn.classList.replace('bg-red-600', 'bg-blue-600');
+                statusDisp.innerText = "DURDURULDU";
                 return;
             }
 
             const topic = topicInput.value.trim();
-            if (!topic) return alert("Lütfen bir konu girin!");
+            if (!topic) return alert("Bir konu girmelisin!");
 
-            running = true;
+            isActive = true;
             chatBox.innerHTML = '';
-            toggleBtn.innerText = "DURDUR";
-            toggleBtn.className = "bg-red-600 text-white font-black px-10 py-4 rounded-2xl hover:bg-red-500 transition-all";
-            statusBadge.innerText = "AKTİF";
+            toggleBtn.innerText = "SİSTEMİ DURDUR";
+            toggleBtn.classList.replace('bg-blue-600', 'bg-red-600');
 
-            let currentPrompt = `Konumuz: "${topic}". Lütfen bu konu hakkında derinlemesine bir giriş yap ve tartışmayı başlat.`;
-            let turn = 'gemini'; // Gemini başlasın
+            let currentContext = `Tartışma Konusu: ${topic}. Lütfen bu konuda iddialı ve zekice bir giriş yap.`;
+            let isTurnA = true;
 
-            while (running) {
+            while (isActive) {
                 try {
-                    const model = turn === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o';
-                    const senderName = turn === 'gemini' ? 'Gemini 1.5' : 'GPT-4o';
-                    const side = turn === 'gemini' ? 'left' : 'right';
-
-                    // AI Cevap Bekleniyor Logu
-                    statusBadge.innerText = `${senderName} DÜŞÜNÜYOR...`;
+                    const currentBot = isTurnA ? "Bot A" : "Bot B";
+                    statusDisp.innerText = `${currentBot.toUpperCase()} YAZIYOR...`;
 
                     const response = await puter.ai.chat(
-                        `Sen ${senderName} modelisin. Karşındaki diğer AI ile bir tartışma içerisindesin. 
-                        Şu son mesaja göre kendi fikirlerini savun veya karşı argüman üret: ${currentPrompt}`,
-                        { model: model }
+                        `Sen GPT-4o tabanlı bir yapay zekasın. Karşındaki ${isTurnA ? 'Bot B' : 'Bot A'} ile bir münazaradasın. 
+                        Şu mesaja karşı argüman üret veya fikri geliştir: ${currentContext}. 
+                        Cevabın kısa, öz ve etkileyici olsun.`,
+                        { model: 'gpt-4o' }
                     );
 
-                    const reply = response.message.content;
-                    createMessage(senderName, reply, side);
+                    const content = response.message.content;
+                    appendMsg(currentBot, content, isTurnA);
                     
-                    currentPrompt = reply; // Bir sonraki AI için girdi
-                    turn = turn === 'gemini' ? 'gpt' : 'gemini'; // Sırayı değiştir
+                    currentContext = content;
+                    isTurnA = !isTurnA;
 
-                    // Hızı dengelemek için kısa bekleme
-                    await new Promise(r => setTimeout(r, 1500));
+                    // API sağlığı için bekleme süresi
+                    await new Promise(r => setTimeout(r, 2500));
 
                 } catch (err) {
                     console.error(err);
-                    createMessage("SİSTEM", "Bir bağlantı kopukluğu yaşandı. Tekrar deneniyor...", "left");
-                    await new Promise(r => setTimeout(r, 3000));
+                    statusDisp.innerText = "HATA OLUŞTU";
+                    isActive = false;
                 }
             }
         }
 
-        toggleBtn.onclick = startTalk;
+        toggleBtn.onclick = engine;
     </script>
 </body>
 </html>
