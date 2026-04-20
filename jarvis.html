@@ -3,151 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dual GPT-4o Mobile</title>
+    <title>WhatsApp Grup</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #09090b; }
-        
-        .chat-height { height: calc(100vh - 180px); }
-        
-        /* Mesaj Balonları */
-        .bubble-a {
-            background: #1e293b;
-            border-bottom-left-radius: 4px;
-            border-left: 4px solid #3b82f6;
-        }
-        .bubble-b {
-            background: #2d1b36;
-            border-bottom-right-radius: 4px;
-            border-right: 4px solid #d946ef;
-        }
-
-        /* Yükleme Animasyonu */
-        .dot-flashing {
-            position: relative;
-            width: 6px;
-            height: 6px;
-            border-radius: 5px;
-            background-color: #94a3b8;
-            animation: dot-flashing 1s infinite linear alternate;
-            display: inline-block;
-        }
-        @keyframes dot-flashing {
-            0% { background-color: #94a3b8; }
-            50%, 100% { background-color: #475569; }
-        }
+        body { background-color: #0b141a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .wa-bg { background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; background-color: #0b141a; }
+        .chat-area { height: calc(100vh - 130px); }
+        .my-bubble { background-color: #005c4b; border-radius: 8px 0 8px 8px; }
+        .ai-bubble { background-color: #202c33; border-radius: 0 8px 8px 8px; }
+        .typing { font-style: italic; font-size: 11px; color: #00a884; }
     </style>
 </head>
-<body class="overflow-hidden">
+<body class="wa-bg">
 
-    <header class="h-16 border-b border-zinc-800 flex items-center justify-between px-6 bg-zinc-900/50 backdrop-blur-md">
-        <div class="flex items-center gap-2">
-            <div class="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
-            <h1 class="text-white font-bold text-sm tracking-tight uppercase">Bot-A vs Bot-B</h1>
+    <header class="h-16 bg-[#202c33] flex items-center px-4 gap-3 border-b border-gray-700 shadow-lg sticky top-0 z-50">
+        <div class="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white text-xl">👥</div>
+        <div class="flex flex-col">
+            <span class="text-white font-semibold text-sm">Geyik Muhabbeti 🚀</span>
+            <span id="typingStatus" class="typing h-4"></span>
         </div>
-        <div id="status" class="text-[10px] font-bold text-zinc-500 bg-zinc-800 px-2 py-1 rounded">HAZIR</div>
     </header>
 
-    <main id="chatBox" class="chat-height overflow-y-auto p-4 space-y-6 scroll-smooth">
-        <div class="flex flex-col items-center justify-center h-full text-center px-8 space-y-4">
-            <div class="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center text-3xl">🤖</div>
-            <p class="text-zinc-500 text-sm italic">İki GPT-4o'nun birbiriyle konuşmasını izlemek için aşağıdan bir konu başlatın.</p>
+    <main id="chatBox" class="chat-area overflow-y-auto p-4 space-y-3 flex flex-col">
+        <div class="self-center bg-[#182229] text-[#8696a0] text-[11px] px-3 py-1 rounded-md mb-4 shadow-sm">
+            Bugün
         </div>
     </main>
 
-    <footer class="fixed bottom-0 left-0 w-full p-4 bg-zinc-900/80 backdrop-blur-xl border-t border-zinc-800">
-        <div class="max-w-3xl mx-auto flex gap-2">
-            <input type="text" id="topicInput" placeholder="Tartışma konusu nedir?" 
-                   class="flex-grow bg-zinc-800 text-white rounded-2xl px-5 py-3 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm">
-            <button id="toggleBtn" class="bg-white text-black font-extrabold px-6 py-3 rounded-2xl text-xs uppercase tracking-tighter active:scale-90 transition-all">
-                BAŞLAT
-            </button>
-        </div>
+    <footer class="h-16 bg-[#202c33] flex items-center px-3 gap-2 sticky bottom-0">
+        <input type="text" id="userInput" placeholder="Mesaj yazın..." 
+               class="flex-grow bg-[#2a3942] text-white rounded-full px-5 py-2 outline-none text-sm border-none">
+        <button id="sendBtn" class="bg-[#00a884] w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
+        </button>
     </footer>
 
     <script>
-        let running = false;
         const chatBox = document.getElementById('chatBox');
-        const toggleBtn = document.getElementById('toggleBtn');
-        const topicInput = document.getElementById('topicInput');
-        const status = document.getElementById('status');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const typingStatus = document.getElementById('typingStatus');
 
-        function addMessage(sender, text, isA) {
+        let chatHistory = [];
+
+        function addMessage(sender, text, type) {
             const wrapper = document.createElement('div');
-            wrapper.className = `flex w-full ${isA ? 'justify-start' : 'justify-end'}`;
+            wrapper.className = `flex flex-col max-w-[85%] ${type === 'me' ? 'self-end' : 'self-start'}`;
             
-            const div = document.createElement('div');
-            div.className = `max-w-[85%] p-4 rounded-2xl shadow-2xl ${isA ? 'bubble-a' : 'bubble-b'}`;
+            const senderNameColor = sender === 'Ali' ? '#3498db' : (sender === 'Ayşe' ? '#e91e63' : '#00a884');
             
-            div.innerHTML = `
-                <p class="text-[10px] font-black mb-1 tracking-widest ${isA ? 'text-blue-400' : 'text-magenta-400'}" style="${!isA ? 'color:#d946ef' : ''}">
-                    ${sender}
-                </p>
-                <p class="text-sm text-zinc-100 leading-relaxed">${text}</p>
+            wrapper.innerHTML = `
+                <div class="${type === 'me' ? 'my-bubble' : 'ai-bubble'} p-2 px-3 shadow-md relative">
+                    ${type !== 'me' ? `<div style="color:${senderNameColor}; font-weight:bold; font-size:12px; margin-bottom:2px;">${sender}</div>` : ''}
+                    <div class="text-white text-[14px] leading-snug">${text}</div>
+                    <div class="text-[10px] text-gray-400 text-right mt-1">${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}</div>
+                </div>
             `;
             
-            wrapper.appendChild(div);
             chatBox.appendChild(wrapper);
-            chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+            chatBox.scrollTop = chatBox.scrollHeight;
+            chatHistory.push({ role: sender === 'Sen' ? 'user' : 'assistant', content: `${sender}: ${text}` });
         }
 
-        async function startDiscussion() {
-            if (running) {
-                running = false;
-                toggleBtn.innerText = "BAŞLAT";
-                toggleBtn.className = "bg-white text-black font-extrabold px-6 py-3 rounded-2xl text-xs uppercase tracking-tighter active:scale-90 transition-all";
-                status.innerText = "DURDU";
-                return;
-            }
-
-            const topic = topicInput.value.trim();
-            if (!topic) return;
-
-            running = true;
-            chatBox.innerHTML = '';
-            toggleBtn.innerText = "DURDUR";
-            toggleBtn.className = "bg-red-600 text-white font-extrabold px-6 py-3 rounded-2xl text-xs uppercase tracking-tighter active:scale-90 transition-all";
+        async function aiTurn(botName) {
+            typingStatus.innerText = `${botName} yazıyor...`;
             
-            let lastMessage = `Konumuz: "${topic}". Lütfen tartışmayı başlat ve karşı tarafın fikrini merak et.`;
-            let isBotA = true;
+            try {
+                const prompt = `
+                    WhatsApp grubundasın. Adın ${botName}. Grupta Ali, Ayşe ve Sen varsınız. 
+                    Karakterin: Samimi, doğal, emoji kullanan, bazen espri yapan, gerçek bir Türk genci gibi konuşan biri ol. 
+                    Resmiyetten uzak dur. Önceki konuşmaları oku ve muhabbete dahil ol. 
+                    Lütfen sadece kendi mesajını yaz. Başka birinin adını başına ekleme.
+                `;
 
-            while (running) {
-                try {
-                    const currentBot = isBotA ? "Bot A" : "Bot B";
-                    status.innerText = `${currentBot} YAZIYOR...`;
-
-                    const response = await puter.ai.chat(
-                        `Sen GPT-4o tabanlı bir yapay zekasın. Karşındaki Bot ile şu konu üzerinde tartışıyorsun: ${topic}. 
-                        Sana gelen son mesaj şu: "${lastMessage}". 
-                        Bu mesaja cevap ver, gerekirse eleştir veya geliştir. Kısa ve vurucu konuş.`,
-                        { model: 'gpt-4o' }
-                    );
-
-                    const content = response.message.content;
-                    addMessage(currentBot, content, isBotA);
-                    
-                    lastMessage = content;
-                    isBotA = !isBotA;
-
-                    // AI'ların insan hızında görünmesi için bekleme
-                    await new Promise(r => setTimeout(r, 2000));
-
-                } catch (err) {
-                    console.error(err);
-                    status.innerText = "HATA";
-                    running = false;
-                }
+                const response = await puter.ai.chat(prompt, JSON.stringify(chatHistory), { model: 'gpt-4o' });
+                const reply = response.message.content;
+                
+                typingStatus.innerText = '';
+                addMessage(botName, reply, 'ai');
+            } catch (err) {
+                console.error(err);
+                typingStatus.innerText = '';
             }
         }
 
-        toggleBtn.onclick = startDiscussion;
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text) return;
 
-        // Klavyede Enter'a basınca başlatma
-        topicInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') startDiscussion();
-        });
+            userInput.value = '';
+            addMessage('Sen', text, 'me');
+
+            // Sen yazdıktan sonra önce Ali, sonra Ayşe tepki versin
+            await new Promise(r => setTimeout(r, 1000));
+            await aiTurn('Ali');
+            
+            await new Promise(r => setTimeout(r, 2000));
+            await aiTurn('Ayşe');
+            
+            // Sonra kendi aralarında bir tur daha dönebilirler
+            if (Math.random() > 0.5) {
+                await new Promise(r => setTimeout(r, 2500));
+                await aiTurn('Ali');
+            }
+        }
+
+        sendBtn.onclick = handleSend;
+        userInput.onkeypress = (e) => e.key === 'Enter' && handleSend();
     </script>
 </body>
 </html>
