@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puter + GPT-4o Taslak</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        /* Senin paylaştığın CSS mantığı */
+        :root {
+            --bg: #0d1117;
+            --text: #c9d1d9;
+            --accent: #58a6ff;
+        }
+
+        body { 
+            background: var(--bg); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            color: var(--text); 
+            overflow: hidden; 
+            transition: 0.5s; 
+        }
+
+        #chat-container {
+            width: 95%;
+            max-width: 500px;
+            height: 80vh;
+            background: rgba(22, 27, 34, 0.9);
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .msg {
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 15px;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+
+        .ai { background: #21262d; align-self: flex-start; border: 1px solid #444; }
+        .user { background: var(--accent); color: #fff; align-self: flex-end; }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #30363d;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="messages">
+        <div class="msg ai">Sistem hazır. GPT-4o bağlantısı aktif.</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Mesajınızı yazın..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">GÖNDER</button>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        const msgBox = document.getElementById('messages');
+        const userText = input.value.trim();
+
+        if (!userText) return;
+
+        // Kullanıcı mesajını göster
+        addMessage(userText, 'user');
+        input.value = '';
+
+        // AI Yanıtı bekleniyor
+        const aiResponseElement = addMessage("...", 'ai');
+
+        try {
+            // SİSTEM MESAJI KISMI BOŞ BIRAKILDI
+            const systemPrompt = "Senin adın YahyaAi "; 
+
+            const response = await puter.ai.chat(
+                userText, 
+                { 
+                    model: 'gpt-4o',
+                    system_prompt: systemPrompt 
+                }
+            );
+
+            aiResponseElement.innerText = response.message.content;
+        } catch (error) {
+            aiResponseElement.innerText = "Bağlantı hatası oluştu.";
+            console.error("Puter Error:", error);
+        }
+        
+        msgBox.scrollTop = msgBox.scrollHeight;
+    }
+
+    function addMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerText = text;
+        document.getElementById('messages').appendChild(div);
+        return div;
+    }
+</script>
+
+</body>
+</html>
