@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De belles fleurs pour une belle dame</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #090514 100%);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        .info-text {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 3px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            pointer-events: none;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div class="info-text">Çevirmek için sürükleyin, yakınlaşmak için çimdikleyin/tekerleği kullanın</div>
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- Sahne Kurulumu ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x090514, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 4, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 + 0.2;
+
+        // --- Işıklandırma ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1.2, 30);
+        pointLight.position.set(5, 10, 5);
+        scene.add(pointLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffa4b4, 1.2);
+        directionalLight.position.set(-5, 8, 4);
+        scene.add(directionalLight);
+
+        // --- Buket Ana Grubu ---
+        const bouquet = new THREE.Group();
+        bouquet.position.y = -1; // Buketi biraz aşağı çekerek merkeze oturtuyoruz
+        scene.add(bouquet);
+
+        const colors = [0xff4081, 0xe040fb, 0x00e5ff, 0xffea00, 0xff6e40, 0xff1744];
+
+        // --- Çiçek Yapıcı ---
+        function createFlower(color) {
+            const flowerGroup = new THREE.Group();
+
+            // Orta kısım
+            const centerGeo = new THREE.SphereGeometry(0.22, 16, 16);
+            const centerMat = new THREE.MeshPhongMaterial({ color: 0xffd700, roughness: 0.6 });
+            const center = new THREE.Mesh(centerGeo, centerMat);
+            center.scale.set(1, 0.5, 1);
+            flowerGroup.add(center);
+
+            // Taç Yaprak Ş Şekli
+            const petalShape = new THREE.Shape();
+            petalShape.moveTo(0, 0);
+            petalShape.bezierCurveTo(0.25, 0.4, 0.35, 1.0, 0, 1.3);
+            petalShape.bezierCurveTo(-0.35, 1.0, -0.25, 0.4, 0, 0);
+
+            const petalGeo = new THREE.ExtrudeGeometry(petalShape, { depth: 0.01, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.01, bevelThickness: 0.01 });
+            petalGeo.center();
+
+            const petalMat = new THREE.MeshPhongMaterial({ color: color, shininess: 60, side: THREE.DoubleSide });
+
+            const layers = [
+                { count: 12, scale: 0.75, angle: 0.25, dist: 0.18 },
+                { count: 8, scale: 0.55, angle: 0.45, dist: 0.1 },
+                { count: 5, scale: 0.35, angle: 0.65, dist: 0.04 }
+            ];
+
+            layers.forEach((layer) => {
+                for(let i = 0; i < layer.count; i++) {
+                    const petalMesh = new THREE.Mesh(petalGeo, petalMat);
+                    const u = (i / layer.count) * Math.PI * 2;
+                    petalMesh.scale.set(layer.scale, layer.scale, layer.scale);
+                    petalMesh.position.set(Math.cos(u) * layer.dist, Math.sin(u) * layer.dist, layer.dist * 0.1);
+                    petalMesh.rotation.z = u - Math.PI / 2;
+                    petalMesh.rotation.x = layer.angle; 
+                    flowerGroup.add(petalMesh);
+                }
+            });
+
+            return flowerGroup;
+        }
+
+        // --- Çiçekleri ve İnce Sapları Yerleştirme ---
+        const flowerCount = 14; 
+        const stemMat = new THREE.MeshPhongMaterial({ color: 0x2e7d32, shininess: 10 });
+
+        for (let i = 0; i < flowerCount; i++) {
+            let x = 0, y = 2.8, z = 0; 
+
+            if (i === 0) {
+                x = 0;
+                z = 0;
+                y = 2.85;
+            } else if (i < 5) {
+                const angle = (i / 4) * Math.PI * 2;
+                const r = 0.6;
+                x = Math.cos(angle) * r;
+                z = Math.sin(angle) * r;
+                y = 2.75;
+            } else {
+                const angle = ((i - 5) / (flowerCount - 5)) * Math.PI * 2;
+                const r = 1.4;
+                x = Math.cos(angle) * r;
+                z = Math.sin(angle) * r;
+                y = 2.55;
+            }
+
+            // Çiçek Ekleme
+            const randColor = colors[Math.floor(Math.random() * colors.length)];
+            const flower = createFlower(randColor);
+            flower.position.set(x, y, z);
+            
+            flower.lookAt(new THREE.Vector3(x * 1.5, y * 1.3 + 0.5, z * 1.5));
+            bouquet.add(flower);
+
+            // İnce Sap Tasarımı
+            const startPoint = new THREE.Vector3(0, -1.8, 0); 
+            const endPoint = new THREE.Vector3(x, y - 0.2, z);
+            const midPoint = new THREE.Vector3(x * 0.2, (y + startPoint.y) * 0.4, z * 0.2);
+            
+            const curve = new THREE.QuadraticBezierCurve3(startPoint, midPoint, endPoint);
+            const stemGeo = new THREE.TubeGeometry(curve, 16, 0.03, 6, false); 
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            bouquet.add(stem);
+        }
+
+        // --- Gelişmiş Buket Ambalaj Kağıdı (Üstten kısaltıldı) ---
+        // Külahın boyu üstten basılarak 3.1'den 2.3'e düşürüldü. Üst ağız çapı daraltılarak (1.65) form korundu.
+        const wrapperGeo = new THREE.CylinderGeometry(1.65, 0.15, 2.3, 32, 1, true); 
+        const wrapperMat = new THREE.MeshPhongMaterial({
+            color: 0xffd1dc, 
+            transparent: true,
+            opacity: 0.65,
+            side: THREE.DoubleSide,
+            shininess: 40,
+            depthWrite: true
+        });
+        const wrapper = new THREE.Mesh(wrapperGeo, wrapperMat);
+        // Alt uç pozisyonu (saplara yapışma noktası) bozulmadan üst kesim aşağı çekildi
+        wrapper.position.set(0, 0.55, 0); 
+        bouquet.add(wrapper);
+
+        // --- 3D Kurdele Düğümü Ekleme (Konumu sabit kalacak şekilde) ---
+        const ribbonGroup = new THREE.Group();
+        ribbonGroup.position.set(0, -0.45, 0.3); 
+        
+        const ribbonMat = new THREE.MeshPhongMaterial({ color: 0xff1744, side: THREE.DoubleSide, shininess: 80 });
+
+        // Kurdele Halkaları (Sağ ve Sol)
+        const torusGeo = new THREE.TorusGeometry(0.3, 0.07, 8, 24, Math.PI * 1.5);
+        
+        const leftLoop = new THREE.Mesh(torusGeo, ribbonMat);
+        leftLoop.rotation.set(0, Math.PI / 4, Math.PI / 2);
+        leftLoop.position.x = -0.25;
+        ribbonGroup.add(leftLoop);
+
+        const rightLoop = new THREE.Mesh(torusGeo, ribbonMat);
+        rightLoop.rotation.set(0, -Math.PI / 4, -Math.PI / 2);
+        rightLoop.position.x = 0.25;
+        ribbonGroup.add(rightLoop);
+
+        // Kurdele Düğüm Merkezi
+        const knotGeo = new THREE.SphereGeometry(0.12, 16, 16);
+        const knot = new THREE.Mesh(knotGeo, ribbonMat);
+        knot.scale.set(1.3, 1, 1);
+        ribbonGroup.add(knot);
+
+        // Aşağı Sarkan Kurdele Kuyrukları
+        const tailShape = new THREE.Shape();
+        tailShape.moveTo(0,0);
+        tailShape.lineTo(0.1, -0.8);
+        tailShape.lineTo(-0.1, -0.8);
+        tailShape.lineTo(0,0);
+        const tailGeo = new THREE.ShapeGeometry(tailShape);
+        
+        const leftTail = new THREE.Mesh(tailGeo, ribbonMat);
+        leftTail.rotation.z = 0.2;
+        leftTail.position.set(-0.1, -0.1, -0.05);
+        ribbonGroup.add(leftTail);
+
+        const rightTail = new THREE.Mesh(tailGeo, ribbonMat);
+        rightTail.rotation.z = -0.2;
+        rightTail.position.set(0.1, -0.1, -0.05);
+        ribbonGroup.add(rightTail);
+
+        bouquet.add(ribbonGroup);
+
+
+        // --- Havada Uçuşan Parıltılar ---
+        const particleGeo = new THREE.BufferGeometry();
+        const particleCount = 80;
+        const posArray = new Float32Array(particleCount * 3);
+
+        for(let i=0; i<particleCount*3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 12;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.06,
+            color: 0xfff0b3,
+            transparent: true,
+            opacity: 0.75
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+
+        // --- Animasyon Döngüsü ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Buketin rüzgarda tatlı hafif salınımı
+            bouquet.rotation.y = Math.sin(elapsedTime * 0.4) * 0.08;
+            bouquet.rotation.x = Math.cos(elapsedTime * 0.2) * 0.04;
+
+            // Işık tozlarının hareketi
+            const positions = particleGeo.attributes.position.array;
+            for(let i = 1; i < particleCount * 3; i += 3) {
+                positions[i] -= 0.008;
+                if(positions[i] < -5) positions[i] = 6;
+            }
+            particleGeo.attributes.position.needsUpdate = true;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Ekran Boyut Kontrolü
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
