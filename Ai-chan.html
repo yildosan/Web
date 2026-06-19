@@ -29,7 +29,9 @@
         <span id="moodLabel">Yanındayım ✨</span>
         <img id="charImg" src="https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif">
     </div>
+
     <div id="chat"><div id="typing" class="typing">Düşünüyorum...</div></div>
+
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Bir şeyler yaz sevgilim..." autocomplete="off">
         <button onclick="askAI()">></button>
@@ -42,6 +44,7 @@
     const img = document.getElementById('charImg');
     const moodLabel = document.getElementById('moodLabel');
     const typing = document.getElementById('typing');
+
     let memory = JSON.parse(localStorage.getItem('ai_chan_v18_memory')) || [];
 
     const emotions = {
@@ -51,12 +54,34 @@
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
 
+    /* 🔥 DUYGU ANALİZİ EKLENDİ */
+    async function analyzeEmotion(text) {
+        try {
+            const res = await puter.ai.chat(
+                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge. Metin: "${text}"`,
+                { model: 'gpt-4o-mini' }
+            );
+            return res.message.content.toLowerCase().trim();
+        } catch {
+            return "happy";
+        }
+    }
+
+    function setMood(mood) {
+        img.style.opacity = '0.3';
+        setTimeout(() => {
+            img.src = emotions[mood] || emotions.happy;
+            moodLabel.innerText = mood.toUpperCase();
+            img.style.opacity = '1';
+        }, 300);
+    }
+
     function addMsg(t, c) {
         const d = document.createElement('div');
         d.className = `m ${c}`;
         d.innerText = t;
         chatBox.appendChild(d);
-        chatBox.scrollTop = chat.scrollHeight;
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     async function askAI() {
@@ -67,33 +92,42 @@
         input.value = '';
         typing.style.display = 'block';
 
-        const systemPrompt = { role: "system", content: "Sen Rias'sın. Yıldıray'ın sevgilisisin. Kıskanç, tatlı, resmiyeti sevmeyen birisin." };
+        const systemPrompt = {
+            role: "system",
+            content: "Sen Rias'sın. Yıldıray'ın sevgilisisin. Kıskanç, tatlı, resmiyeti sevmeyen birisin."
+        };
+
         let messages = [systemPrompt, ...memory.slice(-8), { role: "user", content: val }];
 
         try {
-            // Grok çağrısı
             const res = await puter.ai.chat(messages, { model: 'x-ai/grok-4.3' });
-            
-            // Gelen veriyi güvenli bir şekilde metne dönüştür
+
             let aiText = "";
             if (typeof res === 'string') aiText = res;
-            else if (res && res.message && typeof res.message === 'string') aiText = res.message;
-            else if (res && res.message && res.message.content) aiText = res.message.content;
+            else if (res?.message?.content) aiText = res.message.content;
             else aiText = JSON.stringify(res);
 
             typing.style.display = 'none';
             addMsg(aiText, 'ai');
 
+            /* 🔥 BURASI EKLENDİ (GIF DUYGU SİSTEMİ) */
+            const mood = await analyzeEmotion(aiText);
+            setMood(mood);
+
             memory.push({ role: "user", content: val });
             memory.push({ role: "assistant", content: aiText });
             localStorage.setItem('ai_chan_v18_memory', JSON.stringify(memory));
+
         } catch (e) {
             typing.style.display = 'none';
             addMsg("Bağlantı hatası oluştu sevgilim. 🌸", 'ai');
         }
     }
 
-    input.onkeypress = (e) => { if(e.key === 'Enter') askAI(); };
+    input.onkeypress = (e) => {
+        if (e.key === 'Enter') askAI();
+    };
 </script>
+
 </body>
 </html>
