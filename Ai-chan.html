@@ -90,6 +90,15 @@
 
         addMsg(val, 'u');
         input.value = '';
+
+        /* 🔥 /temizle KONTROLÜ EKLENDİ */
+        if (val === '/temizle') {
+            memory = [];
+            localStorage.removeItem('ai_chan_v18_memory');
+            addMsg("(geçmiş temizlendi)", 'ai');
+            return;
+        }
+
         typing.style.display = 'block';
 
         const systemPrompt = {
