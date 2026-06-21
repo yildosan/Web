@@ -7,8 +7,8 @@
     <script src="https://js.puter.com/v2/"></script>
     <style>
         :root { --p: #ff4d6d; --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; }
-        body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; color: var(--text); overflow: hidden; }
-        .card { width: 420px; height: 95vh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; }
+        body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100dvh; color: var(--text); overflow: hidden; }
+        .card { width: 420px; height: 100dvh; background: var(--card); border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column; border: 1px solid #334155; position: relative; }
         #visual { width: 100%; height: 380px; background: #000; position: relative; flex-shrink: 0; }
         #charImg { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
         #moodLabel { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.5); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2); text-transform: uppercase; z-index: 5; }
@@ -20,6 +20,7 @@
         input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid #475569; color: white; padding: 12px; border-radius: 15px; outline: none; }
         button { background: var(--p); border: none; color: white; padding: 0 20px; border-radius: 15px; cursor: pointer; font-weight: bold; }
         .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; }
+        .nude-img { max-width: 85%; border-radius: 18px; align-self: flex-start; margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -52,21 +53,22 @@
         happy: "https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif",
         sad: "https://gifdb.com/images/high/red-hair-anime-rias-gremory-high-school-dxd-bzpd8p6e83okozcb.gif",
         angry: "https://media.tenor.com/d50EH_7IpgQAAAAM/rias-huh.gif",
-        knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10",
-        nude: [
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvc3rTRpEufyObwFhjbkaRduyChtynFHxLXOM3ZvqI9g&s=10",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9RBSfKCXq08CgQl4WaaVpsWk0S606gpCvrgy1GRd-EA&s=10",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvhcIX7N5ga9QJwVsczz9wyBFvA4BAn1mr--8jJlWMgA&s=10",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnmL0pGmda59A1dvhuW8L6kgPEbv1D9dBeB91fW0UB5g&s=10",
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSx90J8d9BWhgj2Fl-N60kyGGcKJEbyuy43tPBQ5m0Tww&s=10"
-        ]
+        knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
     };
+
+    const nudeLinks = [
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvc3rTRpEufyObwFhjbkaRduyChtynFHxLXOM3ZvqI9g&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9RBSfKCXq08CgQl4WaaVpsWk0S606gpCvrgy1GRd-EA&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvhcIX7N5ga9QJwVsczz9wyBFvA4BAn1mr--8jJlWMgA&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnmL0pGmda59A1dvhuW8L6kgPEbv1D9dBeB91fW0UB5g&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSx90J8d9BWhgj2Fl-N60kyGGcKJEbyuy43tPBQ5m0Tww&s=10"
+    ];
 
     /* 🔥 DUYGU ANALİZİ EKLENDİ */
     async function analyzeEmotion(text) {
         try {
             const res = await puter.ai.chat(
-                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge, nude. nude kelimesini diğer kelimelere göre daha baskın seç yani nude ile başka bir kelime arasında seçim yapman gereken durumlarda nude kelimesini seç. Metin: "${text}"`,
+                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge. Metin: "${text}"`,
                 { model: 'gpt-4o-mini' }
             );
             return res.message.content.toLowerCase().trim();
@@ -78,17 +80,7 @@
     function setMood(mood) {
         img.style.opacity = '0.3';
         setTimeout(() => {
-            if (mood === "nude") {
-                const nudeLinks = emotions.nude;
-                let index = Math.floor(Math.random() * nudeLinks.length);
-                if (index === lastNudeIndex && nudeLinks.length > 1) {
-                    index = (index + 1) % nudeLinks.length;
-                }
-                lastNudeIndex = index;
-                img.src = nudeLinks[index];
-            } else {
-                img.src = emotions[mood] || emotions.happy;
-            }
+            img.src = emotions[mood] || emotions.happy;
             moodLabel.innerText = mood.toUpperCase();
             img.style.opacity = '1';
         }, 300);
@@ -99,6 +91,23 @@
         d.className = `m ${c}`;
         d.innerText = t;
         chatBox.appendChild(d);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addNudeImage() {
+        const index = Math.floor(Math.random() * nudeLinks.length);
+        if (index === lastNudeIndex && nudeLinks.length > 1) {
+            index = (index + 1) % nudeLinks.length;
+        }
+        lastNudeIndex = index;
+
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'm ai';
+        const nudeImg = document.createElement('img');
+        nudeImg.src = nudeLinks[index];
+        nudeImg.className = 'nude-img';
+        imgDiv.appendChild(nudeImg);
+        chatBox.appendChild(imgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -143,6 +152,7 @@
 
             memory.push({ role: "user", content: val });
             memory.push({ role: "assistant", content: aiText });
+
             localStorage.setItem('ai_chan_v18_memory', JSON.stringify(memory));
 
         } catch (e) {
@@ -157,4 +167,4 @@
 </script>
 
 </body>
-</html> 
+</html>
