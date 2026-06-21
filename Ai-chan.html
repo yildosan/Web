@@ -20,7 +20,14 @@
         input { flex: 1; background: rgba(0,0,0,0.2); border: 1px solid #475569; color: white; padding: 12px; border-radius: 15px; outline: none; }
         button { background: var(--p); border: none; color: white; padding: 0 20px; border-radius: 15px; cursor: pointer; font-weight: bold; }
         .typing { font-size: 11px; color: var(--p); padding: 5px; text-align: center; display: none; }
-        .nude-img { max-width: 85%; border-radius: 18px; align-self: flex-start; margin: 8px 0; }
+        
+        .nude-thumb { 
+            max-width: 180px; 
+            max-height: 220px; 
+            border-radius: 16px; 
+            cursor: pointer; 
+            border: 2px solid rgba(255,77,109,0.3);
+        }
     </style>
 </head>
 <body>
@@ -95,19 +102,22 @@
     }
 
     function addNudeImage() {
-        const index = Math.floor(Math.random() * nudeLinks.length);
+        let index = Math.floor(Math.random() * nudeLinks.length);
         if (index === lastNudeIndex && nudeLinks.length > 1) {
             index = (index + 1) % nudeLinks.length;
         }
         lastNudeIndex = index;
 
-        const imgDiv = document.createElement('div');
-        imgDiv.className = 'm ai';
-        const nudeImg = document.createElement('img');
-        nudeImg.src = nudeLinks[index];
-        nudeImg.className = 'nude-img';
-        imgDiv.appendChild(nudeImg);
-        chatBox.appendChild(imgDiv);
+        const container = document.createElement('div');
+        container.className = 'm ai';
+
+        const thumb = document.createElement('img');
+        thumb.src = nudeLinks[index];
+        thumb.className = 'nude-thumb';
+        thumb.onclick = () => window.open(nudeLinks[index], '_blank');
+        
+        container.appendChild(thumb);
+        chatBox.appendChild(container);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
@@ -118,7 +128,6 @@
         addMsg(val, 'u');
         input.value = '';
 
-        /* 🔥 /temizle KONTROLÜ EKLENDİ */
         if (val === '/temizle') {
             memory = [];
             localStorage.removeItem('ai_chan_v18_memory');
@@ -146,13 +155,18 @@
             typing.style.display = 'none';
             addMsg(aiText, 'ai');
 
-            /* 🔥 BURASI EKLENDİ (GIF DUYGU SİSTEMİ) */
             const mood = await analyzeEmotion(aiText);
             setMood(mood);
 
+            // Nude kontrolü
+            if (aiText.toLowerCase().includes("fotoğraf atıyorum") || 
+                aiText.toLowerCase().includes("nude") || 
+                aiText.toLowerCase().includes("resim") && val.toLowerCase().includes("nude")) {
+                addNudeImage();
+            }
+
             memory.push({ role: "user", content: val });
             memory.push({ role: "assistant", content: aiText });
-
             localStorage.setItem('ai_chan_v18_memory', JSON.stringify(memory));
 
         } catch (e) {
