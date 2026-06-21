@@ -52,13 +52,14 @@
         sad: "https://gifdb.com/images/high/red-hair-anime-rias-gremory-high-school-dxd-bzpd8p6e83okozcb.gif",
         angry: "https://media.tenor.com/d50EH_7IpgQAAAAM/rias-huh.gif",
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10"
+        nude: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvc3rTRpEufyObwFhjbkaRduyChtynFHxLXOM3ZvqI9g&s=10"
     };
 
     /* 🔥 DUYGU ANALİZİ EKLENDİ */
     async function analyzeEmotion(text) {
         try {
             const res = await puter.ai.chat(
-                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge. Metin: "${text}"`,
+                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge, nude. Metin: "${text}"`,
                 { model: 'gpt-4o-mini' }
             );
             return res.message.content.toLowerCase().trim();
