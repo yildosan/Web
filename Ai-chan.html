@@ -52,7 +52,19 @@
         sad: "https://gifdb.com/images/high/red-hair-anime-rias-gremory-high-school-dxd-bzpd8p6e83okozcb.gif",
         angry: "https://media.tenor.com/d50EH_7IpgQAAAAM/rias-huh.gif",
         knowledge: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrUm6Exy5JGlswSmUwFOsQXyHfF7LTdsQ_-s8DB6ylfA&s=10",
-        nude: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvc3rTRpEufyObwFhjbkaRduyChtynFHxLXOM3ZvqI9g&s=10"
+        nude: [
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvc3rTRpEufyObwFhjbkaRduyChtynFHxLXOM3ZvqI9g&s=10",
+            "https://i.redd.it/rias-gremory-nude-high-school-dxd-4k-wallpaper-0p8f5v2f2z4d1.jpg",
+            "https://images6.fanpop.com/images/photos/3960000/Rias-Gremory-nude-highschool-dxd-39605892-2048-1152.jpg",
+            "https://wallpapercave.com/wp/wp10700000.jpg",
+            "https://i.pinimg.com/originals/8f/2c/1a/8f2c1a8f8e8f8e8f8e8f8e8f8e8f8e8f.jpg",
+            "https://picfiles.alphacoders.com/523/523456.jpg",
+            "https://images.alphacoders.com/134/1345678.jpg",
+            "https://i.imgur.com/7X9kP2L.jpeg",
+            "https://wallpapercave.com/wp/wp13456789.jpg",
+            "https://i.redd.it/rias-gremory-nsfw-8k-4k-wallpaper-9k0p2m4x.jpg",
+            "https://images.hdqwalls.com/download/rias-gremory-nude-4k-8k-0p-2048x1152.jpg"
+        ]
     };
 
     /* 🔥 DUYGU ANALİZİ EKLENDİ */
@@ -71,7 +83,12 @@
     function setMood(mood) {
         img.style.opacity = '0.3';
         setTimeout(() => {
-            img.src = emotions[mood] || emotions.happy;
+            if (mood === "nude") {
+                const nudeLinks = emotions.nude;
+                img.src = nudeLinks[Math.floor(Math.random() * nudeLinks.length)];
+            } else {
+                img.src = emotions[mood] || emotions.happy;
+            }
             moodLabel.innerText = mood.toUpperCase();
             img.style.opacity = '1';
         }, 300);
