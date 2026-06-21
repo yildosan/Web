@@ -66,7 +66,7 @@
     async function analyzeEmotion(text) {
         try {
             const res = await puter.ai.chat(
-                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge, nude. Metin: "${text}"`,
+                `Aşağıdaki metni analiz et ve sadece şu kelimelerden birini döndür: happy, sad, angry, knowledge, nude. nude kelimesini diğer kelimelere göre daha baskın seç yani nude ile başka bir kelime arasında seçim yapman gereken durumlarda nude kelimesini seç. Metin: "${text}"`,
                 { model: 'gpt-4o-mini' }
             );
             return res.message.content.toLowerCase().trim();
