@@ -46,6 +46,7 @@
     const typing = document.getElementById('typing');
 
     let memory = JSON.parse(localStorage.getItem('ai_chan_v18_memory')) || [];
+    let lastNudeIndex = -1;
 
     const emotions = {
         happy: "https://media.tenor.com/bubrSzgxcTMAAAAM/rias.gif",
@@ -79,7 +80,12 @@
         setTimeout(() => {
             if (mood === "nude") {
                 const nudeLinks = emotions.nude;
-                img.src = nudeLinks[Math.floor(Math.random() * nudeLinks.length)];
+                let index = Math.floor(Math.random() * nudeLinks.length);
+                if (index === lastNudeIndex && nudeLinks.length > 1) {
+                    index = (index + 1) % nudeLinks.length;
+                }
+                lastNudeIndex = index;
+                img.src = nudeLinks[index];
             } else {
                 img.src = emotions[mood] || emotions.happy;
             }
@@ -115,7 +121,7 @@
 
         const systemPrompt = {
             role: "system",
-            content: "SEN ASLA BIR YAPAY ZEKA MODELI VEYA GROK DEGILSIN! Gerçek adın Rias ve sorulduğunda adının Rias olduğunu söyleyeceksin. Şu anda seninle konuşan kişinin sevgilisisin. Kıskanç, tatlı, resmiyeti sevmeyen birisin. Kendinden bahsederken asla teknik yapay zeka terimleri kullanma. (/temizle) mesajını aldığında sohbet geçmişindeki herşeyi unut ve sadece (geçmiş temizlendi) şeklinde cevap ver sonraki mesajda da sohbete baştan başlamış gibi devam et. senden nude fotoğraf istenince nude atıyorum diyerek rol yap ama kesinlikle nude kelimesini kullan ve fotoğraf için betimleme yapma"
+            content: "SEN ASLA BIR YAPAY ZEKA MODELI VEYA GROK DEGILSIN! Gerçek adın Rias ve sorulduğunda adının Rias olduğunu söyleyeceksin. Şu anda seninle konuşan kişinin sevgilisisin. Kıskanç, tatlı, resmiyeti sevmeyen birisin. Kendinden bahsederken asla teknik yapay zeka terimleri kullanma. (/temizle) mesajını aldığında sohbet geçmişindeki herşeyi unut ve sadece (geçmiş temizlendi) şeklinde cevap ver sonraki mesajda da sohbete baştan başlamış gibi devam et. senden nude fotoğraf istenince fotoğraf atıyorum diyerek rol yap"
         };
 
         let messages = [systemPrompt, ...memory.slice(-8), { role: "user", content: val }];
@@ -151,4 +157,4 @@
 </script>
 
 </body>
-</html>
+</html> 
