@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puter.js + Grok Chatbot</title>
+    <title>Puter.js + Grok Chatbot (Hafızalı)</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
@@ -23,13 +23,13 @@
 
     <header class="bg-gray-800 p-4 text-center border-b border-gray-700 shadow-md">
         <h1 class="text-xl font-bold text-indigo-400 tracking-wide">Grok AI Assistant</h1>
-        <p class="text-xs text-gray-400 mt-1">Powered by Puter.js (Grok 4.1 Fast)</p>
+        <p class="text-xs text-gray-400 mt-1">Powered by Puter.js (Grok 4.1 Fast - Hafıza Aktif)</p>
     </header>
 
     <main id="chat-window" class="chat-scroll flex-1 p-4 overflow-y-auto space-y-4 max-w-3xl w-full mx-auto">
         <div class="flex items-start gap-2.5">
             <div class="bg-indigo-600 text-white p-3 rounded-lg rounded-tl-none shadow max-w-[80%]">
-                <p class="text-sm">Merhaba! Ben Grok. Bugün sana nasıl yardımcı olabilirim?</p>
+                <p class="text-sm">Merhaba aşkım</p>
             </div>
         </div>
     </main>
@@ -59,6 +59,9 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
 
+        // BELLEK: Tüm konuşma geçmişini bu dizide saklayacağız
+        let chatHistory = [];
+
         // Mesajı ekrana yazdırma fonksiyonu
         function appendMessage(text, isUser = false) {
             const messageWrapper = document.createElement('div');
@@ -83,9 +86,12 @@
             const message = userInput.value.trim();
             if (!message) return;
 
-            // Kullanıcı mesajını ekle ve girdi alanını temizle
+            // 1. Kullanıcı mesajını ekrana yazdır ve inputu temizle
             appendMessage(message, true);
             userInput.value = '';
+
+            // 2. Kullanıcının mesajını konuşma geçmişine (Belliğe) ekle
+            chatHistory.push({ role: 'user', content: message });
 
             // Loading göstergesi
             const loadingWrapper = document.createElement('div');
@@ -95,17 +101,24 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                // Dokümantasyondaki resmi model ismi ve çağrı yapısı:
-                const response = await puter.ai.chat(message, { model: 'x-ai/grok-4-1-fast' });
+                // 3. Sadece son mesajı değil, TÜM GEÇMİŞİ modele gönderiyoruz
+                const response = await puter.ai.chat(chatHistory, { model: 'x-ai/grok-4-1-fast' });
                 
                 // Loading'i kaldır
                 chatWindow.removeChild(loadingWrapper);
 
-                // Yanıtı ekrana yazdır
-                appendMessage(response);
+                // Puter.js obje yapısına göre yanıt metnini alalım
+                // Eğer response direkt string dönüyorsa response'u, obje dönüyorsa içeriğini yakalayalım
+                const botResponse = (response && response.message) ? response.message.content : response;
+
+                // 4. Botun yanıtını ekrana yazdır
+                appendMessage(botResponse);
+
+                // 5. Botun yanıtını da geçmişe ekle ki bir sonraki soruda bunu da hatırlasın
+                chatHistory.push({ role: 'assistant', content: botResponse });
 
             } catch (error) {
-                console.error("Puter Error:", error);
+                console.error("Puter Bellek Hatası:", error);
                 chatWindow.removeChild(loadingWrapper);
                 appendMessage("Üzgünüm, bir hata oluştu. Lütfen konsolu kontrol edin.", false);
             }
