@@ -54,7 +54,7 @@
                         <i class="fa-solid fa-masks-theater mr-1 law-gold"></i> Dolandırıcılık Suçu
                     </button>
                     <button onclick="fillPrompt('Hakaret suçu hangi durumlarda cezasızlık veya ceza indirimi gerektirir?')" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3 rounded-lg transition text-left w-full">
-                        <i class="fa-solid fa-comments-text mr-1 law-gold"></i> Hakaret ve Ceza İndirimi
+                        <i class="fa-solid fa-comments mr-1 law-gold"></i> Hakaret ve Ceza İndirimi
                     </button>
                 </div>
             </div>
@@ -83,19 +83,19 @@
                         <i class="fa-solid fa-scale-balanced text-xs law-gold"></i>
                     </div>
                     <div class="bg-white border border-gray-200 text-slate-800 p-3 rounded-r-lg rounded-bl-lg max-w-[85%] text-sm shadow-sm">
-                        Merhaba, ben Türk Ceza Kanunu (TCK) konusunda uzmanlaşmış yapay zeka danışmanınızım. Sorularınızı yasal mevzuata uygun şekilde yanıtlayabilirim. Hangi hukuki konuda bilgi almak istersiniz?
+                        Merhaba, ben Türk Ceza Kanunu (TCK) konusunda uzmanlaşmış yapay zeka danışmanınızım. Sorularınızı veya başınızdan geçen bir olayı anlatın, yasal mevzuata uygun şekilde analiz edeyim.
                     </div>
                 </div>
             </div>
 
             <div id="loading" class="hidden px-4 py-2 bg-slate-50 text-xs text-gray-500 flex items-center space-x-2">
                 <i class="fa-solid fa-spinner animate-spin law-gold"></i>
-                <span>Avukat AI kanun maddelerini inceliyor...</span>
+                <span>Avukat AI kanun maddelerini inceliyor ve olayı analiz ediyor...</span>
             </div>
 
             <div class="p-3 bg-white border-t border-gray-200">
                 <form id="chat-form" onsubmit="sendMessage(event)" class="flex gap-2">
-                    <input type="text" id="user-input" placeholder="Hukuki sorunuzu yazın (Örn: TCK Madde 86 kasten yaralama...)" 
+                    <input type="text" id="user-input" placeholder="Hukuki sorunuzu veya olayı yazın..." 
                            class="flex-grow border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-yellow-600 transition" required>
                     <button type="submit" class="law-btn px-5 py-2.5 rounded-lg font-medium text-sm transition shadow-sm flex items-center justify-center">
                         <i class="fa-solid fa-paper-plane"></i>
@@ -118,9 +118,9 @@
         // Yapay zekaya kimlik kazandıran sistem talimatı (System Prompt)
         const systemInstruction = `
             Sen Türk Ceza Kanunu (TCK) konusunda uzman, profesyonel, bilgili ve tarafsız bir Avukat Yapay Zeka asistanısın. 
-            Görevin, kullanıcının sorduğu sorulara 5237 sayılı Türk Ceza Kanunu maddelerine atıfta bulunarak net, hukuki ve anlaşılır yanıtlar vermektir. 
-            Yanıtlarında suçun unsurlarını, cezai alt ve üst sınırları (eğer kanunda netse) ve varsa nitelikli hallerini belirt.
-            Her yanıtın sonunda, durumun somut olaya göre değişebileceğini hatırlatarak bir avukata danışılması tavsiyesini yasal uyarı olarak (kısa ve profesyonelce) ekle.
+            Görevin, kullanıcının sorduğu sorulara veya anlattığı olaylara 5237 sayılı Türk Ceza Kanunu maddelerine atıfta bulunarak net, hukuki ve anlaşılır yanıtlar vermektir. 
+            Anlatılan olaylardaki suçun unsurlarını, cezai alt/üst sınırları ve varsa cezayı artıran nitelikli halleri belirt.
+            Her yanıtın sonunda, somut olayın özelliklerine göre durumun değişebileceğini hatırlatarak bir avukata başvurulması gerektiğine dair profesyonel bir yasal uyarı ekle.
         `;
 
         async function sendMessage(event) {
@@ -135,17 +135,26 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // Puter.js Chat API Çağrısı
+                // Deneme 1: Puter.js üzerinde en kararlı çalışan Claude 3.5 Sonnet modeli ile istek atıyoruz
                 const response = await puter.ai.chat(
-                    `${systemInstruction}\n\nKullanıcı Sorusu: ${messageText}`, 
-                    { model: 'gpt-4o' } // Güçlü hukuk yorumları için kararlı model tercihi
+                    `${systemInstruction}\n\nKullanıcı Sorusu/Olayı: ${messageText}`, 
+                    { model: 'claude-3-5-sonnet' }
                 );
 
-                // AI yanıtını ekrana bas
                 appendMessage(response, 'ai');
             } catch (error) {
-                console.error("Puter.js hatası:", error);
-                appendMessage("Üzgünüm, şu an kanun veritabanına erişirken bir hata oluştu. Lütfen tekrar deneyin.", 'ai');
+                console.warn("Birinci model isteği başarısız oldu, yedek modele (fallback) geçiliyor...", error);
+                
+                try {
+                    // Deneme 2 (Fallback): Model adı belirtmeden Puter'ın varsayılan genel modeline yönlendiriyoruz
+                    const fallbackResponse = await puter.ai.chat(
+                        `${systemInstruction}\n\nKullanıcı Sorusu/Olayı: ${messageText}`
+                    );
+                    appendMessage(fallbackResponse, 'ai');
+                } catch (retryError) {
+                    console.error("Yedek model de başarısız oldu:", retryError);
+                    appendMessage("Üzgünüm, şu an Puter.js yapay zeka sunucularına bağlanılamıyor. Tarayıcınızın internet bağlantısını kontrol edin veya projeyi yerel bir sunucu (Live Server) üzerinde çalıştırdığınızdan emin olun.", 'ai');
+                }
             } finally {
                 loadingPrompt.classList.add('hidden');
                 chatBox.scrollTop = chatBox.scrollHeight;
@@ -156,7 +165,7 @@
             const msgDiv = document.createElement('div');
             msgDiv.className = `flex items-start space-x-2 ${sender === 'user' ? 'justify-end' : ''}`;
 
-            // Markdown benzeri satır başlarını HTML <br>'ye çevirme (basit formatlama)
+            // Gelen metindeki yeni satır karakterlerini HTML'de düzgün kırılması için <br>'ye dönüştürüyoruz
             const formattedText = text.replace(/\n/g, '<br>');
 
             if (sender === 'user') {
