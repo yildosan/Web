@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grok Persona & Chat Manager</title>
+    <title>Grok Web-Search Persona Bot</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
@@ -21,70 +21,90 @@
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen flex flex-col font-sans overflow-hidden">
 
-    <header class="bg-gray-800 p-4 text-center border-b border-gray-700 shadow-md shrink-0">
-        <h1 class="text-xl font-bold text-indigo-400 tracking-wide">Grok Persona Chatbot</h1>
-        <p class="text-xs text-gray-400 mt-1">Karakterini Yarat, Hafızalı Sohbeti Başlat</p>
+    <header class="bg-gray-800 p-4 text-center border-b border-gray-700 shadow-md shrink-0 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div>
+            <h1 class="text-lg font-bold text-indigo-400 tracking-wide">Grok Web Search Persona Bot</h1>
+            <p class="text-xs text-gray-400 mt-0.5">İnternetten Karakter Ara & Bilinci Oluştur</p>
+        </div>
+        <div class="flex gap-2 sm:hidden w-full justify-center">
+            <button onclick="togglePanel('left-panel')" class="bg-gray-700 px-3 py-1 rounded text-xs font-semibold text-indigo-300">🎭 Kimlik</button>
+            <button onclick="togglePanel('right-panel')" class="bg-gray-700 px-3 py-1 rounded text-xs font-semibold text-indigo-300">📜 Geçmiş</button>
+        </div>
     </header>
 
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden relative">
         
-        <aside class="w-80 bg-gray-850 border-r border-gray-700 p-4 flex flex-col gap-4 custom-scroll overflow-y-auto shrink-0">
-            <h2 class="text-md font-bold text-indigo-400 border-b border-gray-700 pb-2">🎭 Karakter Kimliği</h2>
+        <aside id="left-panel" class="hidden sm:flex w-full sm:w-80 bg-gray-850 border-r border-gray-700 p-4 flex-col gap-4 custom-scroll overflow-y-auto shrink-0 absolute sm:relative z-20 h-full sm:h-auto left-0 top-0">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2">
+                <h2 class="text-md font-bold text-indigo-400">🎭 Karakter Kimliği</h2>
+                <button onclick="togglePanel('left-panel')" class="sm:hidden text-xs text-red-400 font-bold">Kapat</button>
+            </div>
             
+            <div class="bg-gray-800 p-3 rounded border border-indigo-500/30">
+                <label class="block text-xs text-indigo-300 mb-1 font-semibold">🔍 İnternetten Karakter Ara:</label>
+                <div class="flex gap-1">
+                    <input type="text" id="search-query" placeholder="Örn: Rias Gremory veya Elon Musk" class="flex-1 bg-gray-700 p-1.5 text-xs rounded border border-gray-600 focus:outline-none text-white">
+                    <button type="button" id="search-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 rounded font-medium transition-colors">Bul</button>
+                </div>
+                <p id="search-status" class="text-[10px] text-gray-400 mt-1 hidden"></p>
+            </div>
+
             <div class="flex flex-col gap-3 text-sm">
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Adı:</label>
-                    <input type="text" id="char-name" value="Rias" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="char-name" value="Rias" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Soyadı:</label>
-                    <input type="text" id="char-surname" value="Gremory" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="char-surname" value="Gremory" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Yaş:</label>
-                    <input type="number" id="char-age" value="18" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="char-age" value="18" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Meslek / Rol:</label>
-                    <input type="text" id="char-job" value="Kulüp Başkanı" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="char-job" value="Kulüp Başkanı" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs">
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Genel Tanım / Kişilik:</label>
                     <textarea id="char-desc" rows="4" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs resize-none">Asil, lider ruhlu, korumacı ve sadık bir karakter. Kullanıcıya yakın ve samimi bir hitap şekli kullanır.</textarea>
                 </div>
-                <button id="save-persona-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded transition-colors duration-200">
-                    Kimliği Güncelle
+                <button id="save-persona-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 rounded text-xs transition-colors duration-200">
+                    Kimliği Güncelle ve Kaydet
                 </button>
             </div>
         </aside>
 
-        <main class="flex-1 flex flex-col justify-between bg-gray-900 relative">
+        <main class="flex-1 flex flex-col justify-between bg-gray-900 relative w-full">
             <div id="chat-window" class="custom-scroll flex-1 p-4 overflow-y-auto space-y-4 max-w-2xl w-full mx-auto">
                 </div>
 
-            <footer class="p-4 bg-gray-800 border-t border-gray-700 sticky bottom-0">
+            <footer class="p-3 bg-gray-800 border-t border-gray-700 sticky bottom-0">
                 <form id="chat-form" class="max-w-2xl mx-auto flex gap-2">
                     <input 
                         type="text" 
                         id="user-input" 
                         placeholder="Karaktere bir şeyler yazın..." 
                         autocomplete="off"
-                        class="flex-1 bg-gray-700 text-white placeholder-gray-400 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none p-3"
+                        class="flex-1 bg-gray-700 text-white placeholder-gray-400 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none p-2.5"
                         required
                     >
-                    <button type="submit" class="p-3 text-indigo-400 hover:text-indigo-200 font-bold bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                    <button type="submit" class="px-4 py-2.5 text-indigo-400 hover:text-indigo-200 text-sm font-bold bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
                         Gönder
                     </button>
                 </form>
             </footer>
         </main>
 
-        <aside class="w-64 bg-gray-850 border-l border-gray-700 p-4 flex flex-col gap-4 custom-scroll overflow-y-auto shrink-0">
+        <aside id="right-panel" class="hidden sm:flex w-full sm:w-64 bg-gray-850 border-l border-gray-700 p-4 flex-col gap-4 custom-scroll overflow-y-auto shrink-0 absolute sm:relative z-20 h-full sm:h-auto right-0 top-0">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2">
                 <h2 class="text-md font-bold text-indigo-400">📜 Eski Sohbetler</h2>
-                <button id="new-chat-btn" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-indigo-300">+</button>
+                <div class="flex gap-2">
+                    <button id="new-chat-btn" class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-indigo-300 font-bold" title="Yeni Sohbet">+</button>
+                    <button onclick="togglePanel('right-panel')" class="sm:hidden text-xs text-red-400 font-bold">Kapat</button>
+                </div>
             </div>
-            
             <div id="history-list" class="flex flex-col gap-2 text-sm">
                 </div>
         </aside>
@@ -98,20 +118,36 @@
         const historyList = document.getElementById('history-list');
         const newChatBtn = document.getElementById('new-chat-btn');
         const savePersonaBtn = document.getElementById('save-persona-btn');
+        const searchBtn = document.getElementById('search-btn');
+        const searchQuery = document.getElementById('search-query');
+        const searchStatus = document.getElementById('search-status');
 
-        // State verileri
-        let currentSessionId = null;
-        let allSessions = JSON.parse(localStorage.getItem('grok_chat_sessions')) || {};
-        let chatHistory = []; // O anki aktif chat dizisi
-
-        // Karakter Değişkenleri Dom Elemanları
+        // Form girdileri
         const cName = document.getElementById('char-name');
         const cSurname = document.getElementById('char-surname');
         const cAge = document.getElementById('char-age');
         const cJob = document.getElementById('char-job');
         const cDesc = document.getElementById('char-desc');
 
-        // Grok için sistem talimatını (Persona) hazırlayan fonksiyon
+        let currentSessionId = null;
+        let allSessions = JSON.parse(localStorage.getItem('grok_search_sessions')) || {};
+        let chatHistory = [];
+
+        // Mobil panel açma/kapatma fonksiyonu
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if(panel.classList.contains('hidden')) {
+                // Diğer açık panelleri kapat
+                document.getElementById('left-panel').classList.add('hidden');
+                document.getElementById('right-panel').classList.add('hidden');
+                panel.classList.remove('hidden');
+                panel.classList.add('flex');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex');
+            }
+        }
+
         function buildSystemInstruction() {
             return {
                 role: 'system',
@@ -125,7 +161,6 @@
             };
         }
 
-        // Arayüze mesaj basma fonksiyonu
         function appendMessage(text, isUser = false) {
             const messageWrapper = document.createElement('div');
             messageWrapper.className = isUser ? "flex items-start justify-end gap-2.5" : "flex items-start gap-2.5";
@@ -141,12 +176,59 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // Yeni sohbet oturumu oluşturma
+        // İnternetten Karakter Arama Algoritması
+        searchBtn.addEventListener('click', async () => {
+            const q = searchQuery.value.trim();
+            if(!q) return;
+
+            searchStatus.classList.remove('hidden');
+            searchStatus.innerText = "İnternette araştırılıyor ve bilgi toplanıyor...";
+            searchBtn.disabled = true;
+
+            try {
+                // Grok modeline 'web_search' aracı vererek internetten veriyi taratıyoruz ve bize JSON döndürmesini istiyoruz.
+                const instructions = `İnternet üzerinde şu karakteri araştır: "${q}". 
+                Karakterin bilgilerini bulduktan sonra bana SADECE aşağıdaki JSON formatında yanıt dön. Başka hiçbir şey yazma, kod bloğu oluşturma, sadece saf JSON ver:
+                {
+                    "name": "Karakterin Adı",
+                    "surname": "Karakterin Soyadı (varsa yoksa boş bırak)",
+                    "age": "Karakterin yaşı veya tahmini yaşı",
+                    "job": "Karakterin mesleği, rolü ya da unvanı",
+                    "desc": "Karakterin internetteki bilgilerine göre detaylı kişilik analizi, konuşma tarzı ve genel tanımı."
+                }`;
+
+                const response = await puter.ai.chat(instructions, {
+                    model: 'x-ai/grok-4-1-fast',
+                    tools: [{ type: 'web_search' }] // Grok'un internete erişmesini sağlayan resmi Puter parametresi
+                });
+
+                const rawText = (response && response.message) ? response.message.content : response;
+                
+                // Gelen veriyi temizleyip JSON objesine parse ediyoruz
+                const cleanJsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const data = JSON.parse(cleanJsonText);
+
+                // Input alanlarını otomatik dolduruyoruz
+                cName.value = data.name || '';
+                cSurname.value = data.surname || '';
+                cAge.value = data.age || '';
+                cJob.value = data.job || '';
+                cDesc.value = data.desc || '';
+
+                searchStatus.innerText = "Karakter başarıyla yüklendi! Kaydet butonuna basarak sohbeti başlatabilirsiniz.";
+                searchQuery.value = '';
+            } catch (error) {
+                console.error("Arama Hatası:", error);
+                searchStatus.innerText = "Bilgi toplanırken bir hata oluştu. Lütfen manuel girin.";
+            } finally {
+                searchBtn.disabled = false;
+            }
+        });
+
         function createNewSession() {
             currentSessionId = 'session_' + Date.now();
             chatHistory = [];
             
-            // İlk selamlama mesajı
             const welcomeText = `Merhaba! Ben ${cName.value} ${cSurname.value}. Konuşmak istediğin bir şey mi vardı?`;
             
             allSessions[currentSessionId] = {
@@ -159,7 +241,6 @@
             loadSession(currentSessionId);
         }
 
-        // Belirli bir oturumu yükleme
         function loadSession(id) {
             currentSessionId = id;
             chatWindow.innerHTML = '';
@@ -167,7 +248,6 @@
             const session = allSessions[id];
             chatHistory = session.history;
 
-            // Karakter panelini bu oturumun kaydedilen karakterine göre güncelle
             if(session.persona) {
                 cName.value = session.persona.name || '';
                 cSurname.value = session.persona.surname || '';
@@ -176,7 +256,6 @@
                 cDesc.value = session.persona.desc || '';
             }
 
-            // Mesaj geçmişini ekrana bas (Sistem mesajları hariç)
             chatHistory.forEach(msg => {
                 if(msg.role !== 'system') {
                     appendMessage(msg.content, msg.role === 'user');
@@ -186,23 +265,25 @@
             renderHistorySidebar();
         }
 
-        // Sağdaki geçmiş panelini listeleme
         function renderHistorySidebar() {
             historyList.innerHTML = '';
             Object.keys(allSessions).sort((a,b) => b.split('_')[1] - a.split('_')[1]).forEach(id => {
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-2 rounded text-xs truncate transition-all duration-150 ${id === currentSessionId ? 'bg-indigo-600 text-white font-semibold' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`;
+                btn.className = `w-full text-left p-2 rounded text-xs truncate transition-all ${id === currentSessionId ? 'bg-indigo-600 text-white font-semibold' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'}`;
                 btn.innerText = allSessions[id].title;
-                btn.addEventListener('click', () => loadSession(id));
+                btn.addEventListener('click', () => {
+                    loadSession(id);
+                    // Mobilde tıklandığında paneli otomatik kapat
+                    if(window.innerWidth < 640) document.getElementById('right-panel').classList.add('hidden');
+                });
                 historyList.appendChild(btn);
             });
         }
 
         function saveToStorage() {
-            localStorage.setItem('grok_chat_sessions', JSON.stringify(allSessions));
+            localStorage.setItem('grok_search_sessions', JSON.stringify(allSessions));
         }
 
-        // Karakteri güncelle butonu tetiklendiğinde mevcut oturumun hafızasını korur, sadece kimliği günceller
         savePersonaBtn.addEventListener('click', () => {
             if(!currentSessionId) return;
             allSessions[currentSessionId].persona = {
@@ -211,13 +292,22 @@
             allSessions[currentSessionId].title = `${cName.value} (Güncel)`;
             saveToStorage();
             renderHistorySidebar();
-            alert("Karakter bilinci güncellendi! Grok artık bu kurallara göre cevap verecek.");
+            
+            // Yeni kimlikle karşılama mesajı ekle
+            chatWindow.innerHTML = '';
+            chatHistory = [{ role: 'assistant', content: `Merhaba! Ben ${cName.value}. Kimliğim ve bilincim güncellendi. Dinliyorum?` }];
+            allSessions[currentSessionId].history = chatHistory;
+            saveToStorage();
+            appendMessage(chatHistory[0].content, false);
+
+            if(window.innerWidth < 640) document.getElementById('left-panel').classList.add('hidden');
         });
 
-        // Yeni Chat Butonu
-        newChatBtn.addEventListener('click', createNewSession);
+        newChatBtn.addEventListener('click', () => {
+            createNewSession();
+            if(window.innerWidth < 640) document.getElementById('right-panel').classList.add('hidden');
+        });
 
-        // Chat Gönderme Olayı
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = userInput.value.trim();
@@ -226,47 +316,39 @@
             appendMessage(message, true);
             userInput.value = '';
 
-            // Kullanıcı mesajını yerel belleğe ekle
             chatHistory.push({ role: 'user', content: message });
 
             const loadingWrapper = document.createElement('div');
             loadingWrapper.className = "flex items-start gap-2.5 opacity-50";
-            loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm animate-pulse">Cevap yazılıyor...</div>`;
+            loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm animate-pulse">Yazıyor...</div>`;
             chatWindow.appendChild(loadingWrapper);
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                // Grok'a her zaman EN BAŞTA güncel sistem talimatını veriyoruz, ardından sohbet akışını ekliyoruz.
                 const apiPayload = [ buildSystemInstruction(), ...chatHistory ];
-
                 const response = await puter.ai.chat(apiPayload, { model: 'x-ai/grok-4-1-fast' });
+                
                 chatWindow.removeChild(loadingWrapper);
-
                 const botResponse = (response && response.message) ? response.message.content : response;
 
                 appendMessage(botResponse, false);
-                
-                // Bot yanıtını da geçmişe kaydet
                 chatHistory.push({ role: 'assistant', content: botResponse });
                 
-                // localStorage güncelleme
                 allSessions[currentSessionId].history = chatHistory;
                 saveToStorage();
 
             } catch (error) {
-                console.error("Grok Persona Error:", error);
+                console.error(error);
                 if (chatWindow.contains(loadingWrapper)) chatWindow.removeChild(loadingWrapper);
-                appendMessage("Bir hata oluştu, lütfen kimlik alanlarını veya bağlantınızı kontrol edin.", false);
+                appendMessage("Cevap alınamadı, lütfen paneli kontrol edin.", false);
             }
         });
 
-        // BAŞLANGIÇ ÇALIŞMASI (Uygulama ilk açıldığında)
+        // Başlangıç kurulumu
         if (Object.keys(allSessions).length > 0) {
-            // En son açılan veya mevcut olan ilk oturumu yükle
             const lastSessionId = Object.keys(allSessions).sort((a,b) => b.split('_')[1] - a.split('_')[1])[0];
             loadSession(lastSessionId);
         } else {
-            // Hiç oturum yoksa varsayılan karakterle yeni bir tane oluştur
             createNewSession();
         }
     </script>
