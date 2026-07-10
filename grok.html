@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grok & Flux AI Assistant</title>
+    <title>Grok AI Chatbot (Sadece Metin)</title>
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
@@ -23,13 +23,13 @@
 
     <header class="bg-gray-800 p-4 text-center border-b border-gray-700 shadow-md">
         <h1 class="text-xl font-bold text-indigo-400 tracking-wide">Grok AI Assistant</h1>
-        <p class="text-xs text-gray-400 mt-1">Sohbet edin veya <b>/görsel [istek]</b> ile Grok beyne Flux ile resim çizdirin.</p>
+        <p class="text-xs text-gray-400 mt-1">Powered by Puter.js (Grok 4.1 Fast)</p>
     </header>
 
     <main id="chat-window" class="chat-scroll flex-1 p-4 overflow-y-auto space-y-4 max-w-3xl w-full mx-auto">
         <div class="flex items-start gap-2.5">
             <div class="bg-indigo-600 text-white p-3 rounded-lg rounded-tl-none shadow max-w-[80%]">
-                <p class="text-sm">Merhaba! Ben Grok. Sohbet edebiliriz ya da <b>/görsel</b> komutuyla Flux motorunu tetikleyerek resim oluşturabiliriz.</p>
+                <p class="text-sm">Merhaba! Ben Grok. Bugün sana nasıl yardımcı olabilirim?</p>
             </div>
         </div>
     </main>
@@ -39,7 +39,7 @@
             <input 
                 type="text" 
                 id="user-input" 
-                placeholder="Grok'a yazın veya '/görsel bir araba' yazın..." 
+                placeholder="Grok'a bir şeyler sorun..." 
                 autocomplete="off"
                 class="flex-1 bg-gray-700 text-white placeholder-gray-400 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none p-3"
                 required
@@ -59,9 +59,11 @@
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
 
+        // BELLEK: Tüm konuşma geçmişini bu dizide saklıyoruz
         let chatHistory = [];
 
-        function appendMessage(content, isUser = false, isImage = false, customLabel = "") {
+        // Mesajı ekrana yazdırma fonksiyonu
+        function appendMessage(text, isUser = false) {
             const messageWrapper = document.createElement('div');
             messageWrapper.className = isUser ? "flex items-start justify-end gap-2.5" : "flex items-start gap-2.5";
 
@@ -70,95 +72,54 @@
                 ? "bg-gray-700 text-gray-100 p-3 rounded-lg rounded-tr-none shadow max-w-[80%] text-sm" 
                 : "bg-indigo-600 text-white p-3 rounded-lg rounded-tl-none shadow max-w-[80%] text-sm";
             
-            if (isImage) {
-                const label = document.createElement('p');
-                label.className = "text-xs text-indigo-200 mb-2 italic";
-                label.innerText = customLabel || "Grok + Flux üretimi görsel:";
-                
-                const img = document.createElement('img');
-                img.src = content;
-                img.className = "rounded-lg max-w-full h-auto shadow-md border border-indigo-400/20";
-                
-                messageBox.appendChild(label);
-                messageBox.appendChild(img);
-            } else {
-                messageBox.innerText = content;
-            }
-
+            messageBox.innerText = text;
             messageWrapper.appendChild(messageBox);
             chatWindow.appendChild(messageWrapper);
+            
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
+        // Form gönderildiğinde
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const message = userInput.value.trim();
             if (!message) return;
 
+            // 1. Kullanıcı mesajını ekrana yazdır ve inputu temizle
             appendMessage(message, true);
             userInput.value = '';
 
+            // 2. Kullanıcının mesajını konuşma geçmişine ekle
+            chatHistory.push({ role: 'user', content: message });
+
+            // Loading göstergesi ekle
             const loadingWrapper = document.createElement('div');
             loadingWrapper.className = "flex items-start gap-2.5 opacity-50";
+            loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm animate-pulse">Grok düşünüyor...</div>`;
             chatWindow.appendChild(loadingWrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
 
-            if (message.startsWith('/görsel')) {
-                const userPrompt = message.replace('/görsel', '').trim();
+            try {
+                // 3. Konuşma geçmişiyle birlikte kararlı Grok modelini çağırıyoruz
+                const response = await puter.ai.chat(chatHistory, { model: 'x-ai/grok-4-1-fast' });
                 
-                if (!userPrompt) {
-                    loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm">Lütfen ne çizmek istediğinizi belirtin.</div>`;
-                    setTimeout(() => chatWindow.removeChild(loadingWrapper), 2000);
-                    return;
-                }
+                // Loading'i kaldır
+                chatWindow.removeChild(loadingWrapper);
 
-                loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm animate-pulse">Grok promptu Flux için optimize ediyor...</div>`;
-                chatWindow.scrollTop = chatWindow.scrollHeight;
+                // Yanıt yapısını güvenli bir şekilde filtreleyelim
+                const botResponse = (response && response.message) ? response.message.content : response;
 
-                try {
-                    // 1. ADIM: Grok'tan kullanıcı isteğini Flux'ın en iyi anlayacağı İngilizce sanatsal prompta çevirmesini istiyoruz
-                    const systemInstruction = `Sen resmi Grok uygulamasının görsel zekasısın. Kullanıcı senden bir resim üretmeni istiyor. Kullanıcının şu Türkçe isteğini, Flux modelinin (Black Forest Labs) en yüksek kalitede, hiper-gerçekçi veya sanatsal çizim yapabilmesi için detaylı bir İngilizce prompta dönüştür. Sadece prompt metnini dönüt olarak ver, asla açıklama ekleme. İstek: ${userPrompt}`;
-                    
-                    const grokPromptResponse = await puter.ai.chat(systemInstruction, { model: 'x-ai/grok-4-1-fast' });
-                    const refinedPrompt = (grokPromptResponse && grokPromptResponse.message) ? grokPromptResponse.message.content : grokPromptResponse;
+                // 4. Botun yanıtını ekrana yazdır ve geçmişe kaydet
+                appendMessage(botResponse);
+                chatHistory.push({ role: 'assistant', content: botResponse });
 
-                    loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm animate-pulse">Flux motoru resmi çiziyor...</div>`;
-                    chatWindow.scrollTop = chatWindow.scrollHeight;
-
-                    // 2. ADIM: Grok'un hazırladığı promptu Puter üzerinden FLUX modeline gönderiyoruz
-                    const imageResult = await puter.ai.txt2img(refinedPrompt, { model: 'flux-schnell' });
-                    
+            } catch (error) {
+                console.error("Grok Chat Error:", error);
+                if (chatWindow.contains(loadingWrapper)) {
                     chatWindow.removeChild(loadingWrapper);
-                    
-                    appendMessage(imageResult.src, false, true, `Grok & Flux: "${userPrompt}"`);
-
-                } catch (error) {
-                    console.error("Grok/Flux Error:", error);
-                    if (chatWindow.contains(loadingWrapper)) chatWindow.removeChild(loadingWrapper);
-                    appendMessage("Görsel oluşturulurken bir hata meydana geldi.", false);
                 }
-
-            } else {
-                // Standart Grok Sohbet Akışı
-                loadingWrapper.innerHTML = `<div class="bg-indigo-800 p-3 rounded-lg rounded-tl-none text-sm animate-pulse">Grok düşünüyor...</div>`;
-                chatWindow.scrollTop = chatWindow.scrollHeight;
-
-                chatHistory.push({ role: 'user', content: message });
-
-                try {
-                    const response = await puter.ai.chat(chatHistory, { model: 'x-ai/grok-4-1-fast' });
-                    chatWindow.removeChild(loadingWrapper);
-
-                    const botResponse = (response && response.message) ? response.message.content : response;
-
-                    appendMessage(botResponse, false, false);
-                    chatHistory.push({ role: 'assistant', content: botResponse });
-
-                } catch (error) {
-                    console.error("Grok Chat Error:", error);
-                    if (chatWindow.contains(loadingWrapper)) chatWindow.removeChild(loadingWrapper);
-                    appendMessage("Grok yanıt verirken bir hata oluştu.", false);
-                }
+                appendMessage("Üzgünüm, Grok yanıt verirken bir hata oluştu. Lütfen konsolu kontrol edin.", false);
             }
         });
     </script>
