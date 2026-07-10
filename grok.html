@@ -7,7 +7,6 @@
     <script src="https://js.puter.com/v2/"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* Custom scrollbar for chat window */
         .chat-scroll::-webkit-scrollbar {
             width: 6px;
         }
@@ -59,7 +58,9 @@
         const chatWindow = document.getElementById('chat-window');
         const chatForm = document.getElementById('chat-form');
         const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
+
+        // Mesaj geçmişini hafızada tutmak için array (Grok'un bağlamı hatırlamasını sağlar)
+        let messageHistory = [];
 
         // Mesajı ekrana yazdırma fonksiyonu
         function appendMessage(text, isUser = false) {
@@ -79,7 +80,7 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // Form gönderildiğinde (Mesaj atıldığında)
+        // Form gönderildiğinde
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -90,6 +91,9 @@
             appendMessage(message, true);
             userInput.value = '';
 
+            // Geçmişe ekle
+            messageHistory.push({ role: 'user', content: message });
+
             // Loading göstergesi ekle
             const loadingWrapper = document.createElement('div');
             loadingWrapper.className = "flex items-start gap-2.5 opacity-50";
@@ -98,20 +102,22 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
 
             try {
-                // Puter.js Yapay Zeka servisi çağrısı
-                // 'grok-beta' veya 'grok-2' Puter'ın güncel modellerine göre güncellenebilir.
-                const response = await puter.ai.chat(message, { model: 'grok-beta' });
+                // Puter.js chat servisi çağrısı (Chat geçmişini ve güncel modeli gönderiyoruz)
+                const response = await puter.ai.chat(messageHistory, { model: 'grok-2' });
                 
                 // Loading'i kaldır
                 chatWindow.removeChild(loadingWrapper);
 
-                // Bot yanıtını ekle
-                appendMessage(response.message.content);
+                const botResponse = response.message.content;
+                
+                // Bot yanıtını ekrana yazdır ve geçmişe kaydet
+                appendMessage(botResponse);
+                messageHistory.push({ role: 'assistant', content: botResponse });
 
             } catch (error) {
                 console.error("Puter Error:", error);
                 chatWindow.removeChild(loadingWrapper);
-                appendMessage("Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.", false);
+                appendMessage("Üzgünüm, bir hata oluştu. Model ismi veya API yapısı değişmiş olabilir.", false);
             }
         });
     </script>
