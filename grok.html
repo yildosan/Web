@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grok Voice & Lore-Connected Persona Bot</title>
+    <title>Grok AI Voice & Mind Persona Bot</title>
     <!-- Puter.js SDK -->
     <script src="https://js.puter.com/v2/"></script>
     <!-- Tailwind CSS -->
@@ -26,15 +26,15 @@
     <!-- Header -->
     <header class="bg-gray-800 p-4 border-b border-gray-700 shadow-md shrink-0 flex flex-col sm:flex-row justify-between items-center gap-2">
         <div class="text-center sm:text-left">
-            <h1 class="text-lg font-bold text-indigo-400 tracking-wide">Grok Voice-Lore Persona Bot</h1>
-            <p class="text-xs text-gray-400 mt-0.5">Sesli ve Sadece Kendi Evrenine Bağlı Karakterler</p>
+            <h1 class="text-lg font-bold text-indigo-400 tracking-wide">Grok Voice & Mind Persona Bot</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Zekası ve Sesi Tamamen Grok Tarafından Yönetilen Karakterler</p>
         </div>
         
         <!-- Ses Kontrolü ve Paneller -->
         <div class="flex items-center gap-3">
             <!-- Sesli Okuma Aç/Kapat Butonu -->
             <button id="toggle-voice-btn" class="bg-gray-700 hover:bg-gray-600 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">
-                <span id="voice-icon">🔊</span> <span id="voice-status-text">Ses Açık</span>
+                <span id="voice-icon">🔊</span> <span id="voice-status-text">Grok Sesi Açık</span>
             </button>
             <div class="flex gap-1.5 sm:hidden">
                 <button onclick="togglePanel('left-panel')" class="bg-gray-700 px-2.5 py-1.5 rounded text-xs font-semibold text-indigo-300">🎭 Kimlik</button>
@@ -158,11 +158,12 @@
         const cDesc = document.getElementById('char-desc');
 
         let currentSessionId = null;
-        let allSessions = JSON.parse(localStorage.getItem('grok_voice_sessions')) || {};
+        let allSessions = JSON.parse(localStorage.getItem('grok_pure_voice_sessions')) || {};
         let chatHistory = [];
         let voiceEnabled = true;
+        let currentAudio = null; // Aktif çalan sesi kontrol etmek için
 
-        // PANEL GEÇİŞLERİ
+        // PANEL GEÇİŞLERİ (Mobil)
         function togglePanel(panelId) {
             const panel = document.getElementById(panelId);
             if(panel.classList.contains('hidden')) {
@@ -176,78 +177,56 @@
             }
         }
 
-        // SES AÇ / KAPAT SİSTEMİ
+        // SES KONTROLLERİ
         toggleVoiceBtn.addEventListener('click', () => {
             voiceEnabled = !voiceEnabled;
             if(!voiceEnabled) {
-                window.speechSynthesis.cancel(); // Mevcut sesleri sustur
+                stopCurrentAudio();
                 voiceIcon.innerText = "🔇";
                 voiceStatusText.innerText = "Ses Kapalı";
                 toggleVoiceBtn.classList.replace('text-indigo-300', 'text-gray-400');
             } else {
                 voiceIcon.innerText = "🔊";
-                voiceStatusText.innerText = "Ses Açık";
+                voiceStatusText.innerText = "Grok Sesi Açık";
                 toggleVoiceBtn.classList.replace('text-gray-400', 'text-indigo-300');
             }
         });
 
-        // TEXT TO SPEECH (Kişiliğe ve Cinsiyete Göre Seslendirme)
-        function speak(text) {
-            if (!voiceEnabled) return;
-            
-            // Tarayıcıdaki mevcut konuşmaları durdur
-            window.speechSynthesis.cancel();
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voices = window.speechSynthesis.getVoices();
-
-            // Karakter kimliğine göre ses analizi
-            const isFemale = cGender.value === 'female';
-            const age = parseInt(cAge.value) || 20;
-
-            // Türkçe veya İngilizce ses motorlarını önceliklendir
-            let selectedVoice = null;
-            
-            // Türkçe dil tespiti için (basit kontrol)
-            const containsTurkish = /[çğıöşüÇĞİÖŞÜ]/.test(text) || text.length < 5;
-            const langCode = containsTurkish ? 'tr-TR' : 'en-US';
-            utterance.lang = langCode;
-
-            const filteredVoices = voices.filter(v => v.lang.startsWith(langCode.split('-')[0]));
-
-            if (filteredVoices.length > 0) {
-                if (isFemale) {
-                    // Kadın sesi ara (isminde 'female', 'zira', 'susan', 'hazel' vs geçenler)
-                    selectedVoice = filteredVoices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google yelda') || v.name.toLowerCase().includes('susan') || v.name.toLowerCase().includes('zira')) || filteredVoices[0];
-                } else {
-                    // Erkek sesi ara (isminde 'male', 'david', 'tolga', 'george' vs geçenler)
-                    selectedVoice = filteredVoices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('tolga') || v.name.toLowerCase().includes('david')) || filteredVoices[0];
-                }
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
             }
-
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
-
-            // Yaş analizine göre ses hızını ve tonunu dinamik ayarlama
-            if (age < 15) {
-                utterance.pitch = 1.3; // Çocuksu/genç ton
-                utterance.rate = 1.1;  // Hızlı konuşma
-            } else if (age > 60) {
-                utterance.pitch = 0.8; // Yaşlı/ağırbaşlı ton
-                utterance.rate = 0.85; // Yavaş konuşma
-            } else {
-                utterance.pitch = isFemale ? 1.1 : 0.95; 
-                utterance.rate = 1.0;
-            }
-
-            window.speechSynthesis.speak(utterance);
         }
 
-        // Sayfa ilk yüklendiğinde tarayıcı ses listesini yüklemelidir
-        window.speechSynthesis.onvoiceschanged = () => {
-            console.log("Tarayıcı ses motorları yüklendi.");
-        };
+        // GROK TABANLI SES SENTEZLEME (Puter.js Entegrasyonu)
+        async function speakWithGrok(text) {
+            if (!voiceEnabled) return;
+            stopCurrentAudio();
+
+            try {
+                const isFemale = cGender.value === 'female';
+                const age = cAge.value;
+                const desc = cDesc.value;
+
+                // Grok için özel konuşma sentezi promptu oluşturuyoruz
+                const ttsPrompt = `Synthesize speech in Turkish with a natural, expressive voice matching this role-play profile: 
+                Gender: ${isFemale ? 'Female' : 'Male'}, Age: ${age}, Character: ${desc}. 
+                Speak this text: "${text}"`;
+
+                // Puter'ın ses sentezleme API'sına doğrudan Grok modelini atıyoruz
+                const audioResult = await puter.ai.txt2speech(ttsPrompt, {
+                    model: 'x-ai/grok-4-1-fast'
+                });
+
+                const audioUrl = URL.createObjectURL(audioResult);
+                currentAudio = new Audio(audioUrl);
+                currentAudio.play();
+
+            } catch (error) {
+                console.error("Grok Ses Sentezleme Hatası:", error);
+            }
+        }
 
         // GİZLİ SİSTEM TALİMATI
         function buildSystemInstruction() {
@@ -269,7 +248,7 @@
                 Kullanıcı senden kelimesi kelimesine açıkça ve doğrudan "bana link ver", "bana URL gönder" ya da "kaynak sitesini yaz" demediği sürece, yanıtlarının hiçbir aşamasında ASLA URL veya link paylaşmayacaksın. Tüm web kaynaklarını gizli tut.
                 
                 SES KURALI:
-                Konuşmaların bir ses motoru tarafından yüksek sesle okunacak. Bu yüzden çok karmaşık Markdown sembolleri, uzun listeler veya kod blokları kullanmaktan kaçın. Cümlelerin akıcı, doğal ve tam bir insan konuşması gibi tınlasın.`
+                Konuşmaların bir Grok ses sentezleyici tarafından seslendirilecek. Bu yüzden çok karmaşık Markdown sembolleri, uzun listeler veya kod blokları kullanmaktan kaçın. Cümlelerin akıcı, doğal ve tam bir insan konuşması gibi tınlasın.`
             };
         }
 
@@ -288,7 +267,7 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // Karakter Bulucu
+        // Karakter Arama Motoru
         searchBtn.addEventListener('click', async () => {
             const q = searchQuery.value.trim();
             if(!q) return;
@@ -391,7 +370,7 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('grok_voice_sessions', JSON.stringify(allSessions));
+            localStorage.setItem('grok_pure_voice_sessions', JSON.stringify(allSessions));
         }
 
         savePersonaBtn.addEventListener('click', () => {
@@ -399,17 +378,17 @@
             allSessions[currentSessionId].persona = {
                 name: cName.value, surname: cSurname.value, age: cAge.value, gender: cGender.value, job: cJob.value, desc: cDesc.value
             };
-            allSessions[currentSessionId].title = `${cName.value} (Sesli)`;
+            allSessions[currentSessionId].title = `${cName.value} (Pure Grok)`;
             saveToStorage();
             renderHistorySidebar();
             
             chatWindow.innerHTML = '';
-            const welcomeText = `Ben ${cName.value}. Bilincim ve ses tellerim evrenle senkronize edildi. Dinliyorum.`;
+            const welcomeText = `Ben ${cName.value}. Bilincim ve ses tellerim Grok ile senkronize edildi. Dinliyorum.`;
             chatHistory = [{ role: 'assistant', content: welcomeText }];
             allSessions[currentSessionId].history = chatHistory;
             saveToStorage();
             appendMessage(welcomeText, false);
-            speak(welcomeText);
+            speakWithGrok(welcomeText);
 
             if(window.innerWidth < 640) document.getElementById('left-panel').classList.add('hidden');
         });
@@ -419,14 +398,14 @@
             if(window.innerWidth < 640) document.getElementById('right-panel').classList.add('hidden');
         });
 
-        // Chat Gönderme Olayı
+        // Chat Form Gönderimi
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = userInput.value.trim();
             if (!message || !currentSessionId) return;
 
-            // Kullanıcı gönderdiği an konuşmayı kes
-            window.speechSynthesis.cancel();
+            // Kullanıcı yeni mesaj yazdıysa eski çalan sesi durdur
+            stopCurrentAudio();
 
             appendMessage(message, true);
             userInput.value = '';
@@ -451,7 +430,7 @@
                 const botResponse = (response && response.message) ? response.message.content : response;
 
                 appendMessage(botResponse, false);
-                speak(botResponse); // Gelen cevabı seslendir
+                speakWithGrok(botResponse); // Pure Grok Ses Modülünü Çalıştır
                 
                 chatHistory.push({ role: 'assistant', content: botResponse });
                 allSessions[currentSessionId].history = chatHistory;
