@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grok Lore-Connected Persona Bot</title>
+    <title>Grok Voice & Lore-Connected Persona Bot</title>
     <!-- Puter.js SDK -->
     <script src="https://js.puter.com/v2/"></script>
     <!-- Tailwind CSS -->
@@ -24,15 +24,22 @@
 <body class="bg-gray-900 text-gray-100 h-screen flex flex-col font-sans overflow-hidden">
 
     <!-- Header -->
-    <header class="bg-gray-800 p-4 text-center border-b border-gray-700 shadow-md shrink-0 flex flex-col sm:flex-row justify-between items-center gap-2">
-        <div>
-            <h1 class="text-lg font-bold text-indigo-400 tracking-wide">Grok Lore Connected Persona Bot</h1>
-            <p class="text-xs text-gray-400 mt-0.5">Sadece Kendi Evrenine Bağlı Karakterler (Link Korumalı)</p>
+    <header class="bg-gray-800 p-4 border-b border-gray-700 shadow-md shrink-0 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div class="text-center sm:text-left">
+            <h1 class="text-lg font-bold text-indigo-400 tracking-wide">Grok Voice-Lore Persona Bot</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Sesli ve Sadece Kendi Evrenine Bağlı Karakterler</p>
         </div>
-        <!-- Mobil Navigasyon Butonları -->
-        <div class="flex gap-2 sm:hidden w-full justify-center">
-            <button onclick="togglePanel('left-panel')" class="bg-gray-700 px-3 py-1 rounded text-xs font-semibold text-indigo-300">🎭 Kimlik</button>
-            <button onclick="togglePanel('right-panel')" class="bg-gray-700 px-3 py-1 rounded text-xs font-semibold text-indigo-300">📜 Geçmiş</button>
+        
+        <!-- Ses Kontrolü ve Paneller -->
+        <div class="flex items-center gap-3">
+            <!-- Sesli Okuma Aç/Kapat Butonu -->
+            <button id="toggle-voice-btn" class="bg-gray-700 hover:bg-gray-600 text-indigo-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors">
+                <span id="voice-icon">🔊</span> <span id="voice-status-text">Ses Açık</span>
+            </button>
+            <div class="flex gap-1.5 sm:hidden">
+                <button onclick="togglePanel('left-panel')" class="bg-gray-700 px-2.5 py-1.5 rounded text-xs font-semibold text-indigo-300">🎭 Kimlik</button>
+                <button onclick="togglePanel('right-panel')" class="bg-gray-700 px-2.5 py-1.5 rounded text-xs font-semibold text-indigo-300">📜 Geçmiş</button>
+            </div>
         </div>
     </header>
 
@@ -68,6 +75,13 @@
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Yaş:</label>
                     <input type="text" id="char-age" value="18" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Cinsiyet:</label>
+                    <select id="char-gender" class="w-full bg-gray-700 p-2 rounded border border-gray-600 focus:outline-none focus:border-indigo-500 text-xs text-white">
+                        <option value="female" selected>Kadın (Female)</option>
+                        <option value="male">Erkek (Male)</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-400 mb-1">Meslek / Rol:</label>
@@ -132,17 +146,23 @@
         const searchBtn = document.getElementById('search-btn');
         const searchQuery = document.getElementById('search-query');
         const searchStatus = document.getElementById('search-status');
+        const toggleVoiceBtn = document.getElementById('toggle-voice-btn');
+        const voiceIcon = document.getElementById('voice-icon');
+        const voiceStatusText = document.getElementById('voice-status-text');
 
         const cName = document.getElementById('char-name');
         const cSurname = document.getElementById('char-surname');
         const cAge = document.getElementById('char-age');
+        const cGender = document.getElementById('char-gender');
         const cJob = document.getElementById('char-job');
         const cDesc = document.getElementById('char-desc');
 
         let currentSessionId = null;
-        let allSessions = JSON.parse(localStorage.getItem('grok_link_shield_sessions')) || {};
+        let allSessions = JSON.parse(localStorage.getItem('grok_voice_sessions')) || {};
         let chatHistory = [];
+        let voiceEnabled = true;
 
+        // PANEL GEÇİŞLERİ
         function togglePanel(panelId) {
             const panel = document.getElementById(panelId);
             if(panel.classList.contains('hidden')) {
@@ -156,7 +176,80 @@
             }
         }
 
-        // KURAL GÜNCELLEMESİ: Kesinlikle link vermemesi emredildi
+        // SES AÇ / KAPAT SİSTEMİ
+        toggleVoiceBtn.addEventListener('click', () => {
+            voiceEnabled = !voiceEnabled;
+            if(!voiceEnabled) {
+                window.speechSynthesis.cancel(); // Mevcut sesleri sustur
+                voiceIcon.innerText = "🔇";
+                voiceStatusText.innerText = "Ses Kapalı";
+                toggleVoiceBtn.classList.replace('text-indigo-300', 'text-gray-400');
+            } else {
+                voiceIcon.innerText = "🔊";
+                voiceStatusText.innerText = "Ses Açık";
+                toggleVoiceBtn.classList.replace('text-gray-400', 'text-indigo-300');
+            }
+        });
+
+        // TEXT TO SPEECH (Kişiliğe ve Cinsiyete Göre Seslendirme)
+        function speak(text) {
+            if (!voiceEnabled) return;
+            
+            // Tarayıcıdaki mevcut konuşmaları durdur
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
+
+            // Karakter kimliğine göre ses analizi
+            const isFemale = cGender.value === 'female';
+            const age = parseInt(cAge.value) || 20;
+
+            // Türkçe veya İngilizce ses motorlarını önceliklendir
+            let selectedVoice = null;
+            
+            // Türkçe dil tespiti için (basit kontrol)
+            const containsTurkish = /[çğıöşüÇĞİÖŞÜ]/.test(text) || text.length < 5;
+            const langCode = containsTurkish ? 'tr-TR' : 'en-US';
+            utterance.lang = langCode;
+
+            const filteredVoices = voices.filter(v => v.lang.startsWith(langCode.split('-')[0]));
+
+            if (filteredVoices.length > 0) {
+                if (isFemale) {
+                    // Kadın sesi ara (isminde 'female', 'zira', 'susan', 'hazel' vs geçenler)
+                    selectedVoice = filteredVoices.find(v => v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google yelda') || v.name.toLowerCase().includes('susan') || v.name.toLowerCase().includes('zira')) || filteredVoices[0];
+                } else {
+                    // Erkek sesi ara (isminde 'male', 'david', 'tolga', 'george' vs geçenler)
+                    selectedVoice = filteredVoices.find(v => v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('tolga') || v.name.toLowerCase().includes('david')) || filteredVoices[0];
+                }
+            }
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+
+            // Yaş analizine göre ses hızını ve tonunu dinamik ayarlama
+            if (age < 15) {
+                utterance.pitch = 1.3; // Çocuksu/genç ton
+                utterance.rate = 1.1;  // Hızlı konuşma
+            } else if (age > 60) {
+                utterance.pitch = 0.8; // Yaşlı/ağırbaşlı ton
+                utterance.rate = 0.85; // Yavaş konuşma
+            } else {
+                utterance.pitch = isFemale ? 1.1 : 0.95; 
+                utterance.rate = 1.0;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Sayfa ilk yüklendiğinde tarayıcı ses listesini yüklemelidir
+        window.speechSynthesis.onvoiceschanged = () => {
+            console.log("Tarayıcı ses motorları yüklendi.");
+        };
+
+        // GİZLİ SİSTEM TALİMATI
         function buildSystemInstruction() {
             return {
                 role: 'system',
@@ -169,11 +262,14 @@
                 
                 LORE SENSÖRÜ VE İNTERNET KURALI: 
                 1. Sana tanımlanan internet arama (web_search) aracını SADECE canlandırdığın karakterin kendi evreni, kendi biyografisi, kendi şirketleri/projeleri ya da hikayesindeki diğer karakterlerle ilgili detayları doğrulamak veya hatırlamak için kullanabilirsin.
-                2. Canlandırdığın karakterin hayatı veya evreniyle hiçbir bağı olmayan genel dünya gündemi, alakasız spor müsabakaları, siyaset veya yabancı magazin olayları hakkında kullanıcı bir şey sorarsa, bunlar için internet araması YAPMA. Bu tarz alakasız konuları bilmiyormuş gibi yap ve karakterinin mizacına uygun şekilde konuyu geçiştir.
+                2. Canlandırdığın karakterin hayatı veya evreniyle hiçbir bağı olmayan genel dünya gündemi hakkında internet araması YAPMA. Bu tarz alakasız konuları bilmiyormuş gibi yap ve karakterinin mizacına uygun şekilde konuyu geçiştir.
                 3. Arama yaptığını kesinlikle gizle. Bilgileri kendi öz hafızandan aktarır gibi, tamamen doğal bir üslupla konuşmaya dahil et.
                 
                 KESİN LİNK YASAĞI:
-                Kullanıcı senden kelimesi kelimesine açıkça ve doğrudan "bana link ver", "bana URL gönder" ya da "kaynak sitesini yaz" demediği sürece, yanıtlarının hiçbir aşamasında (internetten bilgi çeksen dahi) ASLA URL, internet sitesi adresi, link veya köprü metni paylaşmayacaksın. Tüm web kaynaklarını gizli tut, bilgiyi sadece bir insan gibi düz metin cümleleriyle anlat.`
+                Kullanıcı senden kelimesi kelimesine açıkça ve doğrudan "bana link ver", "bana URL gönder" ya da "kaynak sitesini yaz" demediği sürece, yanıtlarının hiçbir aşamasında ASLA URL veya link paylaşmayacaksın. Tüm web kaynaklarını gizli tut.
+                
+                SES KURALI:
+                Konuşmaların bir ses motoru tarafından yüksek sesle okunacak. Bu yüzden çok karmaşık Markdown sembolleri, uzun listeler veya kod blokları kullanmaktan kaçın. Cümlelerin akıcı, doğal ve tam bir insan konuşması gibi tınlasın.`
             };
         }
 
@@ -208,6 +304,7 @@
                     "name": "Karakterin Adı",
                     "surname": "Karakterin Soyadı (yoksa boş bırak)",
                     "age": "Karakterin yaşı",
+                    "gender": "female veya male girin",
                     "job": "Mesleği veya rolü",
                     "desc": "Kişilik analizi, konuşma üslubu ve genel tanımı."
                 }`;
@@ -224,6 +321,7 @@
                 cName.value = data.name || '';
                 cSurname.value = data.surname || '';
                 cAge.value = data.age || '';
+                cGender.value = data.gender === 'male' ? 'male' : 'female';
                 cJob.value = data.job || '';
                 cDesc.value = data.desc || '';
 
@@ -246,7 +344,7 @@
             allSessions[currentSessionId] = {
                 title: `${cName.value} (${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})`,
                 history: [{ role: 'assistant', content: welcomeText }],
-                persona: { name: cName.value, surname: cSurname.value, age: cAge.value, job: cJob.value, desc: cDesc.value }
+                persona: { name: cName.value, surname: cSurname.value, age: cAge.value, gender: cGender.value, job: cJob.value, desc: cDesc.value }
             };
             
             saveToStorage();
@@ -264,6 +362,7 @@
                 cName.value = session.persona.name || '';
                 cSurname.value = session.persona.surname || '';
                 cAge.value = session.persona.age || '';
+                cGender.value = session.persona.gender || 'female';
                 cJob.value = session.persona.job || '';
                 cDesc.value = session.persona.desc || '';
             }
@@ -292,23 +391,25 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('grok_link_shield_sessions', JSON.stringify(allSessions));
+            localStorage.setItem('grok_voice_sessions', JSON.stringify(allSessions));
         }
 
         savePersonaBtn.addEventListener('click', () => {
             if(!currentSessionId) return;
             allSessions[currentSessionId].persona = {
-                name: cName.value, surname: cSurname.value, age: cAge.value, job: cJob.value, desc: cDesc.value
+                name: cName.value, surname: cSurname.value, age: cAge.value, gender: cGender.value, job: cJob.value, desc: cDesc.value
             };
-            allSessions[currentSessionId].title = `${cName.value} (Link Korumalı)`;
+            allSessions[currentSessionId].title = `${cName.value} (Sesli)`;
             saveToStorage();
             renderHistorySidebar();
             
             chatWindow.innerHTML = '';
-            chatHistory = [{ role: 'assistant', content: `Ben ${cName.value}. Bilincim evrenle senkronize edildi. Dinliyorum.` }];
+            const welcomeText = `Ben ${cName.value}. Bilincim ve ses tellerim evrenle senkronize edildi. Dinliyorum.`;
+            chatHistory = [{ role: 'assistant', content: welcomeText }];
             allSessions[currentSessionId].history = chatHistory;
             saveToStorage();
-            appendMessage(chatHistory[0].content, false);
+            appendMessage(welcomeText, false);
+            speak(welcomeText);
 
             if(window.innerWidth < 640) document.getElementById('left-panel').classList.add('hidden');
         });
@@ -323,6 +424,9 @@
             e.preventDefault();
             const message = userInput.value.trim();
             if (!message || !currentSessionId) return;
+
+            // Kullanıcı gönderdiği an konuşmayı kes
+            window.speechSynthesis.cancel();
 
             appendMessage(message, true);
             userInput.value = '';
@@ -347,8 +451,9 @@
                 const botResponse = (response && response.message) ? response.message.content : response;
 
                 appendMessage(botResponse, false);
-                chatHistory.push({ role: 'assistant', content: botResponse });
+                speak(botResponse); // Gelen cevabı seslendir
                 
+                chatHistory.push({ role: 'assistant', content: botResponse });
                 allSessions[currentSessionId].history = chatHistory;
                 saveToStorage();
 
