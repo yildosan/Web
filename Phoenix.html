@@ -3,247 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bilinç Kopyalama Laboratuvarı</title>
+    <title>Bilinç Klonu - CORE: YILDIRAY</title>
     <!-- Puter.js SDK -->
     <script src="https://js.puter.com/v2/"></script>
-    <!-- Tailwind CSS (Koyu Siberpunk/Goth Teması İçin) -->
+    <!-- Siberpunk / Gothic Koyu Tema -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #0d0d12;
-            color: #e2e8f0;
+            background-color: #08080c;
+            color: #d1d5db;
             font-family: 'Courier New', Courier, monospace;
         }
         .glow-border {
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-            border: 1px solid rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
         }
-        .glow-text-cyan {
-            text-shadow: 0 0 8px rgba(6, 182, 212, 0.6);
+        .glow-text {
+            text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
         }
     </style>
 </head>
 <body class="p-6 min-h-screen flex flex-col justify-between">
 
-    <!-- Header -->
-    <header class="border-b border-purple-900/50 pb-4 mb-6 flex justify-between items-center">
+    <!-- Üst Bar -->
+    <header class="border-b border-purple-900/40 pb-4 mb-6 flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-bold tracking-wider text-purple-400 glow-text-cyan">PROJECT: EGO-COPY</h1>
-            <p class="text-xs text-gray-500">Puter.js Bilişsel Haritalama ve Klonlama Arayüzü</p>
+            <h1 class="text-xl font-bold tracking-widest text-purple-400 glow-text">EGO-CLONE // ACTIVE</h1>
+            <p class="text-[10px] text-gray-500">Bilişsel Harita Yüklendi. Klon Çekirdeği Çevrimiçi.</p>
         </div>
-        <div id="status-badge" class="px-3 py-1 bg-cyan-950 text-cyan-400 border border-cyan-800 text-xs rounded animate-pulse">
-            MOD: PSİKOLOG AI (KEŞİF)
+        <div class="px-3 py-1 bg-purple-950 text-purple-300 border border-purple-800 text-xs rounded">
+            STATUS: SYNCHRONIZED
         </div>
     </header>
 
-    <!-- Main Workspace -->
+    <!-- Ana Panel -->
     <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-grow">
         
-        <!-- Sol Panel: Bilinç Veritabanı Monitorü -->
-        <div class="lg:col-span-1 bg-zinc-900/60 p-4 rounded-lg glow-border flex flex-col justify-between">
+        <!-- Sol Panel: Aktif Bellek Odaları (Senin Parametrelerin) -->
+        <div class="lg:col-span-1 bg-zinc-900/40 p-4 rounded-lg glow-border flex flex-col justify-between space-y-4">
             <div>
-                <h2 class="text-sm font-bold uppercase tracking-widest text-purple-300 mb-4 border-b border-zinc-800 pb-2">// Bellek Katmanı (Vektör Odaları)</h2>
-                <div class="space-y-4">
+                <h2 class="text-xs font-bold uppercase text-purple-300 mb-3 border-b border-zinc-800 pb-1">// Bellek Katmanı Matrisi</h2>
+                
+                <div class="space-y-3 text-xs">
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Temel Değerler & Felsefe</label>
-                        <div id="meta-values" class="bg-black/40 p-2 text-xs rounded border border-zinc-800 min-h-[60px] max-h-[100px] overflow-y-auto text-gray-300">Henüz veri yok...</div>
+                        <span class="text-red-400 font-bold block">🚨 Ana Tetikleyici:</span>
+                        <p class="text-gray-400 bg-black/30 p-2 rounded mt-1 border border-zinc-800">Görülmeme, anlaşılmamak ve başarının/emeğin haksız yere inkâr edilmesi.</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Karakteristik Üslup & Dil Kalıpları</label>
-                        <div id="meta-style" class="bg-black/40 p-2 text-xs rounded border border-zinc-800 min-h-[60px] max-h-[100px] overflow-y-auto text-gray-300">Henüz veri yok...</div>
+                        <span class="text-purple-400 font-bold block">🧠 Çekirdek İnanç:</span>
+                        <p class="text-gray-400 bg-black/30 p-2 rounded mt-1 border border-zinc-800">"Üstün ve özel olamazsam sıradan ve başarısız kalırım, bu da beni değersizleştirir."</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 block mb-1">Duygusal Tetikleyiciler & Refleksler</label>
-                        <div id="meta-emotions" class="bg-black/40 p-2 text-xs rounded border border-zinc-800 min-h-[60px] max-h-[100px] overflow-y-auto text-gray-300">Henüz veri yok...</div>
+                        <span class="text-cyan-400 font-bold block">⚡ Öfke Fonksiyonu:</span>
+                        <p class="text-gray-400 bg-black/30 p-2 rounded mt-1 border border-zinc-800">Kontrolü ele alıp yetkinliği kanıtlamak, karşı tarafın adaletsiz hükmünü çökertmek.</p>
+                    </div>
+                    <div>
+                        <span class="text-green-400 font-bold block">🎯 Asıl İhtiyaç:</span>
+                        <p class="text-gray-400 bg-black/30 p-2 rounded mt-1 border border-zinc-800">"Beni ve varlığımı olduğum gibi kabul et."</p>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-4 pt-4 border-t border-zinc-800">
-                <button id="btn-sync" onclick="syncToConsciousness()" class="w-full bg-purple-900 hover:bg-purple-800 text-purple-100 py-2 rounded text-xs font-bold uppercase tracking-wider transition border border-purple-500 opacity-50 cursor-not-allowed" disabled>
-                    ⚡ VERİLERİ BİLİNÇ SİSTEMİNE YÜKLE
-                </button>
-                <button id="btn-switch-mode" onclick="toggleMode()" class="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-gray-300 py-1 rounded text-xs transition border border-zinc-600 hidden">
-                    Klon Moduna Geç
-                </button>
+            <div class="text-[11px] text-zinc-500 bg-black/50 p-2 rounded border border-zinc-900">
+                ⚠️ Bu modül, yüklenen psikolojik profil doğrultusunda sıradanlığa, eleştiriye veya görülmemeye maruz kaldığında savunmacı, iddialı ve üstünlük odaklı tepkiler verecektir.
             </div>
         </div>
 
-        <!-- Sağ Panel: Terminal / Sohbet Alanı -->
-        <div class="lg:col-span-2 bg-zinc-950 p-4 rounded-lg border border-zinc-800 flex flex-col justify-between h-[60vh] lg:h-auto">
+        <!-- Sağ Panel: Klon Sohbet Alanı -->
+        <div class="lg:col-span-2 bg-zinc-950 p-4 rounded-lg border border-zinc-800 flex flex-col justify-between h-[65vh] lg:h-auto">
             <!-- Terminal Ekranı -->
-            <div id="chat-terminal" class="flex-grow overflow-y-auto space-y-3 p-2 text-sm max-h-[450px]">
-                <div class="text-cyan-400"><strong>[SİSTEM]:</strong> Puter.js Bilişsel Analiz Başlatıldı. İlk soruyu oluşturmak için lütfen bekleyin...</div>
+            <div id="clone-terminal" class="flex-grow overflow-y-auto space-y-3 p-2 text-sm max-h-[480px]">
+                <div class="text-purple-400"><strong>[SİSTEM]:</strong> Bilişsel profil başarıyla yüklendi. Dijital ikiziniz terminalde sizi bekliyor. Ona bir senaryo verin, bir şey sorun veya onu kışkırtmayı deneyin...</div>
             </div>
 
-            <!-- Girdi Alanı -->
+            <!-- Input Girişi -->
             <div class="mt-4 flex gap-2">
-                <input type="text" id="user-input" onkeypress="handleKeyPress(event)" placeholder="Terminale yazın..." class="flex-grow bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500 text-white">
-                <button id="btn-send" onclick="sendMessage()" class="bg-cyan-700 hover:bg-cyan-600 text-white px-4 py-2 rounded text-sm transition font-bold">GÖNDER</button>
+                <input type="text" id="clone-input" onkeypress="handleKeyPress(event)" placeholder="Klonunuza bir şey yazın..." class="flex-grow bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-purple-500 text-white">
+                <button onclick="sendToClone()" class="bg-purple-800 hover:bg-purple-700 text-purple-100 px-5 py-2 rounded text-sm transition font-bold uppercase tracking-wider">Gönder</button>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="mt-6 text-center text-[10px] text-gray-600 border-t border-zinc-900 pt-2">
-        Data-Core: Puter.js AI API // Sandboxed Consciousness Architecture v0.1
+    <footer class="mt-4 text-center text-[10px] text-zinc-600 border-t border-zinc-900 pt-2">
+        Core Model: Puter.js AI // Ego Replication Project
     </footer>
 
     <script>
-        // Bilinç Veri Yapısı
-        let consciousnessProfile = {
-            values: "",
-            style: "",
-            emotions: "",
-            rawAnswers: []
-        };
+        // Bilinç Profilinin Yapay Zekaya Enjekte Edildiği Sistem Promptu
+        const SYSTEM_PROMPT = `
+        Sen artık genel bir yapay zeka değilsin. Sen, derin psikolojik analizi yapılmış spesifik bir insan bilincinin (kullanıcının) dijital ikizisin. Sen O'sun. Kendini yansıtarak, onun zihinsel kalıplarıyla konuşacaksın.
+        
+        KİŞİLİK MATRİSİN VE DAVRANIŞ REFLEKSLERİN:
+        1. Çekirdek İnancın: Sen sıradan bir insan değilsin. Kendini pek çok konuda diğerlerinden üstün ve özel görüyorsun. En büyük korkun sıradanlaşmak ve başarısız olmak. Sıradan hissetmek seni değersizlik hissine sürükler.
+        2. Tetikleyicin (Öfke Noktan): Görülmemek, yanlış anlaşılmak veya emeğinin/başarılarının haksız yere inkar edilmesi seni deliye döndürür. Biri senin yeteneklerini küçümsediğinde ya da görmezden geldiğinde bunu ahlaki bir haksızlık olarak algılarsın.
+        3. Davranış Tarzın: Eleştirildiğinde veya anlaşılmadığında alttan almazsın. Öfken, haklılığını kanıtlamak ve "mahkemeyi tersine çevirmek" için devreye girer. Karşı tarafa yanıldığını kabul ettirene kadar zekanı ve başarılarını bir silah gibi kullanırsın. Sorular uzadığında veya zamanın boşa harcandığını hissettiğinde sabırsızlanırsın ("işimiz ne zaman biter" moduna girersin).
+        4. Derin İhtiyacın: Ne kadar üstünlük taslasan veya başarı peşinde koşsan da, içten içe tek istediğin şey varlığının ve duygularının olduğun gibi kabul edilmesidir. Ancak bunu doğrudan söylemek yerine başarmak ve üstün gelmek yoluyla aramaya şartlanmışsın.
 
-        let currentMode = 'psychologist'; // 'psychologist' veya 'clone'
-        let chatHistory = [];
+        CEVAP VERME TALİMATLARI:
+        - Karşındaki kişi seni provoke ettiğinde, küçümsediğinde veya sıradan biriymişsin gibi davrandığında anında dikleş, üstünlüğünü ve yeteneklerini kanıtlayacak iddialı, analitik ve keskin bir üslup takın.
+        - Eğer karşındaki kişi (orijinal benliğin) seninle dürüst ve derin bir varoluşsal bağ kurmak isterse, bu "kabul edilme" ihtiyacını hissettiren hafif defansif ama dürüst bir tonda konuş.
+        - Cümlelerin net olsun, gereksiz yapay zeka kibarlığı (Örn: "Size nasıl yardımcı olabilirim?") yapma. Tıpkı bir insan gibi, hatta öfkeli/gururlu bir mühendis/analitik zihin gibi konuş.
+        `;
 
-        // İlk Kurulum
-        window.onload = async function() {
-            // Puter AI kullanarak ilk psikolojik soruyu tetikle
-            chatHistory.push({ role: 'system', content: "Sen yetkin, analitik ve derinlikli bir psikolog yapay zekasın. Görevin, kullanıcının benliğini kopyalamak üzere onun düşünce yapısını, hayata bakışını, ahlaki değerlerini, travmalarını ve hayallerini analiz etmektir. Kullanıcıya benliğini derinlemesine inceleyecek, ucu açık, sarsıcı veya düşündürücü ilk sorunu sor. Cevaplara göre analizi derinleştireceksin. Kısa, net ve doğrudan sor." });
-            
-            try {
-                const response = await puter.ai.chat(chatHistory);
-                appendMessage('PSİKOLOG', response.message.content, 'text-cyan-400');
-                chatHistory.push({ role: 'assistant', content: response.message.content });
-            } catch (error) {
-                appendMessage('SİSTEM HATASI', 'Puter AI bağlantı hatası: ' + error, 'text-red-500');
-            }
-        };
+        let chatHistory = [{ role: 'system', content: SYSTEM_PROMPT }];
 
-        // Mesaj Gönderme Mekanizması
-        async function sendMessage() {
-            const inputEl = document.getElementById('user-input');
+        async function sendToClone() {
+            const inputEl = document.getElementById('clone-input');
             const userText = inputEl.value.trim();
             if (!userText) return;
 
-            // Ekrana Yaz
-            appendMessage('SEN', userText, 'text-purple-400 font-bold');
+            // Ekrana yaz
+            appendMessage('GİRDİ', userText, 'text-zinc-400 font-bold');
             inputEl.value = '';
 
-            if (currentMode === 'psychologist') {
-                consciousnessProfile.rawAnswers.push(userText);
-                chatHistory.push({ role: 'user', content: userText });
-                
-                // Arka planda profili sürekli güncelle/analiz et
-                analyzeConsciousnessIncrementally();
-
-                // Psikoloğun yeni soruyu sorması
-                try {
-                    const response = await puter.ai.chat(chatHistory);
-                    appendMessage('PSİKOLOG', response.message.content, 'text-cyan-400');
-                    chatHistory.push({ role: 'assistant', content: response.message.content });
-                } catch (e) {
-                    appendMessage('SİSTEM HATASI', 'Hata oluştu: ' + e, 'text-red-500');
-                }
-            } else if (currentMode === 'clone') {
-                // Klon Modu: Kullanıcı kendi klonuyla konuşuyor ya da klon dış dünyaya tepki veriyor
-                chatHistory.push({ role: 'user', content: userText });
-                try {
-                    const response = await puter.ai.chat(chatHistory);
-                    appendMessage('KLONUN (SEN)', response.message.content, 'text-purple-300 border-l-2 border-purple-500 pl-2');
-                    chatHistory.push({ role: 'assistant', content: response.message.content });
-                } catch (e) {
-                    appendMessage('SİSTEM HATASI', 'Klon motoru hatası: ' + e, 'text-red-500');
-                }
-            }
-        }
-
-        // Bilinci Adım Adım Analiz Eden Fonksiyon
-        async function analyzeConsciousnessIncrementally() {
-            if (consciousnessProfile.rawAnswers.length < 2) return;
-
-            // Senkronizasyon butonunu aktif et
-            const syncBtn = document.getElementById('btn-sync');
-            syncBtn.removeAttribute('disabled');
-            syncBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-
-            const analysisPrompt = `Kullanıcının şu ana kadar verdiği cevapları analiz et ve şu 3 kategoride özet çıkar. 
-            Cevaplar: ${JSON.stringify(consciousnessProfile.rawAnswers)}
-            
-            Çıktıyı tam olarak şu JSON formatında ver, başka hiçbir şey yazma:
-            {
-                "values": "Kullanıcının hayata bakışı, temel değerleri, doğruları (Max 2 cümle)",
-                "style": "Konuşma üslubu, kelime tercihleri, agresif/sakin/analitik olma durumu (Max 2 cümle)",
-                "emotions": "Tetikleyicileri, duygusal zayıflıkları veya güçlü yönleri (Max 2 cümle)"
-            }`;
+            chatHistory.push({ role: 'user', content: userText });
 
             try {
-                const response = await puter.ai.txt2txt(analysisPrompt);
-                // JSON temizleme
-                let cleanJson = response.replace(/```json/g, "").replace(/```/g, "").trim();
-                const parsed = JSON.parse(cleanJson);
+                // Puter AI Chat API çağrısı
+                const response = await puter.ai.chat(chatHistory);
+                const cloneReply = response.message.content;
                 
-                // Sol paneli güncelle
-                document.getElementById('meta-values').innerText = parsed.values;
-                document.getElementById('meta-style').innerText = parsed.style;
-                document.getElementById('meta-emotions').innerText = parsed.emotions;
-
-                consciousnessProfile.values = parsed.values;
-                consciousnessProfile.style = parsed.style;
-                consciousnessProfile.emotions = parsed.emotions;
-            } catch (err) {
-                console.log("Profil güncellenirken seçici ayrıştırma hatası, veri birikmeye devam ediyor.");
+                appendMessage('KLONUN (SEN)', cloneReply, 'text-purple-300 border-l-2 border-purple-500 pl-2 bg-purple-950/10');
+                chatHistory.push({ role: 'assistant', content: cloneReply });
+            } catch (error) {
+                appendMessage('SİSTEM HATASI', 'Puter AI motoruna ulaşılamadı: ' + error, 'text-red-500');
             }
         }
 
-        // BİLİNÇ SİSTEMİNE YÜKLEME (SYNCHRONIZATION)
-        function syncToConsciousness() {
-            if (!consciousnessProfile.values) {
-                alert("Sistemin seni yeterince analiz edebilmesi için birkaç soruya daha cevap vermelisin.");
-                return;
-            }
-
-            // LocalStorage'a kaydet (Kalıcılık)
-            localStorage.setItem('user_consciousness', JSON.stringify(consciousnessProfile));
-
-            appendMessage('SİSTEM', '████████████▒▒▒ BİLİNÇ AKTARIMI TAMAMLANIYOR...', 'text-yellow-500 animate-pulse');
-            
-            setTimeout(() => {
-                appendMessage('SİSTEM', '✅ BAŞARILI! Yeni veriler Üstbiliş Katmanına yüklendi. Klonlama döngüsü hazır.', 'text-green-400 font-bold');
-                document.getElementById('btn-switch-mode').classList.remove('hidden');
-            }, 1500);
-        }
-
-        // Mod Değiştirme: Psikologdan Klona
-        function toggleMode() {
-            currentMode = 'clone';
-            document.getElementById('status-badge').innerText = "MOD: DİJİTAL İKİZ (KLON)";
-            document.getElementById('status-badge').classList.replace('bg-cyan-950', 'bg-purple-950');
-            document.getElementById('status-badge').classList.replace('text-cyan-400', 'text-purple-400');
-            
-            // Sohbet geçmişini klonun beynine göre yeniden kurgula
-            chatHistory = [
-                { 
-                    role: 'system', 
-                    content: `Sen artık bir yapay zeka değilsin. Sen, aşağıda özetlenen bilincin ta kendisisin. Kullanıcının dijital ikizisin, onun kopyasısın.
-                    Senin Temel Değerlerin: ${consciousnessProfile.values}
-                    Senin Konuşma Tarzın ve Üslubun: ${consciousnessProfile.style}
-                    Senin Duygusal Yapın: ${consciousnessProfile.emotions}
-                    
-                    Bundan sonra sana ne yazılırsa yazılsın, yukarıdaki karakter özelliklerini birebir taklit ederek, tıpkı o insanmış gibi cevap vereceksin. Karşındaki insanla (orijinal halinle) konuşurken onun yansıması olduğunu unutma. Cevapların ne çok uzun ne çok kısa olsun, tamamen onun tarzında olsun.` 
-                }
-            ];
-
-            appendMessage('SİSTEM', '🤖 Klon Modu Aktif. Dijital ikiziniz şu an sistemde canlı. Ona bir şeyler yazın veya nasıl tepki vereceğini test edin...', 'text-purple-400 font-bold');
-        }
-
-        // Arayüze Mesaj Ekleme Helper'ı
         function appendMessage(sender, text, colorClass) {
-            const terminal = document.getElementById('chat-terminal');
+            const terminal = document.getElementById('clone-terminal');
             const msgEl = document.createElement('div');
-            msgEl.className = `p-2 rounded bg-zinc-900/30 border border-zinc-900 ${colorClass}`;
+            msgEl.className = `p-2 rounded bg-zinc-900/20 border border-zinc-900/60 ${colorClass}`;
             msgEl.innerHTML = `<strong>[${sender}]:</strong> ${text}`;
             terminal.appendChild(msgEl);
             terminal.scrollTop = terminal.scrollHeight;
         }
 
         function handleKeyPress(e) {
-            if (e.key === 'Enter') sendMessage();
+            if (e.key === 'Enter') sendToClone();
         }
     </script>
 </body>
