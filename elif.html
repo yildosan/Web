@@ -3,109 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>root@system:~# access_denied</title>
+    <title>memory_stream_init.sh</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #050508; color: #00ff66; font-family: 'Courier New', Courier, monospace; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #070913; color: #00ffaa; font-family: 'Courier New', Courier, monospace; }
         
-        #terminal { padding: 20px; font-size: 0.9rem; line-height: 1.5; height: 100%; overflow-y: auto; }
-        .error { color: #ff3333; font-weight: bold; }
-        .info { color: #00ffff; }
+        #terminal { padding: 20px; font-size: 0.9rem; line-height: 1.6; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+        #log-area { flex-grow: 1; }
         
-        #quiz-zone { display: none; margin-top: 20px; background: rgba(0, 255, 102, 0.05); border: 1px solid #00ff66; padding: 15px; border-radius: 8px; }
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        button {
-            background: transparent; border: 1px solid #00ff66; color: #00ff66; padding: 12px;
-            font-family: inherit; font-size: 1rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;
-        }
-        button:active { background: #00ff66; color: #050508; }
+        .error { color: #ff4444; font-weight: bold; }
+        .info { color: #00d9ff; font-weight: bold; }
+        .success { color: #a3be8c; }
 
-        #success-screen {
+        #input-zone { display: none; align-items: center; margin-top: 15px; padding-bottom: 20px; }
+        #cmd-input { background: transparent; border: none; color: #00ffaa; font-family: inherit; font-size: 1rem; outline: none; flex-grow: 1; border-bottom: 1px solid #00ffaa; }
+
+        #final-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; color: #fff; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; padding: 30px; text-align: center;
-            opacity: 0; pointer-events: none; transition: all 0.8s ease; transform: translateY(100%);
-            z-index: 10;
+            background: radial-gradient(circle at center, #171b30 0%, #06080f 100%);
+            color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; text-align: center; opacity: 0; pointer-events: none;
+            transition: all 1s ease; transform: translateY(30px); z-index: 100;
         }
         .unlocked { opacity: 1 !important; transform: translateY(0) !important; pointer-events: auto !important; }
-        h1 { font-size: 2.2rem; margin-bottom: 20px; color: #00ff66; text-shadow: 0 0 10px rgba(0,255,102,0.5); }
+        h1 { font-size: 2rem; margin-bottom: 15px; color: #00ffaa; }
     </style>
 </head>
 <body>
 
-    <!-- 1. ETAP: TERMİNAL GİRİŞİ VE HACK EFEKTİ -->
     <div id="terminal">
         <div id="log-area"></div>
         
-        <!-- 2. ETAP: ETKİLEŞİMLİ SORU (DOSTLUK DOĞRULAMASI) -->
-        <div id="quiz-zone">
-            <p class="info">>>> GÜVENLİK SORUSU: Bu sistemi kodlayan en yakın arkadaşının mesleği nedir?</p>
-            <div class="btn-group">
-                <button onclick="answer(false)">Uzay Pilotu 🚀</button>
-                <button onclick="answer(true)">Bilgisayar Mühendisi 💻</button>
-                <button onclick="answer(false)">Profesyonel E-Sporcu 🎮</button>
-            </div>
+        <!-- İNTERAKTİF YAZI ALANI (HER İKİ AŞAMADA DA ORTAK KULLANILIR) -->
+        <div id="input-zone">
+            <span id="prompt-label">cevap:~#&nbsp;</span>
+            <input type="text" id="cmd-input" autofocus autocomplete="off" autocapitalize="off">
         </div>
     </div>
 
-    <!-- 3. ETAP: BAŞARILI KİLİT AÇILMA VE DOĞUM GÜNÜ KARTI -->
-    <div id="success-screen">
-        <div style="font-size: 4rem; margin-bottom: 15px;">🎂</div>
-        <h1>Erişim Sağlandı!</h1>
-        <p style="color: #aaa; line-height: 1.6; max-width: 320px;">
-            <span style="color: #fff; font-weight: bold;">İyi ki doğdun Elif!</span><br><br>
-            Sisteme başarıyla sızdın. Hayatın debug edilmeye ihtiyaç duymadan, bug'sız, stabil ve her zaman neşe dolu geçsin. Kodların hatasız, kahven her zaman sıcak ve yeni yaşın sana tüm güzellikleri getirsin dostum. Doğum günün kutlu olsun!
+    <!-- FİNAL DOĞUM GÜNÜ EKRANI -->
+    <div id="final-screen">
+        <div style="font-size: 4rem; margin-bottom: 15px;">🎉</div>
+        <h1>Sistem Kilidi Açıldı!</h1>
+        <p style="color: #cbd5e1; line-height: 1.7; max-width: 340px; font-size: 1rem;">
+            <span style="color: #fff; font-weight: bold;">İyi ki doğdun Elif! 🎂</span><br><br>
+            "Güneş ne zaman doğar?" sorusundan "her şeyi başlatan mesaj"a kadar tüm hafıza kilitlerini başarıyla açtın. Teknik göründüğüne bakma, bu sistem tamamen sana özel bir doğum günü sürprizi üretmek için tasarlandı.<br><br>
+            Yeni yaşının sana sağlık, neşe, bolca şans ve tüm sevdiklerinle birlikte unutulmaz anılar getirmesini dilerim. Her zaman böyle harika bir dost olarak kal. Doğum günün kutlu olsun, iyi ki varsın!
         </p>
     </div>
 
     <script>
-        const logs = [
-            "CONNECTING TO ELIF_PHONE_RESOURCES...",
-            "SUCCESS: Connection established.",
-            "OVERRIDING SYSTEM INTERFACE...",
-            "WARNING: Security firewall detected.",
-            "INJECTING BIRTHDAY_PROTOCOL.EXE...",
-            "ERROR: Authentication failed. Human presence required.",
-            "HOLD ON... Safety bypass initiated."
-        ];
+        // --- 1. AŞAMA DOĞUM GÜNÜ AYARI ---
+        // Elif'in doğum gününü buraya girin (Farklı format varyasyonlarıyla)
+        const VALID_BIRTHDAYS = ["20.07", "20/07", "2007"]; 
+        // ---------------------------------
 
         const logArea = document.getElementById('log-area');
-        const quizZone = document.getElementById('quiz-zone');
-        let logIndex = 0;
+        const inputZone = document.getElementById('input-zone');
+        const cmdInput = document.getElementById('cmd-input');
+        const promptLabel = document.getElementById('prompt-label');
+        
+        let currentStage = 1; // 1: Doğum Günü, 2: Başlatan Mesaj, 3: Bitiş
 
-        function printLogs() {
-            if (logIndex < logs.length) {
-                let currentLog = logs[logIndex];
-                let isError = currentLog.includes("ERROR") || currentLog.includes("WARNING");
-                
-                logArea.innerHTML += `<p class="${isError ? 'error' : ''}">[+] ${currentLog}</p>`;
-                logIndex++;
-                
-                // Mobil cihazı her logda hafifçe titret
-                if (navigator.vibrate) navigator.vibrate(30);
-                
-                setTimeout(printLogs, 800); // Logların akış hızı
-            } else {
-                // Loglar bitince soruyu aç
-                setTimeout(() => {
-                    quizZone.style.display = 'block';
-                }, 500);
-            }
+        function print(text, type = '') {
+            const p = document.createElement('p');
+            if (type) p.className = type;
+            p.innerHTML = text;
+            logArea.appendChild(p);
+            document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
         }
 
-        function answer(isCorrect) {
-            if (isCorrect) {
+        function startStage1() {
+            print("[+] ANILAR ZİNCİRİ BAŞLATILIYOR...");
+            setTimeout(() => {
+                print("[-] ERİŞİM ENGELLENDİ: Güvenlik protokolü aktif.", "error");
+                print("[?] GÖREV_01: Güneş ne zaman doğar?", "info");
+                promptLabel.innerText = "tarih:~# ";
+                cmdInput.placeholder = "GG.AA formatında...";
+                inputZone.style.display = 'flex';
+                cmdInput.focus();
+            }, 800);
+        }
+
+        function startStage2() {
+            inputZone.style.display = 'none';
+            cmdInput.value = '';
+            print("<br>[✓] TARİH DOĞRULANDI. Bir sonraki kilit yükleniyor...", "success");
+            
+            setTimeout(() => {
+                print("[?] GÖREV_02: her şeyi başlatan mesaj?", "info");
+                promptLabel.innerText = "mesaj:~# ";
+                cmdInput.placeholder = "Cevabı yazın...";
+                inputZone.style.display = 'flex';
+                cmdInput.focus();
+                document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+            }, 1000);
+        }
+
+        function triggerFinal() {
+            inputZone.style.display = 'none';
+            print("<br>[✓] ANILAR DOĞRULANDI. Sistem başarıyla açılıyor...", "success");
+            
+            setTimeout(() => {
                 if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
-                document.getElementById('success-screen').classList.add('unlocked');
-            } else {
-                if (navigator.vibrate) navigator.vibrate(300);
-                alert("Hatalı cevap! Yakın arkadaşını iyi tanı. Tekrar dene.");
-            }
+                document.getElementById('terminal').style.opacity = '0';
+                document.getElementById('final-screen').classList.add('unlocked');
+            }, 1200);
         }
 
-        // Sayfa yüklenince simülasyonu başlat
+        cmdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                // Türkçe karakterleri ve boşlukları toleranslı hale getirmek için temizleme yapıyoruz
+                const guess = cmdInput.value.trim().toLowerCase().replace(/\s+/g, '');
+                
+                if (currentStage === 1) {
+                    if (VALID_BIRTHDAYS.includes(guess)) {
+                        currentStage = 2;
+                        startStage2();
+                    } else {
+                        if (navigator.vibrate) navigator.vibrate(200);
+                        print(`[x] '${cmdInput.value}' yanlış zamanlama. Güneş o gün doğmadı. Tekrar dene.`, "error");
+                        cmdInput.value = '';
+                    }
+                } 
+                else if (currentStage === 2) {
+                    // "elif?" girdisini kontrol eder (soru işareti dahil veya hariç esneklik sağlar)
+                    if (guess === "elif?" || guess === "elif") {
+                        currentStage = 3;
+                        triggerFinal();
+                    } else {
+                        if (navigator.vibrate) navigator.vibrate(200);
+                        print(`[x] '${cmdInput.value}' doğru anahtar değil. Her şeyin nasıl başladığını hatırla.`, "error");
+                        cmdInput.value = '';
+                    }
+                }
+            }
+        });
+
         window.onload = () => {
-            setTimeout(printLogs, 500);
+            setTimeout(startStage1, 500);
         };
     </script>
 </body>
