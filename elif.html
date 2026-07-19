@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>İyi Ki Doğdun Elif!</title>
+    <style>
+        /* Mobil Kaydırma ve Ekran Ayarları */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body, html {
+            width: 100%;
+            overflow-x: hidden;
+            background-color: #0b0914;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+            scroll-behavior: smooth;
+        }
+        
+        /* Sihirli Efektlerin Dönüşeceği Arka Plan Canvası */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            zIndex: 1;
+            pointer-events: none; /* Alttaki elementlere tıklanabilsin */
+        }
+
+        /* İçerik Katmanları */
+        .content-container {
+            position: relative;
+            zIndex: 2;
+            width: 100%;
+        }
+
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        /* Başlık Efektleri */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff758c, #ff7eb3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(255, 117, 140, 0.3);
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #b3b0c2;
+            line-height: 1.6;
+            max-width: 85%;
+        }
+
+        /* Kalp İkonu ve Dokunma Alanı Animasyonu */
+        .gift-icon {
+            font-size: 4rem;
+            margin-top: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* İkinci Ekran: Mektup Kartı */
+        .letter-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 340px;
+        }
+
+        .scroll-down {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #ff758c;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="content-container">
+        <!-- 1. GİRİŞ EKRANI -->
+        <section class="screen">
+            <h1>İyi Ki Doğdun Elif! ✨</h1>
+            <p>Bugün tamamen senin günün. Parmağını ekranda gezdirmeyi dene ve aşağı doğru kaydır...</p>
+            <div class="gift-icon">❤️</div>
+            <div class="scroll-down">Aşağı Kaydır ➔</div>
+        </section>
+
+        <!-- 2. MEKTUP EKRANI -->
+        <section class="screen">
+            <div class="letter-card">
+                <h2 style="color: #ff758c; margin-bottom: 15px; font-size: 1.5rem;">Elif'e Küçük Bir Not...</h2>
+                <p style="font-size: 1rem; color: #e2e0eb; max-width: 100%;">
+                    Hayatıma kattığın tüm renkler, yüzüme kondurduğun her tebessüm için teşekkür ederim. Yeni yaşının sana senin gibi harika, musmutlu ve neşe dolu anlar getirmesini diliyorum. Birlikte çok daha güzel yaşlara!
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- Mobil Dokunmatik Parçacık Sistemi ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particlesArray = [];
+
+        // Canvas Boyutlarını Ayarla
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Parçacık Sınıfı (Kalpler ve Yıldızlar)
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 12 + 6;
+                this.speedX = (Math.random() - 0.5) * 4;
+                this.speedY = (Math.random() - 0.5) * 4 - 1; // Hafif yukarı doğru uçuşsunlar
+                this.color = `hsl(${Math.random() * 30 + 330}, 100%, 70%)`; // Pembe ve kırmızı tonları
+                this.alpha = 1;
+                this.decay = Math.random() * 0.015 + 0.01;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                
+                // Basit bir Kalp Çizimi
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.bezierCurveTo(this.x - this.size/2, this.y - this.size/2, this.x - this.size, this.y + this.size/3, this.x, this.y + this.size);
+                ctx.bezierCurveTo(this.x + this.size, this.y + this.size/3, this.x + this.size/2, this.y - this.size/2, this.x, this.y);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Dokunma Hareketlerini Yakala (Mobil İçin touchmove ve touchstart)
+        function handleTouch(e) {
+            // Çoklu dokunmayı destekle veya ilk parmağı al
+            const touch = e.touches[0];
+            if (touch) {
+                for (let i = 0; i < 3; i++) {
+                    particlesArray.push(new Particle(touch.clientX, touch.clientY));
+                }
+            }
+        }
+
+        window.addEventListener('touchmove', handleTouch);
+        window.addEventListener('touchstart', handleTouch);
+        
+        // Masaüstünde test etmek istersen mouse hareketlerini de algılasın:
+        window.addEventListener('mousemove', (e) => {
+            if(Math.random() > 0.3) { // Çok yoğun olmasın diye
+                particlesArray.push(new Particle(e.clientX, e.clientY));
+            }
+        });
+
+        // Animasyon Döngüsü
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+                
+                // Kaybolan parçacıkları sil
+                if (particlesArray[i].alpha <= 0) {
+                    particlesArray.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
