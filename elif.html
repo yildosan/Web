@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>memory_stream_3d.sh</title>
-    <!-- Three.js ve GLTFLoader Kütüphaneleri -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-    
+    <title>memory_stream_init.sh</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #070913; color: #00ffaa; font-family: 'Courier New', Courier, monospace; }
         
-        #terminal { padding: 20px; font-size: 0.9rem; line-height: 1.6; height: 100%; overflow-y: auto; display: flex; flex-direction: column; position: relative; z-index: 10; background: #070913; transition: transform 1s ease, opacity 1s ease; }
+        #terminal { padding: 20px; font-size: 0.9rem; line-height: 1.6; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
         #log-area { flex-grow: 1; }
         
         .error { color: #ff4444; font-weight: bold; }
@@ -22,57 +18,44 @@
         #input-zone { display: none; align-items: center; margin-top: 15px; padding-bottom: 20px; }
         #cmd-input { background: transparent; border: none; color: #00ffaa; font-family: inherit; font-size: 1rem; outline: none; flex-grow: 1; border-bottom: 1px solid #00ffaa; }
 
-        /* 3D Sahne ve Kart Konteyneri */
         #final-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding: 40px 20px; text-align: center; opacity: 0; pointer-events: none;
-            transition: all 1s ease; z-index: 1;
+            background: radial-gradient(circle at center, #171b30 0%, #06080f 100%);
+            color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; text-align: center; opacity: 0; pointer-events: none;
+            transition: all 1s ease; transform: translateY(30px); z-index: 100;
         }
-        #canvas3d { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
-        
-        .card-content {
-            position: relative; z-index: 3; background: rgba(23, 27, 48, 0.85);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 170, 0.2); border-radius: 16px;
-            padding: 25px; color: #fff; max-width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: translateY(50px); transition: transform 1.2s ease;
-        }
-        .unlocked { opacity: 1 !important; pointer-events: auto !important; }
-        .unlocked .card-content { transform: translateY(0); }
-        h1 { font-size: 1.8rem; margin-bottom: 10px; color: #00ffaa; }
+        .unlocked { opacity: 1 !important; transform: translateY(0) !important; pointer-events: auto !important; }
+        h1 { font-size: 2rem; margin-bottom: 15px; color: #00ffaa; }
     </style>
 </head>
 <body>
 
-    <!-- 1. ETAP: TERMİNAL GİRİŞİ -->
     <div id="terminal">
         <div id="log-area"></div>
+        
+        <!-- İNTERAKTİF YAZI ALANI (HER İKİ AŞAMADA DA ORTAK KULLANILIR) -->
         <div id="input-zone">
             <span id="prompt-label">cevap:~#&nbsp;</span>
             <input type="text" id="cmd-input" autofocus autocomplete="off" autocapitalize="off">
         </div>
     </div>
 
-    <!-- 2. ETAP: 3D MODEL VE DOĞUM GÜNÜ EKRANI -->
+    <!-- FİNAL DOĞUM GÜNÜ EKRANI -->
     <div id="final-screen">
-        <div id="canvas3d"></div> <!-- 3D Model buraya render edilecek -->
-        
-        <div class="card-content">
-            <h1>Sistem Kilidi Açıldı!</h1>
-            <p style="color: #cbd5e1; line-height: 1.6; font-size: 0.95rem;">
-                <span style="color: #fff; font-weight: bold;">İyi ki doğdun Elif! 🎂</span><br><br>
-                "Güneş ne zaman doğar?" sorusundan "her şeyi başlatan mesaj"a kadar tüm kilitleri açarak sisteme sızdın ve bu boyutsal sürprizi aktif ettin.<br><br>
-                Bugün senin günün! Yeni yaşının sana en güzel mutlulukları, bolca neşeyi ve harika anıları getirmesini dilerim. Doğum günün kutlu olsun, iyi ki varsın dostum!
-            </p>
-        </div>
+        <div style="font-size: 4rem; margin-bottom: 15px;">🎉</div>
+        <h1>Sistem Kilidi Açıldı!</h1>
+        <p style="color: #cbd5e1; line-height: 1.7; max-width: 340px; font-size: 1rem;">
+            <span style="color: #fff; font-weight: bold;">İyi ki doğdun Elif! 🎂</span><br><br>
+            "Güneş ne zaman doğar?" sorusundan "her şeyi başlatan mesaj"a kadar tüm hafıza kilitlerini başarıyla açtın. Teknik göründüğüne bakma, bu sistem tamamen sana özel bir doğum günü sürprizi üretmek için tasarlandı.<br><br>
+            Yeni yaşının sana sağlık, neşe, bolca şans ve tüm sevdiklerinle birlikte unutulmaz anılar getirmesini dilerim. Her zaman böyle ışılda. Doğum günün kutlu olsun, iyi ki varsın!
+        </p>
     </div>
 
     <script>
-        // --- AYARLAR VE DOĞRULAMALAR ---
-        // 19.07 Bugün için tarihler güncellendi
-        const VALID_BIRTHDAYS = ["19.07", "19/07", "1907", "19.7", "19/7"]; 
-        const MODEL_PATH = 'modeliniz.glb'; // 3D modelinizin (.glb veya .gltf) dosya yolu
+        // --- 1. AŞAMA DOĞUM GÜNÜ AYARI ---
+        // Elif'in doğum gününü buraya girin (Farklı format varyasyonlarıyla)
+        const VALID_BIRTHDAYS = ["20.07", "20/07", "2007"]; 
         // ---------------------------------
 
         const logArea = document.getElementById('log-area');
@@ -80,7 +63,7 @@
         const cmdInput = document.getElementById('cmd-input');
         const promptLabel = document.getElementById('prompt-label');
         
-        let currentStage = 1;
+        let currentStage = 1; // 1: Doğum Günü, 2: Başlatan Mesaj, 3: Bitiş
 
         function print(text, type = '') {
             const p = document.createElement('p');
@@ -119,24 +102,18 @@
 
         function triggerFinal() {
             inputZone.style.display = 'none';
-            print("<br>[✓] DOĞRULAMA BAŞARILI. 3D Evren oluşturuluyor...", "success");
+            print("<br>[✓] ANILAR DOĞRULANDI. Sistem başarıyla açılıyor...", "success");
             
             setTimeout(() => {
                 if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
-                
-                // Terminali yukarı kaydırarak gizle
-                const term = document.getElementById('terminal');
-                term.style.transform = 'translateY(-100%)';
-                term.style.opacity = '0';
-                
-                // 3D ekranı göster ve Three.js sahnelerini başlat
+                document.getElementById('terminal').style.opacity = '0';
                 document.getElementById('final-screen').classList.add('unlocked');
-                init3D();
             }, 1200);
         }
 
         cmdInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+                // Türkçe karakterleri ve boşlukları toleranslı hale getirmek için temizleme yapıyoruz
                 const guess = cmdInput.value.trim().toLowerCase().replace(/\s+/g, '');
                 
                 if (currentStage === 1) {
@@ -150,6 +127,7 @@
                     }
                 } 
                 else if (currentStage === 2) {
+                    // "elif?" girdisini kontrol eder (soru işareti dahil veya hariç esneklik sağlar)
                     if (guess === "elif?" || guess === "elif") {
                         currentStage = 3;
                         triggerFinal();
@@ -161,68 +139,6 @@
                 }
             }
         });
-
-        // --- THREE.JS 3D MOTOR KURULUMU ---
-        let scene, camera, renderer, model;
-
-        function init3D() {
-            const container = document.getElementById('canvas3d');
-            
-            // Sahne ve Kamera Ayarları
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 0, 5);
-
-            // Işıklandırmalar (Modelin net görünmesi için)
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-            scene.add(ambientLight);
-            
-            const dirLight = new THREE.DirectionalLight(0x00ffaa, 1.5);
-            dirLight.position.set(5, 10, 7);
-            scene.add(dirLight);
-
-            // Renderer Kurulumu
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
-
-            // 3D GLTF/GLB Yükleyici
-            const loader = new THREE.GLTFLoader();
-            loader.load(MODEL_PATH, function(gltf) {
-                model = gltf.scene;
-                
-                // Modeli ekranın ortasına almak için boyutları otomatik hesapla
-                const box = new THREE.Box3().setFromObject(model);
-                const center = box.getCenter(new THREE.Vector3());
-                model.position.x += (model.position.x - center.x);
-                model.position.y += (model.position.y - center.y) + 0.5; // Kartın üstünde kalması için biraz kaldırdık
-                
-                scene.add(model);
-                animate();
-            }, undefined, function(error) {
-                console.error("3D Model yüklenirken hata oluştu:", error);
-                print("<br>[!] 3D model dosyası bulunamadı. Lütfen dosya yolunu kontrol edin.", "error");
-            });
-
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        // Animasyon Döngüsü (Modelin kendi etrafında yavaşça dönmesini sağlar)
-        function animate() {
-            requestAnimationFrame(animate);
-            if (model) {
-                model.rotation.y += 0.01; // Dönüş hızı
-            }
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            const container = document.getElementById('canvas3d');
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
 
         window.onload = () => {
             setTimeout(startStage1, 500);
