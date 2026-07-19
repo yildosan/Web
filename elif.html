@@ -3,232 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>İyi Ki Doğdun Elif!</title>
+    <title>Elif'in Doğum Günü Kapsülü</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #030208; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
-        
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        
-        .ui-layer {
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #0a0915; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fff; }
+
+        /* --- 1. EKRAN: ŞİFRE KİLİDİ --- */
+        #lock-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0d0c1d; z-index: 10; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: all 0.6s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        .code-display { display: flex; gap: 15px; margin-bottom: 40px; }
+        .dot { width: 16px; height: 16px; border: 2px solid #ff758c; border-radius: 50%; transition: background 0.2s; }
+        .dot.active { background: #ff758c; box-shadow: 0 0 10px #ff758c; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 75px); gap: 20px; justify-content: center; }
+        .key {
+            width: 75px; height: 75px; border-radius: 50%; background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: center;
+            align-items: center; font-size: 1.6rem; font-weight: 300; color: #fff; cursor: pointer;
+        }
+        .key:active { background: rgba(255, 117, 140, 0.3); border-color: #ff758c; }
+
+        /* --- 2. EKRAN: ANI DESTESİ --- */
+        #main-screen {
+            position: relative; width: 100%; height: 100%; display: flex;
+            justify-content: center; align-items: center; padding: 20px; opacity: 0; transition: opacity 0.5s;
+        }
+        .card-container { position: relative; width: 300px; height: 400px; perspective: 1000px; }
+        .polaroid {
+            position: absolute; width: 100%; height: 100%; background: #fff;
+            padding: 16px 16px 60px 16px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            display: flex; flex-direction: column; transition: transform 0.5s cubic-bezier(0.1, 0.8, 0.2, 1);
+            transform-origin: center center; cursor: grab;
+        }
+        .polaroid:active { cursor: grabbing; }
+        .photo-slot {
+            width: 100%; flex-grow: 1; background: #1a1926; border-radius: 2px;
+            display: flex; justify-content: center; align-items: center; font-size: 4rem;
+        }
+        .caption {
+            position: absolute; bottom: 15px; left: 16px; right: 16px;
+            color: #2b2b36; font-size: 1.1rem; text-align: center; font-weight: 600;
+        }
+
+        /* --- 3. EKRAN: ASIL KUTLAMA --- */
+        #celebration-zone {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 2; display: flex; flex-direction: column; justify-content: center;
-            align-items: center; padding: 30px; text-align: center; pointer-events: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 30px; opacity: 0; transform: scale(0.9);
+            transition: all 0.8s cubic-bezier(0.1, 0.8, 0.2, 1); z-index: -1;
         }
-
-        #intro-btn {
-            background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2); padding: 18px 30px; border-radius: 50px;
-            color: white; font-size: 1.1rem; letter-spacing: 1px; pointer-events: auto; cursor: pointer;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: all 0.3s ease;
-        }
-
-        #status-text {
-            font-size: 1.2rem; font-weight: 300; color: #a09cb0; max-width: 80%;
-            line-height: 1.6; margin-top: 20px; transition: opacity 0.5s;
-        }
-
-        #final-card {
-            background: rgba(11, 8, 20, 0.75); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 117, 140, 0.3); border-radius: 24px; padding: 35px 25px;
-            width: 85%; max-width: 340px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-            opacity: 0; transform: scale(0.9) translateY(20px); transition: all 1s cubic-bezier(0.1, 0.8, 0.2, 1);
-        }
-
-        .show-card { opacity: 1 !important; transform: scale(1) translateY(0) !important; pointer-events: auto !important; }
-
-        h1 { font-size: 2rem; background: linear-gradient(45deg, #ff758c, #ff7eb3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
+        h1 { font-size: 2.4rem; background: linear-gradient(45deg, #ff758c, #ff7eb3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+        p { color: #b3b0c2; line-height: 1.6; max-width: 320px; }
     </style>
-    <!-- Three.js Kütüphanesi -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <div id="canvas-container"></div>
+    <!-- 1. EKRAN: ŞİFRE KİLİDİ -->
+    <div id="lock-screen">
+        <h2 style="font-weight: 300; margin-bottom: 10px; font-size: 1.2rem; color: #b3b0c2; letter-spacing: 2px;">ELİF'İN ZAMAN KAPSÜLÜ</h2>
+        <p style="font-size: 0.85rem; color: #69667a; margin-bottom: 30px;">Açmak için bugünün tarihini girin (GGAA)</p>
+        <div class="code-display">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="keypad">
+            <div class="key" onclick="press(1)">1</div><div class="key" onclick="press(2)">2</div><div class="key" onclick="press(3)">3</div>
+            <div class="key" onclick="press(4)">4</div><div class="key" onclick="press(5)">5</div><div class="key" onclick="press(6)">6</div>
+            <div class="key" onclick="press(7)">7</div><div class="key" onclick="press(8)">8</div><div class="key" onclick="press(9)">9</div>
+            <div></div><div class="key" onclick="press(0)">0</div><div class="key" onclick="clearCode()">⌫</div>
+        </div>
+    </div>
 
-    <div class="ui-layer">
-        <div id="intro-zone">
-            <button id="intro-btn">Sürprizi Başlat ✨</button>
-            <p id="status-text">Elif, bu deneyim sesine ve hareketlerine tepki verir. Başlamak için butona dokunup izinleri onaylayabilirsin.</p>
+    <!-- 2. EKRAN: ANI DESTESİ -->
+    <div id="main-screen">
+        <div class="card-container" id="deck">
+            <!-- Kartlar JS ile dinamik olarak eklenecek -->
         </div>
 
-        <div id="final-card">
+        <!-- 3. EKRAN: ARKA PLANDAKİ ASIL SÜRPRİZ -->
+        <div id="celebration-zone">
+            <div style="font-size: 4rem; margin-bottom: 10px;">🎉</div>
             <h1>İyi Ki Doğdun Elif! ❤️</h1>
-            <p style="font-size: 0.95rem; color: #e2e0eb; line-height: 1.6;">
-                Hayatıma kattığın tüm güzellikler ve yüzümdeki her tebessüm için teşekkür ederim. Sesinle şekillenen bu kristal gibi, hayatın da her zaman senin kadar eşsiz, parlak ve musmutlu olsun. Yeni yaşın kutlu olsun!
-            </p>
+            <p>Tüm bilmeceleri çözdün ve zaman kapsülünü açtın. Hayatıma kattığın tüm renkler ve güzellikler için teşekkür ederim. Yeni yaşın sana senin kadar tatlı, mutlu ve huzurlu anlar getirsin. Birlikte daha nice harika yaşlara!</p>
         </div>
     </div>
 
     <script>
-        let scene, camera, renderer, crystal, particles;
-        let audioContext, analyser, dataArray;
-        let isSetup = false, phase = 0, phaseTimer = 0;
-        let targetRotX = 0, targetRotY = 0;
+        // --- ŞİFRE KONTROLÜ ---
+        const correctPin = "1907"; // 19 Temmuz (GGAA formatında)
+        let currentPin = "";
+        const dots = document.querySelectorAll('.dot');
 
-        const introBtn = document.getElementById('intro-btn');
-        const statusText = document.getElementById('status-text');
-        const finalCard = document.getElementById('final-card');
-        const introZone = document.getElementById('intro-zone');
+        function press(num) {
+            if (currentPin.length >= 4) return;
+            currentPin += num;
+            dots[currentPin.length - 1].classList.add('active');
+            if (navigator.vibrate) navigator.vibrate(40);
 
-        introBtn.addEventListener('click', async () => {
-            if (isSetup) return;
-            
-            // Mobil Titreşim
-            if (navigator.vibrate) navigator.vibrate(100);
-            
-            introBtn.style.display = 'none';
-            statusText.innerText = "Mikrofon ve sensörler aktifleşiyor...";
-
-            // 1. Mobil Mikrofon İzni ve Kurulumu
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const source = audioContext.createMediaStreamSource(stream);
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 64;
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-                source.connect(analyser);
-            } catch (e) {
-                console.log("Mikrofon reddedildi veya desteklenmiyor, simüle ediliyor.");
+            if (currentPin.length === 4) {
+                setTimeout(() => {
+                    if (currentPin === correctPin) {
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                        document.getElementById('lock-screen').style.transform = 'translateY(-100%)';
+                        document.getElementById('main-screen').style.opacity = '1';
+                    } else {
+                        if (navigator.vibrate) navigator.vibrate(300);
+                        clearCode();
+                    }
+                }, 250);
             }
+        }
 
-            // 2. Jiroskop (Cihaz Eğimi) İzni ve Kurulumu
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') window.addEventListener('deviceorientation', handleMove);
-                } catch (e) { console.log(e); }
-            } else {
-                window.addEventListener('deviceorientation', handleMove);
-            }
-            // Masaüstü testi için yedek mouse hareketi
-            window.addEventListener('mousemove', (e) => {
-                targetRotY = (e.clientX - window.innerWidth / 2) * 0.003;
-                targetRotX = (e.clientY - window.innerHeight / 2) * 0.003;
-            });
+        function clearCode() {
+            currentPin = "";
+            dots.forEach(dot => dot.classList.remove('active'));
+        }
 
-            statusText.innerText = "Şimdi konuşmayı veya üflemeyi dene, telefonu yavaşça eğ...";
-            init3D();
-            animate();
-            isSetup = true;
-            phase = 1; // Kristal ekranı aktif
+        // --- POLAROID ANI VERİLERİ ---
+        // Buradaki emojilerin yerine kendi belirleyeceğin görselleri <img> tagı ile koyabilirsin.
+        const cardData = [
+            { icon: "✨", text: "Her şeyin başladığı an..." },
+            { icon: "🍕", text: "En sevdiğimiz o kaçamaklar" },
+            { icon: "✈️", text: "Birlikte kurduğumuz tüm hayaller" },
+            { icon: "🎈", text: "Ve senin dünyayı güzelleştirdiğin gün!" }
+        ];
+
+        const deck = document.getElementById('deck');
+        let activeCard = null;
+        let startX = 0, currentX = 0;
+
+        // Kartları Tersten Ekleyelim (Deste Yapısı İçin)
+        cardData.reverse().forEach((data, index) => {
+            const card = document.createElement('div');
+            card.className = 'polaroid';
+            // Kartlara hafif rastgele rotasyonlar verelim (Daha doğal dursun)
+            const rot = (Math.random() - 0.5) * 8;
+            card.style.transform = `rotate(${rot}deg) translateZ(${index * -10}px)`;
+            
+            card.innerHTML = `
+                <div class="photo-slot">${data.icon}</div>
+                <div class="caption">${data.text}</div>
+            `;
+            
+            // Mobil Dokunmatik Eventleri
+            card.addEventListener('touchstart', (e) => startSwipe(e, card));
+            card.addEventListener('touchmove', moveSwipe);
+            card.addEventListener('touchend', endSwipe);
+            
+            deck.appendChild(card);
         });
 
-        function handleMove(e) {
-            if (!e.beta || !e.gamma) return;
-            targetRotX = (e.beta - 60) * (Math.PI / 180) * 0.4; // 60 derece varsayılan mobil tutuş açısı
-            targetRotY = e.gamma * (Math.PI / 180) * 0.4;
+        // --- TINDER-STYLE SWIPE MEKANİĞİ ---
+        function startSwipe(e, card) {
+            activeCard = card;
+            startX = e.touches[0].clientX;
+            activeCard.style.transition = 'none';
         }
 
-        function init3D() {
-            const container = document.getElementById('canvas-container');
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.z = 4;
-
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            container.appendChild(renderer.domElement);
-
-            // Kristal Oluşturma (Icosahedron)
-            const crystalGeo = new THREE.IcosahedronGeometry(1, 1);
-            const crystalMat = new THREE.MeshPhongMaterial({
-                color: 0xffffff,
-                wireframe: true,
-                emissive: 0x240b36,
-                specular: 0xffffff,
-                shininess: 100
-            });
-            crystal = new THREE.Mesh(crystalGeo, crystalMat);
-            scene.add(crystal);
-
-            // İleride patlayacak parçacıklar için altyapı
-            const pCount = 800;
-            const pGeo = new THREE.BufferGeometry();
-            const pPos = new Float32Array(pCount * 3);
-            for(let i=0; i<pCount*3; i++) { pPos[i] = (Math.random() - 0.5) * 10; }
-            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-            const pMat = new THREE.PointsMaterial({
-                size: 0.04, color: 0xff758c, transparent: true, opacity: 0, blending: THREE.AdditiveBlending
-            });
-            particles = new THREE.Points(pGeo, pMat);
-            scene.add(particles);
-
-            // Işıklar
-            const pLight1 = new THREE.PointLight(0xff758c, 2, 20); pLight1.position.set(2, 2, 2); scene.add(pLight1);
-            const pLight2 = new THREE.PointLight(0x00f2fe, 1.5, 20); pLight2.position.set(-2, -2, 2); scene.add(pLight2);
-            scene.add(new THREE.AmbientLight(0x111122));
+        function moveSwipe(e) {
+            if (!activeCard) return;
+            currentX = e.touches[0].clientX - startX;
+            const rotate = currentX * 0.1;
+            activeCard.style.transform = `translateX(${currentX}px) rotate(${rotate}deg)`;
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
+        function endSwipe() {
+            if (!activeCard) return;
+            activeCard.style.transition = 'transform 0.4s ease';
             
-            // Ortalama Ses Analizi
-            let volume = 0;
-            if (analyser) {
-                analyser.getByteFrequencyData(dataArray);
-                let sum = 0;
-                for (let i = 0; i < dataArray.length; i++) { sum += dataArray[i]; }
-                volume = sum / dataArray.length;
-            } else {
-                // Mikrofon yoksa simüle et
-                volume = Math.sin(Date.now() * 0.003) * 15 + 15;
-            }
-
-            const time = Date.now() * 0.001;
-
-            if (phase === 1) {
-                phaseTimer += 0.016; // Yaklaşık frame süresi
-
-                // Sese göre kristali boyutlandır ve parlat
-                const scaleVal = 1 + (volume / 40);
-                crystal.scale.lerp(new THREE.Vector3(scaleVal, scaleVal, scaleVal), 0.1);
-                crystal.material.emissive.setHSL(0.9, 0.8, 0.1 + (volume/100));
-
-                // Jiroskopa göre yumuşak dönüş
-                crystal.rotation.x = THREE.MathUtils.lerp(crystal.rotation.x, targetRotX + time * 0.1, 0.05);
-                crystal.rotation.y = THREE.MathUtils.lerp(crystal.rotation.y, targetRotY + time * 0.15, 0.05);
-
-                // 12 saniye sonra kristali patlat
-                if (phaseTimer > 12) {
-                    phase = 2;
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 300]);
-                    introZone.style.opacity = 0;
-                }
-            } 
-            else if (phase === 2) {
-                // Kristal yok olurken parçacıkları dışarı patlat
-                crystal.scale.lerp(new THREE.Vector3(0, 0, 0), 0.1);
-                particles.material.opacity = THREE.MathUtils.lerp(particles.material.opacity, 1, 0.05);
+            // Eğer yeterince hızlı/uzağa fırlatıldıysa kartı ekrandan at
+            if (Math.abs(currentX) > 120) {
+                const throwSide = currentX > 0 ? 1 : -1;
+                activeCard.style.transform = `translateX(${throwSide * 500}px) rotate(${throwSide * 45}deg)`;
                 
-                const pos = particles.geometry.attributes.position.array;
-                for (let i = 0; i < pos.length; i += 3) {
-                    // Parçacıkları dışa doğru uçur
-                    pos[i] *= 1.04;
-                    pos[i+1] *= 1.04;
-                    pos[i+2] *= 1.04;
-                }
-                particles.geometry.attributes.position.needsUpdate = true;
-                particles.rotation.y += 0.005;
+                const targetCard = activeCard;
+                setTimeout(() => targetCard.remove(), 400);
 
-                // Kartı göster
-                if (crystal.scale.x < 0.05) {
-                    phase = 3;
-                    finalCard.classList.add('show-card');
+                // Deste bitti mi kontrol et
+                if (deck.children.length <= 1) {
+                    setTimeout(() => {
+                        document.getElementById('celebration-zone').style.opacity = '1';
+                        document.getElementById('celebration-zone').style.transform = 'scale(1)';
+                        document.getElementById('celebration-zone').style.zIndex = '2';
+                    }, 300);
                 }
+            } else {
+                // Yeterince çekilmediyse yerine geri dönsün
+                activeCard.style.transform = 'translateX(0) rotate(0deg)';
             }
-
-            renderer.render(scene, camera);
+            activeCard = null;
+            currentX = 0;
         }
-
-        window.addEventListener('resize', () => {
-            if (!isSetup) return;
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
