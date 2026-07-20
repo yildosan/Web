@@ -1,73 +1,458 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Canlı Operatör Paketleri</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background-color: #70c5ce;
+        }
+        .controls-hint {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #aaa;
+            text-align: center;
+        }
+        kbd {
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 12px;
+            color: #fff;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-8">
+<body>
 
-  <div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Operatör Sitelerinden Canlı Veri Çekme</h1>
-      <button onclick="fetchTurkcellData()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
-        Turkcell Verilerini Getir
-      </button>
-    </div>
+<div id="game-container">
+    <canvas id="gameCanvas" width="360" height="640"></canvas>
+</div>
 
-    <div id="status" class="text-sm text-gray-600 mb-4"></div>
-    <div id="packageList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-  </div>
+<div class="controls-hint">
+    Zıplamak için <kbd>Boşluk (Space)</kbd> tuşuna basın veya ekrana <kbd>Tıklayın</kbd>
+</div>
 
-  <script>
-    async function fetchTurkcellData() {
-      const statusEl = document.getElementById('status');
-      const listEl = document.getElementById('packageList');
-      
-      statusEl.innerText = 'Turkcell web sitesinden veriler çekiliyor...';
-      listEl.innerHTML = '';
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-      // CORS proxy hizmeti kullanılarak Turkcell sitesine istek atılıyor
-      const targetUrl = 'https://www.turkcell.com.tr/paket-ve-tarifeler/konusma';
-      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl);
+// --- SES EFEKTLERİ (Web Audio API - Harici dosya gerektirmez) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
 
-      try {
-        const response = await fetch(proxyUrl);
-        const data = await response.json();
+function initAudio() {
+    if (!audioCtx) audioCtx = new AudioContext();
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'jump') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } else if (type === 'score') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } else if (type === 'hit') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(40, now + 0.2);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.start(now);
+        osc.stop(now + 0.2);
+    }
+}
+
+// --- OYUN DEĞİŞKENLERİ VE DURUMU ---
+let gameState = 'START'; // 'START', 'PLAYING', 'GAMEOVER'
+let score = 0;
+let highScore = localStorage.getItem('flappy_highscore') || 0;
+let frames = 0;
+
+// --- KUŞ (BIRD) ---
+const bird = {
+    x: 60,
+    y: 250,
+    width: 34,
+    height: 24,
+    gravity: 0.25,
+    jumpForce: -5.5,
+    velocity: 0,
+    rotation: 0,
+
+    draw() {
+        ctx.save();
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
         
-        // Gelen HTML yanıtını bir DOM ağacına çeviriyoruz
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, 'text/html');
+        // Hıza göre kuşu döndür
+        this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity / 10)));
+        ctx.rotate(this.rotation);
 
-        // Örnek: Turkcell sayfasındaki paket kartlarını DOM seçicileri ile yakalama
-        const cards = doc.querySelectorAll('.m-card-v2');
-        
-        if (cards.length === 0) {
-          statusEl.innerText = 'Veri bulundu ancak sayfa yapısı değişmiş olabilir.';
-          return;
+        // Kuş Gövdesi
+        ctx.fillStyle = '#f7d302';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.width / 2, this.height / 2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#000';
+        ctx.stroke();
+
+        // Göz
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(6, -4, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(8, -4, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Gaga
+        ctx.fillStyle = '#f4511e';
+        ctx.beginPath();
+        ctx.moveTo(8, 2);
+        ctx.lineTo(18, 5);
+        ctx.lineTo(8, 9);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Kanat
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(-6, 2, 7, 4, Math.PI / 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+    },
+
+    update() {
+        if (gameState === 'PLAYING') {
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+
+            // Zemin çarpışması
+            if (this.y + this.height >= canvas.height - ground.height) {
+                this.y = canvas.height - ground.height - this.height;
+                gameOver();
+            }
+
+            // Tavan sınırlaması
+            if (this.y <= 0) {
+                this.y = 0;
+                this.velocity = 0;
+            }
+        } else if (gameState === 'START') {
+            // Başlangıç ekranında hafif yukarı-aşağı salınım
+            this.y = 250 + Math.sin(frames / 15) * 5;
+        }
+    },
+
+    flap() {
+        this.velocity = this.jumpForce;
+        playSound('jump');
+    },
+
+    reset() {
+        this.y = 250;
+        this.velocity = 0;
+        this.rotation = 0;
+    }
+};
+
+// --- BORULAR (PIPES) ---
+const pipes = {
+    list: [],
+    width: 52,
+    gap: 125,
+    speed: 2,
+
+    draw() {
+        for (let p of this.list) {
+            ctx.fillStyle = '#73bf2e';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+
+            // Üst Boru
+            ctx.fillRect(p.x, 0, this.width, p.top);
+            ctx.strokeRect(p.x, 0, this.width, p.top);
+            // Üst Boru Başlığı
+            ctx.fillRect(p.x - 3, p.top - 20, this.width + 6, 20);
+            ctx.strokeRect(p.x - 3, p.top - 20, this.width + 6, 20);
+
+            // Alt Boru
+            const bottomY = p.top + this.gap;
+            const bottomHeight = canvas.height - ground.height - bottomY;
+            ctx.fillRect(p.x, bottomY, this.width, bottomHeight);
+            ctx.strokeRect(p.x, bottomY, this.width, bottomHeight);
+            // Alt Boru Başlığı
+            ctx.fillRect(p.x - 3, bottomY, this.width + 6, 20);
+            ctx.strokeRect(p.x - 3, bottomY, this.width + 6, 20);
+        }
+    },
+
+    update() {
+        if (gameState !== 'PLAYING') return;
+
+        // Her 100 karede bir yeni boru ekle
+        if (frames % 100 === 0) {
+            const minTop = 50;
+            const maxTop = canvas.height - ground.height - this.gap - 50;
+            const top = Math.floor(Math.random() * (maxTop - minTop + 1)) + minTop;
+
+            this.list.push({
+                x: canvas.width,
+                top: top,
+                passed: false
+            });
         }
 
-        statusEl.innerText = `${cards.length} adet canlı paket bulundu.`;
+        for (let i = 0; i < this.list.length; i++) {
+            let p = this.list[i];
+            p.x -= this.speed;
 
-        cards.forEach(card => {
-          const title = card.querySelector('.m-card-v2__title')?.innerText || 'İsimsiz Paket';
-          const price = card.querySelector('.m-card-v2__price')?.innerText || 'Fiyat bilgisi yok';
+            // Çarpışma Tespiti (AABB)
+            const birdRight = bird.x + bird.width;
+            const birdBottom = bird.y + bird.height;
 
-          const cardHtml = `
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-              <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold">Turkcell (Canlı)</span>
-              <h3 class="font-bold text-lg mt-2">${title.trim()}</h3>
-              <p class="text-xl font-black text-gray-900 mt-2">${price.trim()}</p>
-            </div>
-          `;
-          listEl.innerHTML += cardHtml;
-        });
+            if (birdRight > p.x && bird.x < p.x + this.width) {
+                // Üst boruya veya alt boruya çarptı mı?
+                if (bird.y < p.top || birdBottom > p.top + this.gap) {
+                    gameOver();
+                }
+            }
 
-      } catch (error) {
-        statusEl.innerText = 'Veriler çekilirken bir hata oluştu: ' + error.message;
-      }
+            // Skor artırma
+            if (p.x + this.width < bird.x && !p.passed) {
+                score++;
+                p.passed = true;
+                playSound('score');
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('flappy_highscore', highScore);
+                }
+            }
+
+            // Ekrandan çıkan boruları sil
+            if (p.x + this.width < 0) {
+                this.list.splice(i, 1);
+                i--;
+            }
+        }
+    },
+
+    reset() {
+        this.list = [];
     }
-  </script>
+};
+
+// --- ZEMİN VE ARKA PLAN ---
+const ground = {
+    height: 112,
+    x: 0,
+
+    draw() {
+        ctx.fillStyle = '#ded895';
+        ctx.fillRect(0, canvas.height - this.height, canvas.width, this.height);
+
+        // Çim çizgisi
+        ctx.fillStyle = '#73bf2e';
+        ctx.fillRect(0, canvas.height - this.height, canvas.width, 15);
+        
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - this.height);
+        ctx.lineTo(canvas.width, canvas.height - this.height);
+        ctx.stroke();
+
+        // Zemin hareketi deseni
+        ctx.fillStyle = '#9ce659';
+        for (let i = this.x; i < canvas.width; i += 20) {
+            ctx.fillRect(i, canvas.height - this.height + 2, 10, 13);
+        }
+    },
+
+    update() {
+        if (gameState === 'PLAYING' || gameState === 'START') {
+            this.x = (this.x - 2) % 20;
+        }
+    }
+};
+
+const bg = {
+    draw() {
+        // Binalar / Şehir Silüeti
+        ctx.fillStyle = '#4ec0ca';
+        ctx.fillRect(0, 0, canvas.width, canvas.height - ground.height);
+
+        ctx.fillStyle = '#90e0ef';
+        // Basit bulutlar
+        ctx.beginPath();
+        ctx.arc(80, 380, 30, 0, Math.PI * 2);
+        ctx.arc(110, 370, 40, 0, Math.PI * 2);
+        ctx.arc(140, 380, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(280, 320, 25, 0, Math.PI * 2);
+        ctx.arc(305, 310, 35, 0, Math.PI * 2);
+        ctx.arc(330, 320, 25, 0, Math.PI * 2);
+        ctx.fill();
+    }
+};
+
+// --- ARAYÜZ (UI) ---
+function drawUI() {
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+
+    if (gameState === 'PLAYING') {
+        ctx.font = 'bold 45px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(score, canvas.width / 2, 80);
+        ctx.strokeText(score, canvas.width / 2, 80);
+    } else if (gameState === 'START') {
+        ctx.font = 'bold 30px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('FLAPPY BIRD', canvas.width / 2, 150);
+        ctx.strokeText('FLAPPY BIRD', canvas.width / 2, 150);
+
+        ctx.font = 'bold 18px sans-serif';
+        ctx.fillText('BAŞLAMAK İÇİN TIKLA', canvas.width / 2, 350);
+        ctx.strokeText('BAŞLAMAK İÇİN TIKLA', canvas.width / 2, 350);
+    } else if (gameState === 'GAMEOVER') {
+        // Panel
+        ctx.fillStyle = '#e0d8b0';
+        ctx.fillRect(50, 180, 260, 180);
+        ctx.strokeRect(50, 180, 260, 180);
+
+        ctx.fillStyle = '#e86100';
+        ctx.font = 'bold 32px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('OYUN BİTTİ', canvas.width / 2, 140);
+        ctx.strokeText('OYUN BİTTİ', canvas.width / 2, 140);
+
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Skor: ${score}`, 80, 230);
+        ctx.fillText(`En Yüksek: ${highScore}`, 80, 270);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('YENİDEN BAŞLAMAK İÇİN TIKLA', canvas.width / 2, 410);
+        ctx.strokeText('YENİDEN BAŞLAMAK İÇİN TIKLA', canvas.width / 2, 410);
+    }
+}
+
+// --- OYUN MANTIĞI VE DÖNGÜ ---
+function gameOver() {
+    gameState = 'GAMEOVER';
+    playSound('hit');
+}
+
+function resetGame() {
+    score = 0;
+    bird.reset();
+    pipes.reset();
+    gameState = 'PLAYING';
+}
+
+function handleInput() {
+    initAudio();
+    if (gameState === 'START') {
+        gameState = 'PLAYING';
+        bird.flap();
+    } else if (gameState === 'PLAYING') {
+        bird.flap();
+    } else if (gameState === 'GAMEOVER') {
+        resetGame();
+    }
+}
+
+// Etkileşim Dinleyicileri
+window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        handleInput();
+    }
+});
+
+canvas.addEventListener('click', handleInput);
+
+// Ana Oyun Döngüsü
+function loop() {
+    frames++;
+
+    // Temizle & Çiz
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    bg.draw();
+    pipes.draw();
+    ground.draw();
+    bird.draw();
+    drawUI();
+
+    // Güncelle
+    bird.update();
+    pipes.update();
+    ground.update();
+
+    requestAnimationFrame(loop);
+}
+
+// Oyunu Başlat
+loop();
+</script>
+
 </body>
 </html>
