@@ -3,300 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GSM Operatör Paketleri ve Tarifeleri</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Canlı Operatör Paketleri</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .active-tab {
-      border-bottom: 3px solid #2563eb;
-      color: #2563eb;
-      font-weight: 600;
-    }
-  </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-gray-100 p-8">
 
-  <!-- Header -->
-  <header class="bg-slate-900 text-white py-6 shadow-md">
-    <div class="container mx-auto px-4 text-center">
-      <h1 class="text-3xl font-bold">GSM Operatör Paketleri</h1>
-      <p class="text-gray-400 mt-2 text-sm md:text-base">Turkcell, Vodafone ve Türk Telekom'un en güncel Hoş Geldin ve Standart Tarifeleri</p>
-    </div>
-  </header>
-
-  <!-- Ana İçerik -->
-  <main class="container mx-auto px-4 py-8">
-
-    <!-- Filtreleme ve Arama Alanı -->
-    <div class="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        <!-- Arama Çubuğu -->
-        <div>
-          <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Paket Arama</label>
-          <input type="text" id="searchInput" placeholder="Paket adı, GB veya dakika girin..." 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-        </div>
-
-        <!-- Operatör Seçimi -->
-        <div>
-          <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Operatör</label>
-          <select id="operatorSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            <option value="all">Tüm Operatörler</option>
-            <option value="turkcell">Turkcell</option>
-            <option value="vodafone">Vodafone</option>
-            <option value="turktelekom">Türk Telekom</option>
-          </select>
-        </div>
-
-        <!-- Paket Türü -->
-        <div>
-          <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Kategori</label>
-          <select id="categorySelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-            <option value="all">Tüm Kategoriler</option>
-            <option value="hosgeldin">Hoş Geldin (Yeni Müşteri)</option>
-            <option value="standart">Diğer / Standart Paketler</option>
-          </select>
-        </div>
-
-      </div>
-
-      <!-- Faturalı / Faturasız Sekmeleri -->
-      <div class="flex border-b border-gray-200 mt-6">
-        <button id="tabAll" class="tab-btn px-6 py-3 text-sm font-medium text-gray-600 focus:outline-none active-tab" onclick="filterType('all')">Tümü</button>
-        <button id="tabFaturali" class="tab-btn px-6 py-3 text-sm font-medium text-gray-600 focus:outline-none" onclick="filterType('faturali')">Faturalı</button>
-        <button id="tabFaturasiz" class="tab-btn px-6 py-3 text-sm font-medium text-gray-600 focus:outline-none" onclick="filterType('faturasiz')">Faturasız (Ön Ödemeli)</button>
-      </div>
+  <div class="max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">Operatör Sitelerinden Canlı Veri Çekme</h1>
+      <button onclick="fetchTurkcellData()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+        Turkcell Verilerini Getir
+      </button>
     </div>
 
-    <!-- Paket Listesi Grid -->
-    <div id="packageGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Paketler JavaScript ile buraya yüklenecek -->
-    </div>
-
-    <!-- Sonuç Bulunamadı Mesajı -->
-    <div id="noResults" class="hidden text-center py-12 text-gray-500">
-      Aradığınız kriterlere uygun paket bulunamadı.
-    </div>
-
-  </main>
+    <div id="status" class="text-sm text-gray-600 mb-4"></div>
+    <div id="packageList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </div>
 
   <script>
-    // Örnek GSM Paket Verileri
-    const packages = [
-      // Turkcell
-      {
-        id: 1,
-        operator: "turkcell",
-        operatorName: "Turkcell",
-        title: "Hoş Geldin Mega 20GB",
-        type: "faturali",
-        category: "hosgeldin",
-        internet: "20 GB",
-        minutes: "1000 Dk",
-        sms: "250 SMS",
-        price: "240",
-        period: "Ay",
-        badge: "Yeni Müşteri"
-      },
-      {
-        id: 2,
-        operator: "turkcell",
-        operatorName: "Turkcell",
-        title: "GNC Bol 15GB Faturasız",
-        type: "faturasiz",
-        category: "standart",
-        internet: "15 GB",
-        minutes: "750 Dk",
-        sms: "1000 SMS",
-        price: "190",
-        period: "4 Hafta",
-        badge: "Gençlere Özel"
-      },
-      // Vodafone
-      {
-        id: 3,
-        operator: "vodafone",
-        operatorName: "Vodafone",
-        title: "Uyumlu Hoş Geldin 15GB",
-        type: "faturali",
-        category: "hosgeldin",
-        internet: "15 GB",
-        minutes: "1000 Dk",
-        sms: "250 SMS",
-        price: "210",
-        period: "Ay",
-        badge: "İlk 3 Ay İndirimli"
-      },
-      {
-        id: 4,
-        operator: "vodafone",
-        operatorName: "Vodafone",
-        title: "Kolay Paket 20GB",
-        type: "faturasiz",
-        category: "standart",
-        internet: "20 GB",
-        minutes: "1000 Dk",
-        sms: "250 SMS",
-        price: "230",
-        period: "28 Gün",
-        badge: "Faturasız"
-      },
-      // Türk Telekom
-      {
-        id: 5,
-        operator: "turktelekom",
-        operatorName: "Türk Telekom",
-        title: "Prime Hoş Geldin 30GB",
-        type: "faturali",
-        category: "hosgeldin",
-        internet: "30 GB",
-        minutes: "1500 Dk",
-        sms: "1000 SMS",
-        price: "290",
-        period: "Ay",
-        badge: "Prime Ayrıcalıklı"
-      },
-      {
-        id: 6,
-        operator: "turktelekom",
-        operatorName: "Türk Telekom",
-        title: "Mis Fırsat 10GB Faturasız",
-        type: "faturasiz",
-        category: "standart",
-        internet: "10 GB",
-        minutes: "750 Dk",
-        sms: "1000 SMS",
-        price: "160",
-        period: "Ay",
-        badge: "Faturasız"
-      }
-    ];
-
-    let currentTypeFilter = 'all';
-
-    // Badge Renkleri
-    const operatorColors = {
-      turkcell: "bg-yellow-500 text-white",
-      vodafone: "bg-red-600 text-white",
-      turktelekom: "bg-blue-600 text-white"
-    };
-
-    // DOM Elementleri
-    const packageGrid = document.getElementById('packageGrid');
-    const searchInput = document.getElementById('searchInput');
-    const operatorSelect = document.getElementById('operatorSelect');
-    const categorySelect = document.getElementById('categorySelect');
-    const noResults = document.getElementById('noResults');
-
-    // Paketleri Ekrana Çizme Fonksiyonu
-    function renderPackages(data) {
-      packageGrid.innerHTML = '';
-
-      if (data.length === 0) {
-        noResults.classList.remove('hidden');
-        return;
-      } else {
-        noResults.classList.add('hidden');
-      }
-
-      data.forEach(pkg => {
-        const opColor = operatorColors[pkg.operator] || "bg-gray-600 text-white";
-        const typeBadge = pkg.type === 'faturali' ? 'Faturalı' : 'Faturasız';
-        
-        const cardHtml = `
-          <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 overflow-hidden border border-gray-100 flex flex-col justify-between">
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <span class="${opColor} text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                  ${pkg.operatorName}
-                </span>
-                <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md font-medium">
-                  ${typeBadge}
-                </span>
-              </div>
-
-              <h3 class="text-lg font-bold text-gray-900 mb-2">${pkg.title}</h3>
-              <p class="text-xs text-blue-600 font-semibold mb-4">${pkg.badge}</p>
-
-              <div class="space-y-2 border-t border-b border-gray-50 py-4 my-2">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-500">İnternet:</span>
-                  <span class="font-semibold text-gray-800">${pkg.internet}</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-500">Her Yöne Dakika:</span>
-                  <span class="font-semibold text-gray-800">${pkg.minutes}</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-500">SMS:</span>
-                  <span class="font-semibold text-gray-800">${pkg.sms}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-100">
-              <div>
-                <span class="text-2xl font-black text-gray-900">₺${pkg.price}</span>
-                <span class="text-xs text-gray-500">/ ${pkg.period}</span>
-              </div>
-              <button class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg transition">
-                Detay / Başvur
-              </button>
-            </div>
-          </div>
-        `;
-        packageGrid.innerHTML += cardHtml;
-      });
-    }
-
-    // Filtreleme Mantığı
-    function filterPackages() {
-      const searchValue = searchInput.value.toLowerCase();
-      const selectedOperator = operatorSelect.value;
-      const selectedCategory = categorySelect.value;
-
-      const filtered = packages.filter(pkg => {
-        // Arama filtresi
-        const matchesSearch = pkg.title.toLowerCase().includes(searchValue) ||
-                              pkg.internet.toLowerCase().includes(searchValue) ||
-                              pkg.minutes.toLowerCase().includes(searchValue);
-
-        // Operatör filtresi
-        const matchesOperator = selectedOperator === 'all' || pkg.operator === selectedOperator;
-
-        // Kategori (Hoş geldin / Standart) filtresi
-        const matchesCategory = selectedCategory === 'all' || pkg.category === selectedCategory;
-
-        // Faturalı / Faturasız sekme filtresi
-        const matchesType = currentTypeFilter === 'all' || pkg.type === currentTypeFilter;
-
-        return matchesSearch && matchesOperator && matchesCategory && matchesType;
-      });
-
-      renderPackages(filtered);
-    }
-
-    // Sekme (Tab) Değişimi
-    function filterType(type) {
-      currentTypeFilter = type;
+    async function fetchTurkcellData() {
+      const statusEl = document.getElementById('status');
+      const listEl = document.getElementById('packageList');
       
-      // Sekme stillerini güncelle
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
-      if(type === 'all') document.getElementById('tabAll').classList.add('active-tab');
-      if(type === 'faturali') document.getElementById('tabFaturali').classList.add('active-tab');
-      if(type === 'faturasiz') document.getElementById('tabFaturasiz').classList.add('active-tab');
+      statusEl.innerText = 'Turkcell web sitesinden veriler çekiliyor...';
+      listEl.innerHTML = '';
 
-      filterPackages();
+      // CORS proxy hizmeti kullanılarak Turkcell sitesine istek atılıyor
+      const targetUrl = 'https://www.turkcell.com.tr/paket-ve-tarifeler/konusma';
+      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl);
+
+      try {
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+        
+        // Gelen HTML yanıtını bir DOM ağacına çeviriyoruz
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, 'text/html');
+
+        // Örnek: Turkcell sayfasındaki paket kartlarını DOM seçicileri ile yakalama
+        const cards = doc.querySelectorAll('.m-card-v2');
+        
+        if (cards.length === 0) {
+          statusEl.innerText = 'Veri bulundu ancak sayfa yapısı değişmiş olabilir.';
+          return;
+        }
+
+        statusEl.innerText = `${cards.length} adet canlı paket bulundu.`;
+
+        cards.forEach(card => {
+          const title = card.querySelector('.m-card-v2__title')?.innerText || 'İsimsiz Paket';
+          const price = card.querySelector('.m-card-v2__price')?.innerText || 'Fiyat bilgisi yok';
+
+          const cardHtml = `
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+              <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-bold">Turkcell (Canlı)</span>
+              <h3 class="font-bold text-lg mt-2">${title.trim()}</h3>
+              <p class="text-xl font-black text-gray-900 mt-2">${price.trim()}</p>
+            </div>
+          `;
+          listEl.innerHTML += cardHtml;
+        });
+
+      } catch (error) {
+        statusEl.innerText = 'Veriler çekilirken bir hata oluştu: ' + error.message;
+      }
     }
-
-    // Event Listener'lar
-    searchInput.addEventListener('input', filterPackages);
-    operatorSelect.addEventListener('change', filterPackages);
-    categorySelect.addEventListener('change', filterPackages);
-
-    // Sayfa Yüklendiğinde İlk Render
-    renderPackages(packages);
   </script>
 </body>
 </html>
