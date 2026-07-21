@@ -2,63 +2,65 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Cyberpunk Metaverse 3D - Fixed P2P Multiplayer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cyberpunk Metaverse 3D - Mobile & P2P Multiplayer</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
     #canvas-container { width: 100%; height: 100%; display: block; }
     
     #hud {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; padding: 20px;
+      pointer-events: none; padding: 15px;
       display: flex; flex-direction: column; justify-content: space-between;
       z-index: 5;
     }
     
     .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
-    .stats { color: #00ffff; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
+    .stats { color: #00ffff; font-size: 14px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
     
     .room-code-container {
       display: inline-flex; align-items: center; gap: 8px; pointer-events: auto; margin-top: 4px;
     }
     .copy-btn {
-      background: #ff0055; color: #fff; border: none; padding: 3px 8px;
+      background: #ff0055; color: #fff; border: none; padding: 4px 8px;
       font-family: inherit; font-size: 11px; font-weight: bold; cursor: pointer;
       border-radius: 4px; transition: all 0.2s; text-shadow: none;
     }
     .copy-btn:hover { background: #ff3377; box-shadow: 0 0 8px #ff0055; }
 
     #bottom-panel {
-      display: flex; gap: 15px; align-items: flex-end; pointer-events: auto;
+      display: flex; gap: 10px; align-items: flex-end; pointer-events: auto;
+      max-width: 100%;
     }
 
     #emote-bar {
-      display: flex; flex-direction: column; gap: 8px;
+      display: flex; flex-direction: column; gap: 6px;
       background: rgba(10, 10, 20, 0.85); border: 1px solid #ff0055;
-      padding: 10px; border-radius: 8px;
+      padding: 8px; border-radius: 8px;
       box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
     }
     .emote-btn {
       background: #111; color: #00ffff; border: 1px solid #00ffff;
-      padding: 6px 12px; font-family: inherit; font-size: 13px;
+      padding: 6px 10px; font-family: inherit; font-size: 12px;
       cursor: pointer; font-weight: bold; transition: all 0.2s;
       text-align: left;
     }
     .emote-btn:hover { background: #00ffff; color: #000; }
 
     #chat-container {
-      width: 320px;
+      width: 260px; max-width: 50vw;
       background: rgba(10, 10, 20, 0.85); border: 1px solid #00ffff;
-      border-radius: 8px; padding: 10px;
+      border-radius: 8px; padding: 8px;
       box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
     }
     #chat-messages {
-      height: 120px; overflow-y: auto; color: #fff; font-size: 13px;
-      margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px;
+      height: 90px; overflow-y: auto; color: #fff; font-size: 11px;
+      margin-bottom: 6px; display: flex; flex-direction: column; gap: 4px;
     }
     #chat-input {
       width: 100%; background: #000; border: 1px solid #ff0055;
-      color: #00ffff; padding: 8px; font-family: inherit; font-size: 13px;
+      color: #00ffff; padding: 6px; font-family: inherit; font-size: 12px;
       outline: none;
     }
 
@@ -66,54 +68,89 @@
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
       justify-content: center; align-items: center; color: #fff; z-index: 10;
+      padding: 20px;
     }
-    h1 { font-size: 38px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 10px; text-align: center; }
-    p { font-size: 14px; color: #aaa; margin-bottom: 25px; text-align: center; line-height: 1.6; }
+    h1 { font-size: 28px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 10px; text-align: center; }
+    p { font-size: 12px; color: #aaa; margin-bottom: 20px; text-align: center; line-height: 1.5; }
     
     .p2p-box {
       background: rgba(20, 20, 35, 0.9); border: 1px solid #00ffff;
-      padding: 20px; border-radius: 10px; display: flex; flex-direction: column;
-      gap: 12px; width: 340px; box-shadow: 0 0 20px rgba(0,255,255,0.2);
+      padding: 15px; border-radius: 10px; display: flex; flex-direction: column;
+      gap: 10px; width: 100%; max-width: 320px; box-shadow: 0 0 20px rgba(0,255,255,0.2);
     }
     .p2p-input {
       background: #000; border: 1px solid #ff0055; color: #00ffff;
-      padding: 10px; font-family: inherit; text-align: center; font-size: 16px;
-      outline: none; letter-spacing: 2px;
+      padding: 10px; font-family: inherit; text-align: center; font-size: 14px;
+      outline: none; letter-spacing: 1px;
     }
     .btn {
-      padding: 12px; font-size: 15px; background: #ff0055; color: #fff;
+      padding: 12px; font-size: 14px; background: #ff0055; color: #fff;
       border: none; cursor: pointer; font-family: inherit; font-weight: bold;
       transition: all 0.2s;
     }
     .btn:hover { background: #ff3377; box-shadow: 0 0 15px #ff0055; }
     .btn-secondary { background: #00ffff; color: #000; }
-    .btn-secondary:hover { background: #66ffff; box-shadow: 0 0 15px #00ffff; }
+
+    /* MOBİL KONTROLLER */
+    #touch-controls {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 4; display: none;
+    }
+    #joystick-zone {
+      position: absolute; bottom: 30px; left: 20px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: rgba(0, 255, 255, 0.1); border: 2px solid rgba(0, 255, 255, 0.4);
+      pointer-events: auto; touch-action: none;
+    }
+    #joystick-knob {
+      position: absolute; top: 35px; left: 35px;
+      width: 50px; height: 50px; border-radius: 50%;
+      background: #ff0055; box-shadow: 0 0 10px #ff0055;
+    }
+    #touch-camera-zone {
+      position: absolute; top: 0; right: 0; width: 50%; height: 80%;
+      pointer-events: auto; touch-action: none;
+    }
+    #jump-btn {
+      position: absolute; bottom: 40px; right: 20px;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(255, 0, 85, 0.8); border: 2px solid #fff;
+      color: #fff; font-weight: bold; font-size: 12px;
+      display: flex; justify-content: center; align-items: center;
+      pointer-events: auto; box-shadow: 0 0 10px #ff0055;
+    }
   </style>
 </head>
 <body>
 
   <div id="start-screen">
-    <h1>CYBER P2P METAVERSE</h1>
+    <h1>CYBER METAVERSE</h1>
     <p>
-      Sunucusuz Çok Oyunculu<br>
-      <b>WASD:</b> Hareket | <b>Fare:</b> Kamera | <b>1, 2, 3:</b> Emote | <b>T:</b> Chat
+      <b>PC:</b> WASD + Fare | <b>Mobil:</b> Dokunmatik Ekran<br>
+      <b>1,2,3:</b> Emote | <b>T:</b> Chat
     </p>
 
     <div class="p2p-box">
       <button class="btn" onclick="hostGame()">1. ODA KUR (HOST)</button>
-      <div style="text-align: center; color: #666; font-size: 12px;">--- VEYA ---</div>
+      <div style="text-align: center; color: #666; font-size: 11px;">--- VEYA ---</div>
       <input type="text" id="join-id-input" class="p2p-input" placeholder="ODA KODUNU GİRİN" />
       <button class="btn btn-secondary" onclick="joinGame()">2. ODAYA KATIL</button>
     </div>
   </div>
 
+  <div id="touch-controls">
+    <div id="joystick-zone"><div id="joystick-knob"></div></div>
+    <div id="touch-camera-zone"></div>
+    <div id="jump-btn">ZIPLA</div>
+  </div>
+
   <div id="hud">
     <div class="top-bar">
       <div class="stats">
-        <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">MERKEZ PLAZA</span></div>
+        <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">PLAZA</span></div>
         <div>BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
         <div class="room-code-container">
-          <span>ODA KODUN:</span>
+          <span>ODA:</span>
           <span id="my-peer-id" style="color:#ffff00;">-</span>
           <button id="copy-btn" class="copy-btn" onclick="copyRoomCode()">KOPYALA</button>
         </div>
@@ -122,16 +159,16 @@
 
     <div id="bottom-panel">
       <div id="emote-bar">
-        <button class="emote-btn" onclick="triggerEmote('wave')">[1] 👋 El Salla</button>
-        <button class="emote-btn" onclick="triggerEmote('dance')">[2] 🕺 Dans Et</button>
-        <button class="emote-btn" onclick="triggerEmote('nod')">[3] 🔴 Onayla</button>
+        <button class="emote-btn" onclick="triggerEmote('wave')">👋 Salla</button>
+        <button class="emote-btn" onclick="triggerEmote('dance')">🕺 Dans</button>
+        <button class="emote-btn" onclick="triggerEmote('nod')">🔴 Onay</button>
       </div>
 
       <div id="chat-container">
         <div id="chat-messages">
-          <div><span style="color:#ff0055;">[Sistem]:</span> Kendi Animasyon Takibiniz Aktifleştirildi!</div>
+          <div><span style="color:#ff0055;">[Sistem]:</span> Mobil & Masaüstü Modu Aktif!</div>
         </div>
-        <input type="text" id="chat-input" placeholder="Mesaj yazın (Enter)..." />
+        <input type="text" id="chat-input" placeholder="Mesaj yazın..." />
       </div>
     </div>
   </div>
@@ -146,6 +183,7 @@
     let player, playerLimbs = {}, cameraPivot;
     let isPlaying = false;
     let isChatting = false;
+    let isMobile = false;
 
     // P2P Değişkenleri
     let peer = null;
@@ -159,6 +197,7 @@
 
     // Kontroller & Fizik
     let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    let joystickVector = { x: 0, y: 0 };
     let velocity = new THREE.Vector3();
     let canJump = false;
     let animTime = 0;
@@ -168,7 +207,15 @@
     let cameraPitch = 0.2;
     const cameraDistance = 6.0;
 
+    function detectDevice() {
+      isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth < 768;
+      if (isMobile) {
+        document.getElementById('touch-controls').style.display = 'block';
+      }
+    }
+
     function init() {
+      detectDevice();
       const container = document.getElementById('canvas-container');
 
       scene = new THREE.Scene();
@@ -179,7 +226,7 @@
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       container.appendChild(renderer.domElement);
 
       const ambientLight = new THREE.AmbientLight(0x554466);
@@ -199,6 +246,7 @@
       scene.add(cameraPivot);
 
       setupControls();
+      setupTouchEvents();
       setupChat();
 
       window.addEventListener('resize', onWindowResize);
@@ -294,7 +342,10 @@
 
     function startGame() {
       document.getElementById('start-screen').style.display = 'none';
-      document.body.requestPointerLock();
+      isPlaying = true;
+      if (!isMobile) {
+        document.body.requestPointerLock();
+      }
     }
 
     function createHumanoidAvatar(suitColor, visorColor) {
@@ -424,17 +475,19 @@
       const startScreen = document.getElementById('start-screen');
 
       document.addEventListener('pointerlockchange', () => {
-        if (document.pointerLockElement === document.body) {
-          isPlaying = true;
-          startScreen.style.display = 'none';
-        } else if (!isChatting && peer) {
-          isPlaying = false;
-          startScreen.style.display = 'flex';
+        if (!isMobile) {
+          if (document.pointerLockElement === document.body) {
+            isPlaying = true;
+            startScreen.style.display = 'none';
+          } else if (!isChatting && peer) {
+            isPlaying = false;
+            startScreen.style.display = 'flex';
+          }
         }
       });
 
       document.addEventListener('mousemove', (e) => {
-        if (!isPlaying || isChatting) return;
+        if (!isPlaying || isChatting || isMobile) return;
         cameraYaw -= e.movementX * 0.003;
         cameraPitch -= e.movementY * 0.003;
         cameraPitch = Math.max(-0.2, Math.min(1.0, cameraPitch));
@@ -470,9 +523,117 @@
       });
     }
 
+    // --- SANAL JOYSTICK VE DOKUNMATİK KAMERA ---
+    function setupTouchEvents() {
+      const joystickZone = document.getElementById('joystick-zone');
+      const joystickKnob = document.getElementById('joystick-knob');
+      const cameraZone = document.getElementById('touch-camera-zone');
+      const jumpBtn = document.getElementById('jump-btn');
+
+      let joystickTouchId = null;
+      let cameraTouchId = null;
+      let lastTouchX = 0, lastTouchY = 0;
+
+      const center = { x: 60, y: 60 };
+      const maxRadius = 45;
+
+      joystickZone.addEventListener('touchstart', (e) => {
+        if (joystickTouchId !== null) return;
+        const touch = e.changedTouches[0];
+        joystickTouchId = touch.identifier;
+        updateJoystick(touch);
+      });
+
+      joystickZone.addEventListener('touchmove', (e) => {
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === joystickTouchId) {
+            updateJoystick(touch);
+          }
+        }
+      });
+
+      const resetJoystick = (e) => {
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === joystickTouchId) {
+            joystickTouchId = null;
+            joystickKnob.style.transform = `translate(0px, 0px)`;
+            joystickVector = { x: 0, y: 0 };
+          }
+        }
+      };
+
+      joystickZone.addEventListener('touchend', resetJoystick);
+      joystickZone.addEventListener('touchcancel', resetJoystick);
+
+      function updateJoystick(touch) {
+        const rect = joystickZone.getBoundingClientRect();
+        let dx = touch.clientX - (rect.left + center.x);
+        let dy = touch.clientY - (rect.top + center.y);
+        let dist = Math.hypot(dx, dy);
+
+        if (dist > maxRadius) {
+          dx = (dx / dist) * maxRadius;
+          dy = (dy / dist) * maxRadius;
+        }
+
+        joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+        joystickVector.x = dx / maxRadius;
+        joystickVector.y = dy / maxRadius;
+        currentEmote = null;
+      }
+
+      // Mobil Kamera Döndürme
+      cameraZone.addEventListener('touchstart', (e) => {
+        if (cameraTouchId !== null) return;
+        const touch = e.changedTouches[0];
+        cameraTouchId = touch.identifier;
+        lastTouchX = touch.clientX;
+        lastTouchY = touch.clientY;
+      });
+
+      cameraZone.addEventListener('touchmove', (e) => {
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === cameraTouchId) {
+            let dx = touch.clientX - lastTouchX;
+            let dy = touch.clientY - lastTouchY;
+
+            cameraYaw -= dx * 0.005;
+            cameraPitch -= dy * 0.005;
+            cameraPitch = Math.max(-0.2, Math.min(1.0, cameraPitch));
+
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+          }
+        }
+      });
+
+      const resetCamera = (e) => {
+        for (let touch of e.changedTouches) {
+          if (touch.identifier === cameraTouchId) {
+            cameraTouchId = null;
+          }
+        }
+      };
+
+      cameraZone.addEventListener('touchend', resetCamera);
+      cameraZone.addEventListener('touchcancel', resetCamera);
+
+      // Zıplama Butonu
+      jumpBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (canJump) {
+          velocity.y = 8.5;
+          canJump = false;
+        }
+      });
+    }
+
     function setupChat() {
       const input = document.getElementById('chat-input');
-      input.addEventListener('focus', () => { isChatting = true; document.exitPointerLock(); });
+      input.addEventListener('focus', () => { 
+        isChatting = true; 
+        if (!isMobile) document.exitPointerLock(); 
+      });
       input.addEventListener('blur', () => { isChatting = false; });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== '') {
@@ -483,7 +644,7 @@
 
           input.value = '';
           input.blur();
-          document.body.requestPointerLock();
+          if (!isMobile) document.body.requestPointerLock();
         }
       });
     }
@@ -498,12 +659,10 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // --- ANIMASYON MOTORU (DÜZELTİLDİ) ---
     function animateAvatarLimbs(limbs, isMoving, delta, emoteOverride = null) {
       animTime += delta * (isMoving ? 12 : 3);
       const activeEmote = emoteOverride !== undefined ? emoteOverride : currentEmote;
 
-      // Varsayılana sıfırla
       limbs.head.rotation.set(0, 0, 0);
       limbs.leftArm.rotation.set(0, 0, 0);
       limbs.rightArm.rotation.set(0, 0, 0);
@@ -555,13 +714,20 @@
         velocity.y -= 25.0 * delta;
 
         const moveDir = new THREE.Vector3();
-        if (moveForward) moveDir.z -= 1;
-        if (moveBackward) moveDir.z += 1;
-        if (moveLeft) moveDir.x -= 1;
-        if (moveRight) moveDir.x += 1;
-        moveDir.normalize();
 
-        const isMoving = moveForward || moveBackward || moveLeft || moveRight;
+        if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
+          moveDir.x = joystickVector.x;
+          moveDir.z = joystickVector.y;
+        } else {
+          if (moveForward) moveDir.z -= 1;
+          if (moveBackward) moveDir.z += 1;
+          if (moveLeft) moveDir.x -= 1;
+          if (moveRight) moveDir.x += 1;
+        }
+        
+        if (moveDir.length() > 0) moveDir.normalize();
+
+        const isMoving = moveDir.length() > 0.1;
 
         if (isMoving) {
           const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
@@ -585,7 +751,6 @@
           if (emoteTimer <= 0) currentEmote = null;
         }
 
-        // KENDİ ANİMASYONUNU HER KAREDE ÇALIŞTIR
         animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
 
         // P2P Senkronizasyonu
@@ -618,10 +783,10 @@
         const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 0, -20));
         const zoneElem = document.getElementById('zone-val');
         if (distToPortal < 5) {
-          zoneElem.innerText = "IŞINLANMA PORTALI";
+          zoneElem.innerText = "PORTAL";
           zoneElem.style.color = "#00ffff";
         } else {
-          zoneElem.innerText = "MERKEZ PLAZA";
+          zoneElem.innerText = "PLAZA";
           zoneElem.style.color = "#ff0055";
         }
       }
