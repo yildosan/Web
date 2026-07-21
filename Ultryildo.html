@@ -230,7 +230,8 @@
     let parkourPortalMesh, cityPortalMesh;
     let portalCooldown = false;
 
-    let physicsBoxes = []; 
+    let physicsBoxes = [];
+let benches=[]; let isSitting=false; let currentBench=null;
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
     let fallCount = 0;
     const PLAYER_RADIUS = 0.35;
@@ -360,7 +361,7 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    function addCollider(mesh, isPassable = false, isCheckpoint = false, cpId = 0, isSeat = false, seatOffset = null) {
+    function addCollider(mesh, isPassable = false, isCheckpoint = false, cpId = 0) {
       mesh.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(mesh);
       physicsBoxes.push({
@@ -368,9 +369,7 @@
         mesh: mesh,
         isPassable: isPassable,
         isCheckpoint: isCheckpoint,
-        cpId: cpId,
-        isSeat: isSeat,
-        seatOffset: seatOffset
+        cpId: cpId
       });
     }
 
@@ -378,7 +377,7 @@
       physicsBoxes = [];
       group.traverse((child) => {
         if (child.isMesh && child.userData && child.userData.isCollider) {
-          addCollider(child, false, child.userData.isCheckpoint || false, child.userData.cpId || 0, child.userData.isSeat || false, child.userData.seatOffset || null);
+          addCollider(child, false, child.userData.isCheckpoint || false, child.userData.cpId || 0);
         }
       });
     }
@@ -452,24 +451,19 @@
         lobbyGroup.add(treeGroup);
       }
 
-      // Neon Park Bankları (Oturulabilir)
+      // Neon Park Bankları
       for (let b = 0; b < 8; b++) {
         const bAngle = (b / 8) * Math.PI * 2;
         const bx = Math.cos(bAngle) * 12;
         const bz = Math.sin(bAngle) * 12;
 
-        const benchGroup = new THREE.Group();
-        benchGroup.position.set(bx, 0, bz);
-        benchGroup.rotation.y = -bAngle;
-
         const benchGeo = new THREE.BoxGeometry(3, 0.4, 1.2);
         const benchMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.3 });
         const bench = new THREE.Mesh(benchGeo, benchMat);
-        bench.position.set(0, 0.2, 0);
-        bench.userData = { isCollider: true, isSeat: true, seatOffset: new THREE.Vector3(0, 0.6, 0) };
-        benchGroup.add(bench);
-
-        lobbyGroup.add(benchGroup);
+        bench.position.set(bx, 0.2, bz);
+        bench.rotation.y = -bAngle;
+        bench.userData = { isCollider: true }; benches.push(bench);
+        lobbyGroup.add(bench);
       }
 
       // --- İKİ KİŞİNİN AYNI ANDA OTURABİLECEĞİ BANKLAR OLAN BİR ALAN ---
@@ -521,7 +515,7 @@
       const dualSeatMat = new THREE.MeshStandardMaterial({ color: 0x00ffaa, emissive: 0x00ffaa, emissiveIntensity: 0.2, roughness: 0.3, metalness: 0.5 });
       const seat1 = new THREE.Mesh(dualSeatGeo, dualSeatMat);
       seat1.position.y = 0.7;
-      seat1.userData = { isCollider: true, isSeat: true, seatOffset: new THREE.Vector3(0, 1.1, 0) };
+      seat1.userData = { isCollider: true };
       bench1Group.add(seat1);
 
       // Arkalık
@@ -934,6 +928,7 @@
           case 'Digit2': triggerEmote('dance'); break;
           case 'Digit3': triggerEmote('nod'); break;
           case 'KeyT': e.preventDefault(); focusChat(); break;
+          case 'KeyE': if(!isSitting){for(const b of benches){if(player.group.position.distanceTo(b.position)<2.2){isSitting=true;currentBench=b;player.group.position.set(b.position.x,0.5,b.position.z);velocity.set(0,0,0);break;}}} else {isSitting=false;player.group.position.z+=1.5;} break;
         }
       });
 
@@ -1113,13 +1108,6 @@
             newPos.y = boxTop;
             velocity.y = 0;
             grounded = true;
-            if (item.isSeat && item.seatOffset) {
-              const seatWorldPos = new THREE.Vector3();
-              item.mesh.getWorldPosition(seatWorldPos);
-              newPos.copy(seatWorldPos).add(item.seatOffset);
-              velocity.set(0, 0, 0);
-              currentEmote = 'dance';
-            }
           } 
           else {
             const overlapX = Math.min(pBox.max.x - item.box.min.x, item.box.max.x - pBox.min.x);
@@ -1146,6 +1134,7 @@
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if (isPlaying) {
+        if(isSitting){animateAvatarLimbs(playerLimbs,false,delta,currentEmote); renderer.render(scene,camera); requestAnimationFrame(()=>{});} 
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
         velocity.y -= 26.0 * delta;
@@ -1169,7 +1158,6 @@
           velocity.x = Math.sin(angle) * 11;
           velocity.z = Math.cos(angle) * 11;
           player.group.rotation.y = angle;
-          if (currentEmote === 'dance') currentEmote = null;
         }
 
         const targetPos = player.group.position.clone();
