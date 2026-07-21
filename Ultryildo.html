@@ -51,6 +51,17 @@
       cursor: pointer; font-weight: bold; border-radius: 4px;
     }
 
+    .voice-btn {
+      background: #ff0055; color: #fff; border: 1px solid #ff0055;
+      padding: 4px 10px; font-family: inherit; font-size: 11px;
+      cursor: pointer; font-weight: bold; border-radius: 999px;
+      transition: all 0.2s ease;
+      margin-right: 6px;
+    }
+    .voice-btn.active {
+      background: #00ff66; color: #000; border-color: #00ff66;
+    }
+
     #chat-container {
       width: 240px; pointer-events: auto;
       background: rgba(10, 20, 15, 0.85); border: 1px solid #00ff66;
@@ -205,6 +216,10 @@
           <button class="emote-btn" onclick="triggerEmote('dance')">🕺 Dans</button>
           <button class="emote-btn" onclick="triggerEmote('nod')">🔴 Onay</button>
         </div>
+        <div id="voice-control-bar" style="display:flex; gap:6px; pointer-events:auto; margin-top:5px;">
+          <button id="mic-btn" class="voice-btn">🎙️ Mikrofon Aç</button>
+          <button id="sound-btn" class="voice-btn active">🔈 Ses Kapat</button>
+        </div>
       </div>
 
       <button id="fullscreen-btn" title="Tam Ekran">⛶</button>
@@ -238,6 +253,12 @@
     let lobbyGroup, gameGroup;
     let parkourPortalMesh, cityPortalMesh;
     let portalCooldown = false;
+
+    let audioStream = null;
+    let micEnabled = false;
+    let soundEnabled = true;
+    let remoteAudioElements = {};
+    let mediaCalls = {};
 
     let physicsBoxes = []; 
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
@@ -312,6 +333,121 @@
       bind('btn-cancel-scan', () => closeQRScanner());
     }
 
+    function setupVoiceButtons() {
+      const micBtn = document.getElementById('mic-btn');
+      const soundBtn = document.getElementById('sound-btn');
+      if (!micBtn || !soundBtn) return;
+
+      micBtn.addEventListener('click', () => {
+        toggleMicrophone();
+      });
+      soundBtn.addEventListener('click', () => {
+        toggleSoundOutput();
+      });
+      soundBtn.innerText = '🔈 Ses Kapat';
+      soundBtn.classList.add('active');
+      micBtn.innerText = '🎙️ Mikrofon Aç';
+      micBtn.classList.remove('active');
+    }
+
+    function toggleMicrophone() {
+      const micBtn = document.getElementById('mic-btn');
+      micEnabled = !micEnabled;
+      if (micEnabled) {
+        micBtn.classList.add('active');
+        micBtn.innerText = '🎙️ Mikrofon Kapat';
+        getMicrophoneStream().then((stream) => {
+          if (!stream) {
+            micEnabled = false;
+            micBtn.classList.remove('active');
+            micBtn.innerText = '🎙️ Mikrofon Aç';
+            return;
+          }
+          Object.keys(connections).forEach((peerId) => {
+            callPeerAudio(peerId);
+          });
+        });
+      } else {
+        micBtn.classList.remove('active');
+        micBtn.innerText = '🎙️ Mikrofon Aç';
+        if (audioStream) {
+          audioStream.getTracks().forEach((track) => track.stop());
+          audioStream = null;
+        }
+        closeAllMediaCalls();
+      }
+    }
+
+    function toggleSoundOutput() {
+      const soundBtn = document.getElementById('sound-btn');
+      soundEnabled = !soundEnabled;
+      if (soundEnabled) {
+        soundBtn.classList.add('active');
+        soundBtn.innerText = '🔈 Ses Kapat';
+      } else {
+        soundBtn.classList.remove('active');
+        soundBtn.innerText = '🔈 Ses Aç';
+      }
+      Object.values(remoteAudioElements).forEach((audio) => {
+        audio.muted = !soundEnabled;
+      });
+    }
+
+    async function getMicrophoneStream() {
+      if (audioStream) return audioStream;
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        return audioStream;
+      } catch (err) {
+        console.warn('Mikrofon erişimi başarısız:', err);
+        alert('Mikrofon izni verilmedi veya cihaz bulunamadı.');
+        return null;
+      }
+    }
+
+    function createRemoteAudio(peerId, stream) {
+      if (remoteAudioElements[peerId]) {
+        remoteAudioElements[peerId].srcObject = stream;
+        return;
+      }
+      const audio = document.createElement('audio');
+      audio.autoplay = true;
+      audio.playsInline = true;
+      audio.srcObject = stream;
+      audio.muted = !soundEnabled;
+      audio.style.display = 'none';
+      document.body.appendChild(audio);
+      remoteAudioElements[peerId] = audio;
+    }
+
+    function closeAllMediaCalls() {
+      Object.values(mediaCalls).forEach((call) => {
+        try { call.close(); } catch (e) {}
+      });
+      mediaCalls = {};
+    }
+
+    function callPeerAudio(peerId) {
+      if (!audioStream || !peerId || mediaCalls[peerId]) return;
+      try {
+        const call = peer.call(peerId, audioStream);
+        if (!call) return;
+        mediaCalls[peerId] = call;
+        call.on('stream', (remoteStream) => {
+          createRemoteAudio(peerId, remoteStream);
+        });
+        call.on('close', () => {
+          if (remoteAudioElements[peerId]) {
+            remoteAudioElements[peerId].remove();
+            delete remoteAudioElements[peerId];
+          }
+          delete mediaCalls[peerId];
+        });
+      } catch (err) {
+        console.warn('Sesli arama başlatılamadı:', err);
+      }
+    }
+
     function init() {
       detectDevice();
       bindUIEvents();
@@ -364,6 +500,7 @@
       setupControls();
       setupTouchEvents();
       setupChat();
+      setupVoiceButtons();
 
       checkUrlAutoJoin();
 
@@ -610,6 +747,20 @@
       });
 
       peer.on('connection', (conn) => setupConnection(conn));
+      peer.on('call', (call) => {
+        call.answer(audioStream || new MediaStream());
+        mediaCalls[call.peer] = call;
+        call.on('stream', (remoteStream) => {
+          createRemoteAudio(call.peer, remoteStream);
+        });
+        call.on('close', () => {
+          if (remoteAudioElements[call.peer]) {
+            remoteAudioElements[call.peer].remove();
+            delete remoteAudioElements[call.peer];
+          }
+          delete mediaCalls[call.peer];
+        });
+      });
       peer.on('error', (err) => console.error("P2P Hata:", err));
     }
 
@@ -707,6 +858,9 @@
           const remoteAvatar = createHumanoidAvatar(0x00ff66, 0xffff00);
           scene.add(remoteAvatar.group);
           remotePlayers[conn.peer] = remoteAvatar;
+        }
+        if (micEnabled && audioStream) {
+          callPeerAudio(conn.peer);
         }
       });
 
