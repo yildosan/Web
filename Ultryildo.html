@@ -306,6 +306,7 @@
     function init() {
       detectDevice();
       bindUIEvents();
+      document.body.style.cursor = 'default';
 
       const container = document.getElementById('canvas-container');
 
@@ -743,6 +744,7 @@
     function startGame() {
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
+      document.body.style.cursor = 'none';
       switchMap("lobby");
     }
 
