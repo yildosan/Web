@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Cyberpunk Metaverse 3D - Speech Bubbles</title>
+  <title>Cyberpunk Metaverse 3D - P2P Serverless Multiplayer</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
@@ -16,7 +16,7 @@
     }
     
     .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
-    .stats { color: #00ffff; font-size: 20px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
+    .stats { color: #00ffff; font-size: 18px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
     
     /* Emote & Chat Paneli */
     #bottom-panel {
@@ -53,34 +53,58 @@
       outline: none;
     }
 
+    /* Lobi / Başlangıç Ekranı */
     #start-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
+      background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
       justify-content: center; align-items: center; color: #fff; z-index: 10;
-      cursor: pointer;
     }
-    h1 { font-size: 45px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 10px; text-align: center; }
-    p { font-size: 15px; color: #aaa; margin-bottom: 20px; text-align: center; line-height: 1.6; }
-    .btn { padding: 12px 30px; font-size: 18px; background: #ff0055; color: #fff; border: none; cursor: pointer; font-family: inherit; font-weight: bold; }
+    h1 { font-size: 40px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 10px; text-align: center; }
+    p { font-size: 14px; color: #aaa; margin-bottom: 25px; text-align: center; line-height: 1.6; }
+    
+    .p2p-box {
+      background: rgba(20, 20, 35, 0.9); border: 1px solid #00ffff;
+      padding: 20px; border-radius: 10px; display: flex; flex-direction: column;
+      gap: 12px; width: 340px; box-shadow: 0 0 20px rgba(0,255,255,0.2);
+    }
+    .p2p-input {
+      background: #000; border: 1px solid #ff0055; color: #00ffff;
+      padding: 10px; font-family: inherit; text-align: center; font-size: 16px;
+      outline: none; letter-spacing: 2px;
+    }
+    .btn {
+      padding: 12px; font-size: 15px; background: #ff0055; color: #fff;
+      border: none; cursor: pointer; font-family: inherit; font-weight: bold;
+      transition: all 0.2s;
+    }
     .btn:hover { background: #ff3377; box-shadow: 0 0 15px #ff0055; }
+    .btn-secondary { background: #00ffff; color: #000; }
+    .btn-secondary:hover { background: #66ffff; box-shadow: 0 0 15px #00ffff; }
   </style>
 </head>
 <body>
 
   <div id="start-screen">
-    <h1>CYBER METAVERSE</h1>
+    <h1>CYBER P2P METAVERSE</h1>
     <p>
-      WASD: Hareket | Fare: Kamerayı Çevir | Boşluk: Zıpla<br>
-      <b>1: El Sallama | 2: Dans | 3: Kafa Sallama</b> | T veya Enter: Chat
+      Sunucusuz Çok Oyunculu (WebRTC)<br>
+      <b>WASD:</b> Hareket | <b>Fare:</b> Kamera | <b>1, 2, 3:</b> Emote | <b>T:</b> Chat
     </p>
-    <button class="btn" id="start-btn">METAVERSE'E GİRİŞ YAP</button>
+
+    <div class="p2p-box">
+      <button class="btn" id="host-btn" onclick="hostGame()">1. ODA KUR (HOST)</button>
+      <div style="text-align: center; color: #666; font-size: 12px;">--- VEYA ---</div>
+      <input type="text" id="join-id-input" class="p2p-input" placeholder="ODA KODUNU GİRİN" />
+      <button class="btn btn-secondary" onclick="joinGame()">2. ODAYA KATIL</button>
+    </div>
   </div>
 
   <div id="hud">
     <div class="top-bar">
       <div class="stats">
         <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">MERKEZ PLAZA</span></div>
-        <div>ONLINE AVATARLAR: <span>1</span></div>
+        <div>BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
+        <div>ODA KODUN: <span id="my-peer-id" style="color:#ffff00;">-</span></div>
       </div>
     </div>
 
@@ -93,7 +117,7 @@
 
       <div id="chat-container">
         <div id="chat-messages">
-          <div><span style="color:#ff0055;">[Sistem]:</span> Dünyaya hoş geldiniz! Mesajlarınız artık kafanızın üstünde belirecek.</div>
+          <div><span style="color:#ff0055;">[Sistem]:</span> PeerJS Multi-Player Modu Hazır!</div>
         </div>
         <input type="text" id="chat-input" placeholder="Mesaj yazın (Enter)..." />
       </div>
@@ -104,12 +128,20 @@
 
   <!-- Three.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <!-- PeerJS CDN (Sunucusuz P2P Bağlantı) -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
   <script>
     let scene, camera, renderer;
     let player, playerLimbs = {}, cameraPivot;
     let isPlaying = false;
     let isChatting = false;
+
+    // P2P Ağ Değişkenleri
+    let peer = null;
+    let connections = {}; // Aktif WebRTC bağlantıları
+    let remotePlayers = {}; // Diğer oyuncuların Three.js objeleri
+    let isHost = false;
 
     // Duygu & Animasyon Durumu
     let currentEmote = null;
@@ -125,10 +157,6 @@
     let cameraYaw = 0;
     let cameraPitch = 0.3;
     const cameraDistance = 5;
-
-    // Mesaj Balonu Sistem Değişkenleri
-    let speechBubbleSprite = null;
-    let bubbleTimeout = null;
 
     function init() {
       const container = document.getElementById('canvas-container');
@@ -153,7 +181,7 @@
 
       createMetaverseWorld();
       
-      // Sadece Oyuncu Avatarı Oluştur
+      // Yerel Oyuncu Avatarı (Kırmızı/Mavi)
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
       scene.add(player.group);
       playerLimbs = player.limbs;
@@ -167,6 +195,104 @@
       window.addEventListener('resize', onWindowResize);
     }
 
+    // --- P2P PEERJS MİMARİSİ ---
+    function initPeer(customId = null) {
+      peer = customId ? new Peer(customId) : new Peer();
+
+      peer.on('open', (id) => {
+        document.getElementById('my-peer-id').innerText = id;
+        document.getElementById('peer-status').innerText = "ONLINE";
+        addChatMessage('Sistem', `Oda Kimliğiniz: ${id}`);
+      });
+
+      peer.on('connection', (conn) => {
+        setupConnection(conn);
+      });
+
+      peer.on('error', (err) => {
+        console.error("P2P Hata:", err);
+        alert("Bağlantı Hatası: " + err.type);
+      });
+    }
+
+    function hostGame() {
+      isHost = true;
+      initPeer();
+      startGame();
+    }
+
+    function joinGame() {
+      const hostId = document.getElementById('join-id-input').value.trim();
+      if (!hostId) {
+        alert("Lütfen geçerli bir Oda Kodu girin!");
+        return;
+      }
+      initPeer();
+      
+      peer.on('open', () => {
+        const conn = peer.connect(hostId);
+        setupConnection(conn);
+        startGame();
+      });
+    }
+
+    function setupConnection(conn) {
+      connections[conn.peer] = conn;
+
+      conn.on('open', () => {
+        addChatMessage('Sistem', `Bir oyuncu bağlandı! [${conn.peer.substring(0, 5)}]`);
+        
+        // Yeni katılan oyuncu için 3D Avatar oluştur (Yeşil/Sarı)
+        if (!remotePlayers[conn.peer]) {
+          const remoteAvatar = createHumanoidAvatar(0x00ff66, 0xffff00);
+          scene.add(remoteAvatar.group);
+          remotePlayers[conn.peer] = remoteAvatar;
+        }
+      });
+
+      conn.on('data', (data) => {
+        handleNetworkData(conn.peer, data);
+      });
+
+      conn.on('close', () => {
+        addChatMessage('Sistem', `Oyuncu ayrıldı. [${conn.peer.substring(0, 5)}]`);
+        if (remotePlayers[conn.peer]) {
+          scene.remove(remotePlayers[conn.peer].group);
+          delete remotePlayers[conn.peer];
+        }
+        delete connections[conn.peer];
+      });
+    }
+
+    function broadcast(data) {
+      Object.values(connections).forEach(conn => {
+        if (conn.open) conn.send(data);
+      });
+    }
+
+    function handleNetworkData(peerId, data) {
+      const remote = remotePlayers[peerId];
+      if (!remote) return;
+
+      if (data.type === 'transform') {
+        // Pozisyon ve Rotasyonu Güncelle
+        remote.group.position.set(data.x, data.y, data.z);
+        remote.group.rotation.y = data.rotY;
+        
+        // Animasyon Durumunu Uygula
+        animateAvatarLimbs(remote.limbs, data.isMoving, data.delta, data.emote);
+      }
+      else if (data.type === 'chat') {
+        addChatMessage(peerId.substring(0, 5), data.text);
+        createSpeechBubble(remote.group, data.text);
+      }
+    }
+
+    function startGame() {
+      document.getElementById('start-screen').style.display = 'none';
+      document.body.requestPointerLock();
+    }
+
     // --- İNSANSI AVATAR OLUŞTURUCU ---
     function createHumanoidAvatar(suitColor, visorColor) {
       const group = new THREE.Group();
@@ -176,14 +302,12 @@
       const jointMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.8 });
       const visorMat = new THREE.MeshBasicMaterial({ color: visorColor, wireframe: true });
 
-      // Torso
       const torsoGeo = new THREE.CylinderGeometry(0.35, 0.25, 0.8, 8);
       const torso = new THREE.Mesh(torsoGeo, suitMat);
       torso.position.y = 1.1;
       group.add(torso);
       limbs.torso = torso;
 
-      // Baş & Vizör
       const headGroup = new THREE.Group();
       headGroup.position.y = 1.65;
       
@@ -221,7 +345,7 @@
       limbs.leftLeg = createLimb(-0.2, 0.7, 0.7, 0.1);
       limbs.rightLeg = createLimb(0.2, 0.7, 0.7, 0.1);
 
-      return { group, limbs };
+      return { group, limbs, currentBubble: null, bubbleTimeout: null };
     }
 
     function createMetaverseWorld() {
@@ -244,28 +368,19 @@
       scene.add(stage);
     }
 
-    // --- MESAJ BALONU (SPEECH BUBBLE) OLUŞTURUCU ---
-    function createSpeechBubble(text) {
-      if (speechBubbleSprite) {
-        player.group.remove(speechBubbleSprite);
-        speechBubbleSprite.geometry.dispose();
-        speechBubbleSprite.material.dispose();
-        speechBubbleSprite = null;
-      }
-
-      if (bubbleTimeout) clearTimeout(bubbleTimeout);
+    // --- MESAJ BALONU (SPEECH BUBBLE) ---
+    function createSpeechBubble(targetGroup, text) {
+      // Var olan balonu temizle
+      const oldSprite = targetGroup.getObjectByName("speechBubble");
+      if (oldSprite) targetGroup.remove(oldSprite);
 
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      canvas.width = 512;
-      canvas.height = 128;
+      canvas.width = 512; canvas.height = 128;
 
-      // Balon Arkaplanı
       ctx.fillStyle = 'rgba(10, 10, 25, 0.9)';
-      ctx.strokeStyle = '#00ffff';
-      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 6;
       
-      // Yuvarlatılmış Kutucuk Çizimi
       const x = 10, y = 10, w = 492, h = 108, r = 20;
       ctx.beginPath();
       ctx.moveTo(x + r, y);
@@ -274,42 +389,30 @@
       ctx.arcTo(x, y + h, x, y, r);
       ctx.arcTo(x, y, x + w, y, r);
       ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+      ctx.fill(); ctx.stroke();
 
-      // Metin Çizimi
       ctx.fillStyle = '#ffffff';
       ctx.font = 'Bold 28px Courier New';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       
-      // Metni sığdırmak için uzun metinlerde kırpma
-      let displayText = text;
-      if (displayText.length > 28) {
-        displayText = displayText.substring(0, 25) + '...';
-      }
+      let displayText = text.length > 28 ? text.substring(0, 25) + '...' : text;
       ctx.fillText(displayText, canvas.width / 2, canvas.height / 2);
 
       const texture = new THREE.CanvasTexture(canvas);
       const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
-      speechBubbleSprite = new THREE.Sprite(spriteMaterial);
+      const sprite = new THREE.Sprite(spriteMaterial);
+      sprite.name = "speechBubble";
 
-      // Balonun Boyutu ve Kafanın Üstündeki Pozisyonu
-      speechBubbleSprite.scale.set(2.4, 0.6, 1);
-      speechBubbleSprite.position.set(0, 2.3, 0);
+      sprite.scale.set(2.4, 0.6, 1);
+      sprite.position.set(0, 2.3, 0);
 
-      player.group.add(speechBubbleSprite);
+      targetGroup.add(sprite);
 
-      // 4 Saniye Sonra Balonu Kaldır
-      bubbleTimeout = setTimeout(() => {
-        if (speechBubbleSprite) {
-          player.group.remove(speechBubbleSprite);
-          speechBubbleSprite = null;
-        }
+      setTimeout(() => {
+        if (sprite.parent) sprite.parent.remove(sprite);
       }, 4000);
     }
 
-    // --- EMOTE TETİKLEME ---
     function triggerEmote(type) {
       if (!isPlaying) return;
       currentEmote = type;
@@ -318,13 +421,12 @@
 
     function setupControls() {
       const startScreen = document.getElementById('start-screen');
-      startScreen.addEventListener('click', () => { document.body.requestPointerLock(); });
 
       document.addEventListener('pointerlockchange', () => {
         if (document.pointerLockElement === document.body) {
           isPlaying = true;
           startScreen.style.display = 'none';
-        } else if (!isChatting) {
+        } else if (!isChatting && peer) {
           isPlaying = false;
           startScreen.style.display = 'flex';
         }
@@ -375,7 +477,11 @@
         if (e.key === 'Enter' && input.value.trim() !== '') {
           const msg = input.value.trim();
           addChatMessage('Sen', msg);
-          createSpeechBubble(msg); // Mesaj Balonunu Tetikle
+          createSpeechBubble(player.group, msg);
+          
+          // Chat Mesajını Ağdaki Oyunculara Gönder
+          broadcast({ type: 'chat', text: msg });
+
           input.value = '';
           input.blur();
           document.body.requestPointerLock();
@@ -393,21 +499,19 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // --- ANIMASYON ENGINE ---
-    function animateAvatarLimbs(limbs, isMoving, delta) {
+    // --- GELİŞMİŞ ANIMASYON ENGINE ---
+    function animateAvatarLimbs(limbs, isMoving, delta, emoteOverride = null) {
       animTime += delta * (isMoving ? 12 : 3);
+      const activeEmote = emoteOverride !== undefined ? emoteOverride : currentEmote;
 
-      if (currentEmote && !isMoving && emoteTimer > 0) {
-        emoteTimer -= delta;
-
-        if (currentEmote === 'wave') {
+      if (activeEmote && !isMoving) {
+        if (activeEmote === 'wave') {
           limbs.rightArm.rotation.x = -Math.PI + 0.3;
           limbs.rightArm.rotation.z = Math.sin(animTime * 2) * 0.4;
-          limbs.leftArm.rotation.x = 0;
-          limbs.leftArm.rotation.z = 0;
+          limbs.leftArm.rotation.x = 0; limbs.leftArm.rotation.z = 0;
           limbs.head.rotation.y = 0;
         } 
-        else if (currentEmote === 'dance') {
+        else if (activeEmote === 'dance') {
           limbs.leftArm.rotation.x = Math.sin(animTime * 2) * 1.2;
           limbs.rightArm.rotation.x = -Math.sin(animTime * 2) * 1.2;
           limbs.leftLeg.rotation.x = Math.cos(animTime * 2) * 0.5;
@@ -415,18 +519,14 @@
           limbs.torso.position.y = 1.1 + Math.sin(animTime * 4) * 0.15;
           limbs.head.rotation.z = Math.sin(animTime * 2) * 0.2;
         } 
-        else if (currentEmote === 'nod') {
+        else if (activeEmote === 'nod') {
           limbs.head.rotation.x = Math.sin(animTime * 3) * 0.3;
-          limbs.leftArm.rotation.x = 0;
-          limbs.rightArm.rotation.x = 0;
+          limbs.leftArm.rotation.x = 0; limbs.rightArm.rotation.x = 0;
         }
-
-        if (emoteTimer <= 0) currentEmote = null;
         return;
       }
 
-      limbs.head.rotation.x = 0;
-      limbs.head.rotation.z = 0;
+      limbs.head.rotation.x = 0; limbs.head.rotation.z = 0;
       limbs.rightArm.rotation.z = 0;
 
       if (isMoving) {
@@ -436,15 +536,15 @@
         limbs.rightArm.rotation.x = Math.sin(animTime) * 0.5;
         limbs.torso.position.y = 1.1 + Math.abs(Math.sin(animTime * 2)) * 0.05;
       } else {
-        limbs.leftLeg.rotation.x = 0;
-        limbs.rightLeg.rotation.x = 0;
+        limbs.leftLeg.rotation.x = 0; limbs.rightLeg.rotation.x = 0;
         limbs.leftArm.rotation.x = Math.sin(animTime) * 0.05;
         limbs.rightArm.rotation.x = -Math.sin(animTime) * 0.05;
-        limbs.torso.position.y = 1.1 + Math.sin(animTime) * 0.02;
+        limbs.torso.position.y = 1.1 + Math.sin(animTime * 0.02);
       }
     }
 
     let clock = new THREE.Clock();
+    let networkTimer = 0;
 
     function animate() {
       requestAnimationFrame(animate);
@@ -481,7 +581,28 @@
           canJump = true;
         }
 
+        if (currentEmote) {
+          emoteTimer -= delta;
+          if (emoteTimer <= 0) currentEmote = null;
+        }
+
         animateAvatarLimbs(playerLimbs, isMoving, delta);
+
+        // --- P2P KONUM VERİSİ YAYINLAMA (Saniyede ~30 kez) ---
+        networkTimer += delta;
+        if (networkTimer > 0.033) {
+          networkTimer = 0;
+          broadcast({
+            type: 'transform',
+            x: player.group.position.x,
+            y: player.group.position.y,
+            z: player.group.position.z,
+            rotY: player.group.rotation.y,
+            isMoving: isMoving,
+            emote: currentEmote,
+            delta: delta
+          });
+        }
 
         // Kamera Takibi
         cameraPivot.position.copy(player.group.position);
