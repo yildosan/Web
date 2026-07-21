@@ -819,6 +819,11 @@
 
     function triggerEmote(type) {
       if (!isPlaying) return;
+      if (currentEmote === type) {
+        currentEmote = null;
+        emoteTimer = 0;
+        return;
+      }
       currentEmote = type;
       emoteTimer = 3.0;
     }
