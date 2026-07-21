@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Cyberpunk Metaverse 3D - Emotes & Animations</title>
+  <title>Cyberpunk Metaverse 3D - Speech Bubbles</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
@@ -68,7 +68,7 @@
 <body>
 
   <div id="start-screen">
-    <h1>CYBER METAVERSE & EMOTES</h1>
+    <h1>CYBER METAVERSE</h1>
     <p>
       WASD: Hareket | Fare: Kamerayı Çevir | Boşluk: Zıpla<br>
       <b>1: El Sallama | 2: Dans | 3: Kafa Sallama</b> | T veya Enter: Chat
@@ -80,7 +80,7 @@
     <div class="top-bar">
       <div class="stats">
         <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">MERKEZ PLAZA</span></div>
-        <div>ONLINE AVATARLAR: <span>12</span></div>
+        <div>ONLINE AVATARLAR: <span>1</span></div>
       </div>
     </div>
 
@@ -93,7 +93,7 @@
 
       <div id="chat-container">
         <div id="chat-messages">
-          <div><span style="color:#ff0055;">[Sistem]:</span> Duygu & Animasyon Güncellemesi Yüklendi!</div>
+          <div><span style="color:#ff0055;">[Sistem]:</span> Dünyaya hoş geldiniz! Mesajlarınız artık kafanızın üstünde belirecek.</div>
         </div>
         <input type="text" id="chat-input" placeholder="Mesaj yazın (Enter)..." />
       </div>
@@ -108,12 +108,11 @@
   <script>
     let scene, camera, renderer;
     let player, playerLimbs = {}, cameraPivot;
-    let npcList = [];
     let isPlaying = false;
     let isChatting = false;
 
     // Duygu & Animasyon Durumu
-    let currentEmote = null; // 'wave', 'dance', 'nod'
+    let currentEmote = null;
     let emoteTimer = 0;
 
     // Kontroller & Fizik
@@ -126,6 +125,10 @@
     let cameraYaw = 0;
     let cameraPitch = 0.3;
     const cameraDistance = 5;
+
+    // Mesaj Balonu Sistem Değişkenleri
+    let speechBubbleSprite = null;
+    let bubbleTimeout = null;
 
     function init() {
       const container = document.getElementById('canvas-container');
@@ -150,12 +153,10 @@
 
       createMetaverseWorld();
       
-      // İnsansı Oyuncu ve NPC'ler
+      // Sadece Oyuncu Avatarı Oluştur
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
       scene.add(player.group);
       playerLimbs = player.limbs;
-
-      createNPCs();
 
       cameraPivot = new THREE.Object3D();
       scene.add(cameraPivot);
@@ -223,20 +224,6 @@
       return { group, limbs };
     }
 
-    function createNPCs() {
-      const npcConfigs = [
-        { x: -8, z: 8, color: 0xffcc00, visor: 0xff00aa },
-        { x: 12, z: -10, color: 0x00ff66, visor: 0x00ffff }
-      ];
-
-      npcConfigs.forEach(cfg => {
-        const npc = createHumanoidAvatar(cfg.color, cfg.visor);
-        npc.group.position.set(cfg.x, 0, cfg.z);
-        scene.add(npc.group);
-        npcList.push(npc);
-      });
-    }
-
     function createMetaverseWorld() {
       const floorGeo = new THREE.PlaneGeometry(120, 120, 30, 30);
       const floorMat = new THREE.MeshStandardMaterial({ color: 0x050510, wireframe: true, emissive: 0x110022 });
@@ -257,18 +244,76 @@
       scene.add(stage);
     }
 
+    // --- MESAJ BALONU (SPEECH BUBBLE) OLUŞTURUCU ---
+    function createSpeechBubble(text) {
+      if (speechBubbleSprite) {
+        player.group.remove(speechBubbleSprite);
+        speechBubbleSprite.geometry.dispose();
+        speechBubbleSprite.material.dispose();
+        speechBubbleSprite = null;
+      }
+
+      if (bubbleTimeout) clearTimeout(bubbleTimeout);
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 512;
+      canvas.height = 128;
+
+      // Balon Arkaplanı
+      ctx.fillStyle = 'rgba(10, 10, 25, 0.9)';
+      ctx.strokeStyle = '#00ffff';
+      ctx.lineWidth = 6;
+      
+      // Yuvarlatılmış Kutucuk Çizimi
+      const x = 10, y = 10, w = 492, h = 108, r = 20;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Metin Çizimi
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'Bold 28px Courier New';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Metni sığdırmak için uzun metinlerde kırpma
+      let displayText = text;
+      if (displayText.length > 28) {
+        displayText = displayText.substring(0, 25) + '...';
+      }
+      ctx.fillText(displayText, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+      speechBubbleSprite = new THREE.Sprite(spriteMaterial);
+
+      // Balonun Boyutu ve Kafanın Üstündeki Pozisyonu
+      speechBubbleSprite.scale.set(2.4, 0.6, 1);
+      speechBubbleSprite.position.set(0, 2.3, 0);
+
+      player.group.add(speechBubbleSprite);
+
+      // 4 Saniye Sonra Balonu Kaldır
+      bubbleTimeout = setTimeout(() => {
+        if (speechBubbleSprite) {
+          player.group.remove(speechBubbleSprite);
+          speechBubbleSprite = null;
+        }
+      }, 4000);
+    }
+
     // --- EMOTE TETİKLEME ---
     function triggerEmote(type) {
       if (!isPlaying) return;
       currentEmote = type;
-      emoteTimer = 3.0; // 3 Saniye sürsün
-
-      let text = "";
-      if (type === 'wave') text = "*El sallıyor...* 👋";
-      if (type === 'dance') text = "*Çılgınca dans ediyor!* 🕺";
-      if (type === 'nod') text = "*Kafasıyla onaylıyor...* 🔴";
-
-      addChatMessage('Sen', text);
+      emoteTimer = 3.0;
     }
 
     function setupControls() {
@@ -307,7 +352,6 @@
           case 'KeyT': e.preventDefault(); focusChat(); break;
         }
 
-        // Hareket edildiğinde Emote iptal edilir
         if (['KeyW', 'KeyS', 'KeyA', 'KeyD'].includes(e.code)) {
           currentEmote = null;
         }
@@ -329,7 +373,9 @@
       input.addEventListener('blur', () => { isChatting = false; });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== '') {
-          addChatMessage('Sen', input.value.trim());
+          const msg = input.value.trim();
+          addChatMessage('Sen', msg);
+          createSpeechBubble(msg); // Mesaj Balonunu Tetikle
           input.value = '';
           input.blur();
           document.body.requestPointerLock();
@@ -347,16 +393,14 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // --- GELİŞMİŞ ANIMASYON SİSTEMİ (PROSEDÜREL + EMOTES) ---
+    // --- ANIMASYON ENGINE ---
     function animateAvatarLimbs(limbs, isMoving, delta) {
       animTime += delta * (isMoving ? 12 : 3);
 
-      // 1. EMOTE ANIMASYONLARI (Hareket etmiyorsa çalışır)
       if (currentEmote && !isMoving && emoteTimer > 0) {
         emoteTimer -= delta;
 
         if (currentEmote === 'wave') {
-          // Sağ Kol El Sallama
           limbs.rightArm.rotation.x = -Math.PI + 0.3;
           limbs.rightArm.rotation.z = Math.sin(animTime * 2) * 0.4;
           limbs.leftArm.rotation.x = 0;
@@ -364,7 +408,6 @@
           limbs.head.rotation.y = 0;
         } 
         else if (currentEmote === 'dance') {
-          // Çılgın Dans
           limbs.leftArm.rotation.x = Math.sin(animTime * 2) * 1.2;
           limbs.rightArm.rotation.x = -Math.sin(animTime * 2) * 1.2;
           limbs.leftLeg.rotation.x = Math.cos(animTime * 2) * 0.5;
@@ -373,7 +416,6 @@
           limbs.head.rotation.z = Math.sin(animTime * 2) * 0.2;
         } 
         else if (currentEmote === 'nod') {
-          // Kafa Sallama (Onaylama)
           limbs.head.rotation.x = Math.sin(animTime * 3) * 0.3;
           limbs.leftArm.rotation.x = 0;
           limbs.rightArm.rotation.x = 0;
@@ -383,21 +425,17 @@
         return;
       }
 
-      // Emote bitince uzuv açılarını sıfırla
       limbs.head.rotation.x = 0;
       limbs.head.rotation.z = 0;
       limbs.rightArm.rotation.z = 0;
 
-      // 2. YÜRÜME ANIMASYONLARI
       if (isMoving) {
         limbs.leftLeg.rotation.x = Math.sin(animTime) * 0.6;
         limbs.rightLeg.rotation.x = -Math.sin(animTime) * 0.6;
         limbs.leftArm.rotation.x = -Math.sin(animTime) * 0.5;
         limbs.rightArm.rotation.x = Math.sin(animTime) * 0.5;
         limbs.torso.position.y = 1.1 + Math.abs(Math.sin(animTime * 2)) * 0.05;
-      } 
-      // 3. IDLE (DURMA) ANIMASYONLARI
-      else {
+      } else {
         limbs.leftLeg.rotation.x = 0;
         limbs.rightLeg.rotation.x = 0;
         limbs.leftArm.rotation.x = Math.sin(animTime) * 0.05;
@@ -443,9 +481,7 @@
           canJump = true;
         }
 
-        // Oyuncu ve NPC Animasyon Takibi
         animateAvatarLimbs(playerLimbs, isMoving, delta);
-        npcList.forEach(npc => animateAvatarLimbs(npc.limbs, false, delta));
 
         // Kamera Takibi
         cameraPivot.position.copy(player.group.position);
