@@ -2,13 +2,12 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Retro Cyberpunk Metaverse 3D</title>
+  <title>Cyberpunk Metaverse 3D - Humanoid Avatars</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
     #canvas-container { width: 100%; height: 100%; display: block; }
     
-    /* HUD & UI */
     #hud {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; padding: 20px;
@@ -19,7 +18,6 @@
     .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
     .stats { color: #00ffff; font-size: 20px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
     
-    /* Chat Box */
     #chat-container {
       position: absolute; bottom: 20px; left: 20px; width: 350px;
       background: rgba(10, 10, 20, 0.85); border: 1px solid #00ffff;
@@ -51,8 +49,8 @@
 <body>
 
   <div id="start-screen">
-    <h1>CYBER METAVERSE 3D</h1>
-    <p>3. ŞAHIS DÜNYAYA HOŞ GELDİNİZ<br>WASD: Hareket | Fare: Kamerayı Çevir | Boşluk: Zıpla | T veya Enter: Chat</p>
+    <h1>HUMANOID CYBER METAVERSE</h1>
+    <p>3. ŞAHIS İNSANSI AVATARLAR<br>WASD: Hareket | Fare: Kamerayı Çevir | Boşluk: Zıpla | T veya Enter: Chat</p>
     <button class="btn" id="start-btn">METAVERSE'E GİRİŞ YAP</button>
   </div>
 
@@ -66,7 +64,7 @@
 
     <div id="chat-container">
       <div id="chat-messages">
-        <div><span style="color:#ff0055;">[Sistem]:</span> Cyber Metaverse'e hoş geldiniz!</div>
+        <div><span style="color:#ff0055;">[Sistem]:</span> İnsansı Avatarlar Dünyasına Hoş Geldiniz!</div>
       </div>
       <input type="text" id="chat-input" placeholder="Mesaj yazın (Enter)..." />
     </div>
@@ -79,24 +77,25 @@
 
   <script>
     let scene, camera, renderer;
-    let player, playerBody, cameraPivot;
+    let player, playerLimbs = {}, cameraPivot;
+    let npcList = [];
     let isPlaying = false;
     let isChatting = false;
 
-    // Kontroller
+    // Kontroller & Fizik
     let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
     let velocity = new THREE.Vector3();
     let canJump = false;
+    let animTime = 0;
 
-    // Kamera Kontrolleri
+    // Kamera
     let cameraYaw = 0;
     let cameraPitch = 0.3;
-    const cameraDistance = 6;
+    const cameraDistance = 5;
 
     function init() {
       const container = document.getElementById('canvas-container');
 
-      // Sahne Kurulumu (ULTRAKILL Stilinde Karanlık/Neon)
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x020205);
       scene.fog = new THREE.FogExp2(0x020205, 0.02);
@@ -108,17 +107,24 @@
       renderer.setPixelRatio(window.devicePixelRatio);
       container.appendChild(renderer.domElement);
 
-      // Işıklar
-      const ambientLight = new THREE.AmbientLight(0x221133);
+      const ambientLight = new THREE.AmbientLight(0x332244);
       scene.add(ambientLight);
 
-      const dirLight = new THREE.DirectionalLight(0x00ffff, 0.8);
+      const dirLight = new THREE.DirectionalLight(0x00ffff, 0.9);
       dirLight.position.set(20, 40, 20);
       scene.add(dirLight);
 
-      // Metaverse Alanları ve Oyuncu Oluşturma
       createMetaverseWorld();
-      createPlayer();
+      
+      // İnsansı Oyuncu ve NPC'leri Kur
+      player = createHumanoidAvatar(0xff0055, 0x00ffff);
+      scene.add(player.group);
+      playerLimbs = player.limbs;
+
+      createNPCs();
+
+      cameraPivot = new THREE.Object3D();
+      scene.add(cameraPivot);
 
       setupControls();
       setupChat();
@@ -126,91 +132,106 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    // --- METAVERSE DÜNYASI VE YAPILARI ---
-    function createMetaverseWorld() {
-      // Retro Izgara Zemin (100x100)
-      const floorGeo = new THREE.PlaneGeometry(120, 120, 30, 30);
-      const floorMat = new THREE.MeshStandardMaterial({ 
-        color: 0x050510, 
-        wireframe: true,
-        emissive: 0x110022 
+    // --- İNSANSI (HUMANOID) AVATAR OLUŞTURUCU ---
+    function createHumanoidAvatar(suitColor, visorColor) {
+      const group = new THREE.Group();
+      const limbs = {};
+
+      const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.4, metalness: 0.2 });
+      const jointMat = new THREE.MeshStandardMaterial({ color: 0x111115, roughness: 0.8 });
+      const visorMat = new THREE.MeshBasicMaterial({ color: visorColor, wireframe: true });
+
+      // 1. Gövde (Torso)
+      const torsoGeo = new THREE.CylinderGeometry(0.35, 0.25, 0.8, 8);
+      const torso = new THREE.Mesh(torsoGeo, suitMat);
+      torso.position.y = 1.1;
+      group.add(torso);
+      limbs.torso = torso;
+
+      // 2. Kafa & Visor
+      const headGroup = new THREE.Group();
+      headGroup.position.y = 1.65;
+      
+      const headGeo = new THREE.SphereGeometry(0.22, 16, 16);
+      const head = new THREE.Mesh(headGeo, suitMat);
+      headGroup.add(head);
+
+      const visorGeo = new THREE.BoxGeometry(0.25, 0.1, 0.2);
+      const visor = new THREE.Mesh(visorGeo, visorMat);
+      visor.position.set(0, 0.02, -0.12);
+      headGroup.add(visor);
+      
+      group.add(headGroup);
+      limbs.head = headGroup;
+
+      // Eklem Yardımcısı Fonksiyonu
+      function createLimb(xOffset, yPos, length, radius) {
+        const pivot = new THREE.Group();
+        pivot.position.set(xOffset, yPos, 0);
+
+        const meshGeo = new THREE.CylinderGeometry(radius, radius * 0.8, length, 8);
+        const mesh = new THREE.Mesh(meshGeo, suitMat);
+        mesh.position.y = -length / 2;
+        pivot.add(mesh);
+
+        // Eklem topu
+        const jointGeo = new THREE.SphereGeometry(radius * 1.1, 8, 8);
+        const joint = new THREE.Mesh(jointGeo, jointMat);
+        pivot.add(joint);
+
+        group.add(pivot);
+        return pivot;
+      }
+
+      // 3. Kollar
+      limbs.leftArm = createLimb(-0.42, 1.4, 0.6, 0.08);
+      limbs.rightArm = createLimb(0.42, 1.4, 0.6, 0.08);
+
+      // 4. Bacaklar
+      limbs.leftLeg = createLimb(-0.2, 0.7, 0.7, 0.1);
+      limbs.rightLeg = createLimb(0.2, 0.7, 0.7, 0.1);
+
+      return { group, limbs };
+    }
+
+    function createNPCs() {
+      const npcConfigs = [
+        { x: -8, z: 8, color: 0xffcc00, visor: 0xff00aa },
+        { x: 12, z: -10, color: 0x00ff66, visor: 0x00ffff }
+      ];
+
+      npcConfigs.forEach(cfg => {
+        const npc = createHumanoidAvatar(cfg.color, cfg.visor);
+        npc.group.position.set(cfg.x, 0, cfg.z);
+        scene.add(npc.group);
+        npcList.push(npc);
       });
+    }
+
+    function createMetaverseWorld() {
+      const floorGeo = new THREE.PlaneGeometry(120, 120, 30, 30);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x050510, wireframe: true, emissive: 0x110022 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
       scene.add(floor);
 
-      // 1. Merkez Portal (Işınlanma Alanı)
+      // Portal & Sahne
       const portalGeo = new THREE.TorusGeometry(3, 0.2, 16, 100);
       const portalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
       const portal = new THREE.Mesh(portalGeo, portalMat);
       portal.position.set(0, 3.5, -20);
       scene.add(portal);
 
-      const portalLight = new THREE.PointLight(0x00ffff, 3, 15);
-      portalLight.position.set(0, 3.5, -20);
-      scene.add(portalLight);
-
-      // 2. Sahne / Etkinlik Alanı (Podyum)
       const stageGeo = new THREE.CylinderGeometry(8, 10, 1, 32);
       const stageMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0x330011 });
       const stage = new THREE.Mesh(stageGeo, stageMat);
       stage.position.set(25, 0.5, 10);
       scene.add(stage);
-
-      // 3. Statik Diğer Avatar/NPC'ler (Metaverse Hissiyatı)
-      createNPC(-10, 10, 0xffcc00);
-      createNPC(15, -15, 0x00ff66);
     }
 
-    function createNPC(x, z, color) {
-      const npcGroup = new THREE.Group();
-      const bodyGeo = new THREE.BoxGeometry(0.8, 1.8, 0.5);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: color });
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.position.y = 0.9;
-
-      const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
-      const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-      const head = new THREE.Mesh(headGeo, headMat);
-      head.position.y = 2.1;
-
-      npcGroup.add(body);
-      npcGroup.add(head);
-      npcGroup.position.set(x, 0, z);
-      scene.add(npcGroup);
-    }
-
-    // --- 3. ŞAHIS OYUNCU (AVATAR) OLUŞTURMA ---
-    function createPlayer() {
-      player = new THREE.Group();
-
-      // Gövde
-      const bodyGeo = new THREE.BoxGeometry(0.8, 1.6, 0.5);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.2 });
-      playerBody = new THREE.Mesh(bodyGeo, bodyMat);
-      playerBody.position.y = 0.8;
-      player.add(playerBody);
-
-      // Baş (Kask)
-      const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-      const headMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
-      const head = new THREE.Mesh(headGeo, headMat);
-      head.position.y = 1.85;
-      player.add(head);
-
-      scene.add(player);
-
-      // Kamera Pivotu (Kamerayı karaktere bağlayan sanal kol)
-      cameraPivot = new THREE.Object3D();
-      scene.add(cameraPivot);
-    }
-
-    // --- KONTROLLER VE FARE TAKİBİ ---
     function setupControls() {
       const startScreen = document.getElementById('start-screen');
-      startScreen.addEventListener('click', () => {
-        document.body.requestPointerLock();
-      });
+      startScreen.addEventListener('click', () => { document.body.requestPointerLock(); });
 
       document.addEventListener('pointerlockchange', () => {
         if (document.pointerLockElement === document.body) {
@@ -222,33 +243,22 @@
         }
       });
 
-      // 3. Şahıs Kamera Döndürme
       document.addEventListener('mousemove', (e) => {
         if (!isPlaying || isChatting) return;
-
         cameraYaw -= e.movementX * 0.003;
         cameraPitch -= e.movementY * 0.003;
-
-        // Dikey bakış açısını sınırla (Yere veya tavana gömülmemesi için)
         cameraPitch = Math.max(-0.2, Math.min(1.2, cameraPitch));
       });
 
-      // Tuş Basışları
       document.addEventListener('keydown', (e) => {
         if (isChatting) return;
-
         switch (e.code) {
           case 'KeyW': moveForward = true; break;
           case 'KeyS': moveBackward = true; break;
           case 'KeyA': moveLeft = true; break;
           case 'KeyD': moveRight = true; break;
-          case 'Space': 
-            if (canJump) { velocity.y = 10; canJump = false; }
-            break;
-          case 'KeyT':
-            e.preventDefault();
-            focusChat();
-            break;
+          case 'Space': if (canJump) { velocity.y = 9; canJump = false; } break;
+          case 'KeyT': e.preventDefault(); focusChat(); break;
         }
       });
 
@@ -262,19 +272,10 @@
       });
     }
 
-    // --- SOHBET (CHAT) SİSTEMİ ---
     function setupChat() {
       const input = document.getElementById('chat-input');
-      
-      input.addEventListener('focus', () => {
-        isChatting = true;
-        document.exitPointerLock();
-      });
-
-      input.addEventListener('blur', () => {
-        isChatting = false;
-      });
-
+      input.addEventListener('focus', () => { isChatting = true; document.exitPointerLock(); });
+      input.addEventListener('blur', () => { isChatting = false; });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== '') {
           addChatMessage('Sen', input.value.trim());
@@ -285,10 +286,7 @@
       });
     }
 
-    function focusChat() {
-      const input = document.getElementById('chat-input');
-      input.focus();
-    }
+    function focusChat() { document.getElementById('chat-input').focus(); }
 
     function addChatMessage(user, msg) {
       const messages = document.getElementById('chat-messages');
@@ -298,21 +296,38 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // --- OYUN DÖNGÜSÜ VE FİZİK ---
+    // --- PROSEDÜREL YÜRÜME/ANIMASYON ENGINE ---
+    function animateAvatarLimbs(limbs, isMoving, delta) {
+      animTime += delta * (isMoving ? 12 : 3);
+
+      if (isMoving) {
+        // Yürüme sallantıları
+        limbs.leftLeg.rotation.x = Math.sin(animTime) * 0.6;
+        limbs.rightLeg.rotation.x = -Math.sin(animTime) * 0.6;
+        limbs.leftArm.rotation.x = -Math.sin(animTime) * 0.5;
+        limbs.rightArm.rotation.x = Math.sin(animTime) * 0.5;
+        limbs.torso.position.y = 1.1 + Math.abs(Math.sin(animTime * 2)) * 0.05;
+      } else {
+        // Rölanti (Idle) nefes alma hareketi
+        limbs.leftLeg.rotation.x = 0;
+        limbs.rightLeg.rotation.x = 0;
+        limbs.leftArm.rotation.x = Math.sin(animTime) * 0.05;
+        limbs.rightArm.rotation.x = -Math.sin(animTime) * 0.05;
+        limbs.torso.position.y = 1.1 + Math.sin(animTime) * 0.02;
+      }
+    }
+
     let clock = new THREE.Clock();
 
     function animate() {
       requestAnimationFrame(animate);
-
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if (isPlaying) {
-        // 1. Hareket Hesaplaması
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
-        velocity.y -= 25.0 * delta; // Yerçekimi
+        velocity.y -= 25.0 * delta;
 
-        // Kameranın yönüne göre hareket açılarını al
         const moveDir = new THREE.Vector3();
         if (moveForward) moveDir.z -= 1;
         if (moveBackward) moveDir.z += 1;
@@ -320,41 +335,41 @@
         if (moveRight) moveDir.x += 1;
         moveDir.normalize();
 
-        if (moveForward || moveBackward || moveLeft || moveRight) {
-          // Kameranın y eksenindeki açısını hareket yönüne uygula
-          const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
-          
-          velocity.x = Math.sin(angle) * 15;
-          velocity.z = Math.cos(angle) * 15;
+        const isMoving = moveForward || moveBackward || moveLeft || moveRight;
 
-          // Karakteri gittiği yöne döndür
-          player.rotation.y = angle + Math.PI;
+        if (isMoving) {
+          const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
+          velocity.x = Math.sin(angle) * 12;
+          velocity.z = Math.cos(angle) * 12;
+          player.group.rotation.y = angle + Math.PI;
         }
 
-        player.position.x += velocity.x * delta;
-        player.position.z += velocity.z * delta;
-        player.position.y += velocity.y * delta;
+        player.group.position.x += velocity.x * delta;
+        player.group.position.z += velocity.z * delta;
+        player.group.position.y += velocity.y * delta;
 
-        // Zemin Kontrolü
-        if (player.position.y < 0) {
+        if (player.group.position.y < 0) {
           velocity.y = 0;
-          player.position.y = 0;
+          player.group.position.y = 0;
           canJump = true;
         }
 
-        // 2. 3. Şahıs Kamera Takibi (Third-Person Camera Update)
-        cameraPivot.position.copy(player.position);
-        cameraPivot.position.y += 1.6; // Karakterin baş hizası
+        // Oyuncu ve NPC Animasyonları
+        animateAvatarLimbs(playerLimbs, isMoving, delta);
+        npcList.forEach(npc => animateAvatarLimbs(npc.limbs, false, delta));
 
-        // Kamerayı pivot etrafında döndür ve konumlandır
+        // Kamera Takibi
+        cameraPivot.position.copy(player.group.position);
+        cameraPivot.position.y += 1.4;
+
         camera.position.x = cameraPivot.position.x + cameraDistance * Math.sin(cameraYaw) * Math.cos(cameraPitch);
         camera.position.z = cameraPivot.position.z + cameraDistance * Math.cos(cameraYaw) * Math.cos(cameraPitch);
         camera.position.y = cameraPivot.position.y + cameraDistance * Math.sin(cameraPitch);
 
         camera.lookAt(cameraPivot.position);
 
-        // 3. Bölge Kontrolü (Portal / Plaza algılama)
-        const distToPortal = player.position.distanceTo(new THREE.Vector3(0, 0, -20));
+        // Bölge Alanı Güncelleme
+        const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 0, -20));
         const zoneElem = document.getElementById('zone-val');
         if (distToPortal < 5) {
           zoneElem.innerText = "IŞINLANMA PORTALI";
