@@ -230,6 +230,10 @@
     let lobbyGroup, gameGroup;
     let parkourPortalMesh, cityPortalMesh;
     let portalCooldown = false;
+    let seatingBenches = [];
+    let currentSeat = null;
+    let isSitting = false;
+    const SIT_RANGE = 1.8;
 
     let physicsBoxes = []; 
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
@@ -383,6 +387,52 @@
       });
     }
 
+    function createDoubleBench(x, z, rotation = 0) {
+      const benchGroup = new THREE.Group();
+      benchGroup.position.set(x, 0, z);
+      benchGroup.rotation.y = rotation;
+
+      const seatOffset = new THREE.Vector3(0, 0.95, 0.2);
+      const seatAnchor = seatOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), rotation);
+      seatAnchor.add(new THREE.Vector3(x, 0, z));
+
+      const seatMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.2 });
+      const frameMat = new THREE.MeshStandardMaterial({ color: 0x0f1a12, roughness: 0.7 });
+
+      const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 0.9), seatMat);
+      base.position.y = 0.65;
+      base.userData = { isCollider: true };
+      benchGroup.add(base);
+
+      const leftPad = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.18, 0.75), seatMat);
+      leftPad.position.set(-0.7, 0.72, 0);
+      leftPad.userData = { isCollider: true };
+      benchGroup.add(leftPad);
+
+      const rightPad = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.18, 0.75), seatMat);
+      rightPad.position.set(0.7, 0.72, 0);
+      rightPad.userData = { isCollider: true };
+      benchGroup.add(rightPad);
+
+      const backrest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.9, 0.18), frameMat);
+      backrest.position.set(0, 1.15, 0.35);
+      benchGroup.add(backrest);
+
+      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.12), frameMat);
+      leftLeg.position.set(-1.2, 0.4, 0.25);
+      benchGroup.add(leftLeg);
+
+      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.12), frameMat);
+      rightLeg.position.set(1.2, 0.4, 0.25);
+      benchGroup.add(rightLeg);
+
+      const light = new THREE.PointLight(0x00ff66, 1.2, 6);
+      light.position.set(0, 1.4, 0.2);
+      benchGroup.add(light);
+
+      return { group: benchGroup, anchor: seatAnchor };
+    }
+
     // --- CYBER PARK (YENİ ŞEHİR PARKI LOBİSİ) ---
     function buildCyberParkLobby() {
       // Park Yeşil Zemin
@@ -466,6 +516,19 @@
         bench.userData = { isCollider: true };
         lobbyGroup.add(bench);
       }
+
+      const seatingAreas = [
+        { x: 12, z: 18, rot: 0 },
+        { x: -16, z: 22, rot: Math.PI / 2 },
+        { x: 20, z: -12, rot: -Math.PI / 4 },
+        { x: -22, z: -8, rot: Math.PI / 4 }
+      ];
+
+      seatingAreas.forEach((area) => {
+        const bench = createDoubleBench(area.x, area.z, area.rot);
+        seatingBenches.push(bench);
+        lobbyGroup.add(bench.group);
+      });
 
       // Parkour Portal
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
@@ -746,6 +809,8 @@
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
       isChatting = false;
+      isSitting = false;
+      currentSeat = null;
       setCursorVisibility();
       requestGameplayPointerLock();
       switchMap("lobby");
@@ -858,6 +923,33 @@
       }
     }
 
+    function toggleSeat() {
+      if (!isPlaying || isChatting) return;
+
+      if (isSitting) {
+        isSitting = false;
+        currentSeat = null;
+        velocity.set(0, 0, 0);
+        moveForward = moveBackward = moveLeft = moveRight = false;
+        return;
+      }
+
+      const bench = seatingBenches.find((item) => {
+        return player.group.position.distanceTo(item.anchor) < SIT_RANGE;
+      });
+
+      if (!bench) return;
+
+      currentSeat = bench;
+      isSitting = true;
+      player.group.position.copy(bench.anchor);
+      player.group.position.y = bench.anchor.y;
+      player.group.rotation.y = bench.group.rotation.y + Math.PI / 2;
+      velocity.set(0, 0, 0);
+      moveForward = moveBackward = moveLeft = moveRight = false;
+      canJump = false;
+    }
+
     function setupControls() {
       document.addEventListener('pointerlockchange', () => {
         pointerLocked = document.pointerLockElement === document.body;
@@ -889,6 +981,11 @@
             if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) break;
             e.preventDefault();
             openChatInput();
+            break;
+          case 'KeyE':
+            if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) break;
+            e.preventDefault();
+            toggleSeat();
             break;
         }
       });
@@ -1124,82 +1221,94 @@
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if (isPlaying) {
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-        velocity.y -= 26.0 * delta;
-
-        const moveDir = new THREE.Vector3();
-        if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
-          moveDir.x = joystickVector.x;
-          moveDir.z = joystickVector.y;
-        } else {
-          if (moveForward) moveDir.z -= 1;
-          if (moveBackward) moveDir.z += 1;
-          if (moveLeft) moveDir.x -= 1;
-          if (moveRight) moveDir.x += 1;
-        }
-        if (moveDir.length() > 0) moveDir.normalize();
-
-        const isMoving = moveDir.length() > 0.1;
-
-        if (isMoving) {
-          const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
-          velocity.x = Math.sin(angle) * 11;
-          velocity.z = Math.cos(angle) * 11;
-          player.group.rotation.y = angle;
-        }
-
-        const targetPos = player.group.position.clone();
-        targetPos.x += velocity.x * delta;
-        targetPos.z += velocity.z * delta;
-        targetPos.y += velocity.y * delta;
-
-        const isGrounded = checkCollisions(targetPos);
-        player.group.position.copy(targetPos);
-
-        if (isGrounded) {
-          canJump = true;
-        }
-
-        // Lobi ve Parkour Harita Dışı Kontrolleri
-        if (currentMap === "parkour" && player.group.position.y < -12) {
-          fallCount++;
-          document.getElementById('fall-count').innerText = fallCount;
-          addChatMessage('Sistem', '⚠️ Düşüldü! Kontrol noktasına dönülüyor...');
-          player.group.position.copy(currentCheckpointPos);
+        if (isSitting) {
           velocity.set(0, 0, 0);
-        } else if (currentMap === "lobby" && player.group.position.y < -10) {
-          // Lobi harita dışına düşme koruması
-          player.group.position.set(0, 0.5, 0);
-          velocity.set(0, 0, 0);
-        }
-
-        animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
-
-        if (currentMap === "lobby") {
-          parkourPortalMesh.rotation.z += delta * 1.5;
-          const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -30));
-          if (distToPortal < 3.8) {
-            switchMap("parkour");
+          if (currentSeat) {
+            player.group.position.copy(currentSeat.anchor);
+            player.group.position.y = currentSeat.anchor.y;
           }
-        } else if (currentMap === "parkour" && cityPortalMesh) {
-          cityPortalMesh.rotation.z += delta * 1.5;
+        } else {
+          velocity.x -= velocity.x * 10.0 * delta;
+          velocity.z -= velocity.z * 10.0 * delta;
+          velocity.y -= 26.0 * delta;
+
+          const moveDir = new THREE.Vector3();
+          if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
+            moveDir.x = joystickVector.x;
+            moveDir.z = joystickVector.y;
+          } else {
+            if (moveForward) moveDir.z -= 1;
+            if (moveBackward) moveDir.z += 1;
+            if (moveLeft) moveDir.x -= 1;
+            if (moveRight) moveDir.x += 1;
+          }
+          if (moveDir.length() > 0) moveDir.normalize();
+
+          const isMoving = moveDir.length() > 0.1;
+
+          if (isMoving) {
+            const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
+            velocity.x = Math.sin(angle) * 11;
+            velocity.z = Math.cos(angle) * 11;
+            player.group.rotation.y = angle;
+          }
+
+          const targetPos = player.group.position.clone();
+          targetPos.x += velocity.x * delta;
+          targetPos.z += velocity.z * delta;
+          targetPos.y += velocity.y * delta;
+
+          const isGrounded = checkCollisions(targetPos);
+          player.group.position.copy(targetPos);
+
+          if (isGrounded) {
+            canJump = true;
+          }
+
+          // Lobi ve Parkour Harita Dışı Kontrolleri
+          if (currentMap === "parkour" && player.group.position.y < -12) {
+            fallCount++;
+            document.getElementById('fall-count').innerText = fallCount;
+            addChatMessage('Sistem', '⚠️ Düşüldü! Kontrol noktasına dönülüyor...');
+            player.group.position.copy(currentCheckpointPos);
+            velocity.set(0, 0, 0);
+          } else if (currentMap === "lobby" && player.group.position.y < -10) {
+            // Lobi harita dışına düşme koruması
+            player.group.position.set(0, 0.5, 0);
+            velocity.set(0, 0, 0);
+          }
+
+          animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
+
+          if (currentMap === "lobby") {
+            parkourPortalMesh.rotation.z += delta * 1.5;
+            const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -30));
+            if (distToPortal < 3.8) {
+              switchMap("parkour");
+            }
+          } else if (currentMap === "parkour" && cityPortalMesh) {
+            cityPortalMesh.rotation.z += delta * 1.5;
+          }
+
+          networkTimer += delta;
+          if (networkTimer > 0.033) {
+            networkTimer = 0;
+            broadcast({
+              type: 'transform',
+              x: player.group.position.x,
+              y: player.group.position.y,
+              z: player.group.position.z,
+              rotY: player.group.rotation.y,
+              isMoving: isMoving,
+              emote: currentEmote,
+              map: currentMap,
+              delta: delta
+            });
+          }
         }
 
-        networkTimer += delta;
-        if (networkTimer > 0.033) {
-          networkTimer = 0;
-          broadcast({
-            type: 'transform',
-            x: player.group.position.x,
-            y: player.group.position.y,
-            z: player.group.position.z,
-            rotY: player.group.rotation.y,
-            isMoving: isMoving,
-            emote: currentEmote,
-            map: currentMap,
-            delta: delta
-          });
+        if (isSitting) {
+          animateAvatarLimbs(playerLimbs, false, delta, currentEmote);
         }
 
         cameraPivot.position.copy(player.group.position);
