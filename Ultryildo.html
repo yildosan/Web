@@ -230,8 +230,7 @@
     let parkourPortalMesh, cityPortalMesh;
     let portalCooldown = false;
 
-    let physicsBoxes = [];
-let benches=[]; let isSitting=false; let currentBench=null;
+    let physicsBoxes = []; 
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
     let fallCount = 0;
     const PLAYER_RADIUS = 0.35;
@@ -462,87 +461,9 @@ let benches=[]; let isSitting=false; let currentBench=null;
         const bench = new THREE.Mesh(benchGeo, benchMat);
         bench.position.set(bx, 0.2, bz);
         bench.rotation.y = -bAngle;
-        bench.userData = { isCollider: true }; benches.push(bench);
+        bench.userData = { isCollider: true };
         lobbyGroup.add(bench);
       }
-
-      // --- İKİ KİŞİNİN AYNI ANDA OTURABİLECEĞİ BANKLAR OLAN BİR ALAN ---
-      const seatingAreaGroup = new THREE.Group();
-      seatingAreaGroup.position.set(22, 0, 0);
-
-      // Zemin / Platform (Oturma Alanı)
-      const seatPlatformGeo = new THREE.CylinderGeometry(7, 7, 0.2, 32);
-      const seatPlatformMat = new THREE.MeshStandardMaterial({ color: 0x11221b, roughness: 0.6, metalness: 0.3 });
-      const seatPlatform = new THREE.Mesh(seatPlatformGeo, seatPlatformMat);
-      seatPlatform.position.y = 0.1;
-      seatPlatform.userData = { isCollider: true };
-      seatingAreaGroup.add(seatPlatform);
-
-      // Çevre Aydınlatma Halkası (Neon)
-      const seatRingGeo = new THREE.TorusGeometry(6.8, 0.15, 16, 50);
-      const seatRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      const seatRing = new THREE.Mesh(seatRingGeo, seatRingMat);
-      seatRing.rotation.x = Math.PI / 2;
-      seatRing.position.y = 0.22;
-      seatingAreaGroup.add(seatRing);
-
-      // Süs Işığı (Merkez Direk)
-      const poleGeo = new THREE.CylinderGeometry(0.15, 0.15, 4, 12);
-      const poleMat = new THREE.MeshStandardMaterial({ color: 0x222233, metalness: 0.8 });
-      const pole = new THREE.Mesh(poleGeo, poleMat);
-      pole.position.y = 2;
-      pole.userData = { isCollider: true };
-      seatingAreaGroup.add(pole);
-
-      const lampGeo = new THREE.SphereGeometry(0.4, 16, 16);
-      const lampMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      const lamp = new THREE.Mesh(lampGeo, lampMat);
-      lamp.position.y = 4;
-      seatingAreaGroup.add(lamp);
-
-      const lampLight = new THREE.PointLight(0x00ffff, 2, 15);
-      lampLight.position.y = 4;
-      seatingAreaGroup.add(lampLight);
-
-      // Karşılıklı İki Bank (İkişer Kişilik Oturma Kapasiteli)
-      // Bank 1 (Doğu Yönü)
-      const bench1Group = new THREE.Group();
-      bench1Group.position.set(3.5, 0, 0);
-      bench1Group.rotation.y = -Math.PI / 2;
-
-      // Oturak Yüzeyi (Genişletilmiş: iki kişinin yan yana oturabilmesi için uzunluk 3.2 birim)
-      const dualSeatGeo = new THREE.BoxGeometry(3.2, 0.3, 1.0);
-      const dualSeatMat = new THREE.MeshStandardMaterial({ color: 0x00ffaa, emissive: 0x00ffaa, emissiveIntensity: 0.2, roughness: 0.3, metalness: 0.5 });
-      const seat1 = new THREE.Mesh(dualSeatGeo, dualSeatMat);
-      seat1.position.y = 0.7;
-      seat1.userData = { isCollider: true };
-      bench1Group.add(seat1);
-
-      // Arkalık
-      const backGeo = new THREE.BoxGeometry(3.2, 1.0, 0.15);
-      const back1 = new THREE.Mesh(backGeo, dualSeatMat);
-      back1.position.set(0, 1.3, -0.42);
-      back1.userData = { isCollider: true };
-      bench1Group.add(back1);
-
-      // Ayaklar
-      const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8);
-      const legMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 });
-      const leg1 = new THREE.Mesh(legGeo, legMat); leg1.position.set(-1.4, 0.35, 0.3); leg1.userData = { isCollider: true }; bench1Group.add(leg1);
-      const leg2 = new THREE.Mesh(legGeo, legMat); leg2.position.set(1.4, 0.35, 0.3); leg2.userData = { isCollider: true }; bench1Group.add(leg2);
-      const leg3 = new THREE.Mesh(legGeo, legMat); leg3.position.set(-1.4, 0.35, -0.3); leg3.userData = { isCollider: true }; bench1Group.add(leg3);
-      const leg4 = new THREE.Mesh(legGeo, legMat); leg4.position.set(1.4, 0.35, -0.3); leg4.userData = { isCollider: true }; bench1Group.add(leg4);
-
-      seatingAreaGroup.add(bench1Group);
-
-      // Bank 2 (Batı Yönü - Karşılıklı)
-      const bench2Group = bench1Group.clone();
-      bench2Group.position.set(-3.5, 0, 0);
-      bench2Group.rotation.y = Math.PI / 2;
-      seatingAreaGroup.add(bench2Group);
-
-      lobbyGroup.add(seatingAreaGroup);
-      // --- OTURMA ALANI BİTİŞ ---
 
       // Parkour Portal
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
@@ -623,7 +544,7 @@ let benches=[]; let isSitting=false; let currentBench=null;
       if (portalCooldown) return;
       portalCooldown = true;
       currentMap = targetMap;
-      velocity.set(0, 0, 0);
+      velocity.set(0, 0, 0); // İvmeyi sıfırla
 
       const zoneVal = document.getElementById('zone-val');
       const gameHud = document.getElementById('game-hud-panel');
@@ -653,6 +574,7 @@ let benches=[]; let isSitting=false; let currentBench=null;
 
         rebuildColliders(lobbyGroup);
 
+        // GÜVENLİ DOĞMA NOKTASI: Tam merkezde, zeminin hafif üstünde (0, 0.5, 0)
         player.group.position.set(0, 0.5, 0); 
         zoneVal.innerText = "CYBER PARK (LOBİ)";
         zoneVal.style.color = "#00ff66";
@@ -928,7 +850,6 @@ let benches=[]; let isSitting=false; let currentBench=null;
           case 'Digit2': triggerEmote('dance'); break;
           case 'Digit3': triggerEmote('nod'); break;
           case 'KeyT': e.preventDefault(); focusChat(); break;
-          case 'KeyE': if(!isSitting){for(const b of benches){if(player.group.position.distanceTo(b.position)<2.2){isSitting=true;currentBench=b;player.group.position.set(b.position.x,0.5,b.position.z);velocity.set(0,0,0);break;}}} else {isSitting=false;player.group.position.z+=1.5;} break;
         }
       });
 
@@ -1134,7 +1055,6 @@ let benches=[]; let isSitting=false; let currentBench=null;
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if (isPlaying) {
-        if(isSitting){animateAvatarLimbs(playerLimbs,false,delta,currentEmote); renderer.render(scene,camera); requestAnimationFrame(()=>{});} 
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
         velocity.y -= 26.0 * delta;
@@ -1172,6 +1092,7 @@ let benches=[]; let isSitting=false; let currentBench=null;
           canJump = true;
         }
 
+        // Lobi ve Parkour Harita Dışı Kontrolleri
         if (currentMap === "parkour" && player.group.position.y < -12) {
           fallCount++;
           document.getElementById('fall-count').innerText = fallCount;
@@ -1179,6 +1100,7 @@ let benches=[]; let isSitting=false; let currentBench=null;
           player.group.position.copy(currentCheckpointPos);
           velocity.set(0, 0, 0);
         } else if (currentMap === "lobby" && player.group.position.y < -10) {
+          // Lobi harita dışına düşme koruması
           player.group.position.set(0, 0.5, 0);
           velocity.set(0, 0, 0);
         }
