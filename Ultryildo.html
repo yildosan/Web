@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyberpunk Metaverse 3D - Mobile & QR Connect</title>
+  <title>Cyberpunk Metaverse 3D - Fullscreen & QR Connect</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
@@ -16,7 +16,8 @@
       z-index: 5;
     }
     
-    .top-bar { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
+    .top-left { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
     .stats { color: #00ffff; font-size: 12px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
     
     .room-code-container {
@@ -27,6 +28,15 @@
       font-family: inherit; font-size: 10px; font-weight: bold; cursor: pointer;
       border-radius: 4px; transition: all 0.2s; text-shadow: none;
     }
+
+    /* MOBİL TAM EKRAN BUTONU */
+    #fullscreen-btn {
+      display: none; /* JS ile mobilde aktif edilecek */
+      pointer-events: auto; background: rgba(10, 10, 20, 0.85); color: #00ffff;
+      border: 1px solid #00ffff; font-size: 18px; padding: 6px 12px;
+      border-radius: 6px; cursor: pointer; box-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+    }
+    #fullscreen-btn:active { background: #00ffff; color: #000; }
 
     #emote-bar { display: flex; gap: 6px; pointer-events: auto; margin-top: 5px; }
     .emote-btn {
@@ -76,7 +86,7 @@
     }
     .btn-secondary { background: #00ffff; color: #000; }
 
-    /* QR MODAL (HOST QR GOSTERICI & SCANNER) */
+    /* QR MODALLAR */
     .modal-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.95); display: none; flex-direction: column;
@@ -88,12 +98,8 @@
       align-items: center; gap: 12px; max-width: 320px; width: 100%;
       box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     }
-    #qrcode-display {
-      background: #fff; padding: 10px; border-radius: 8px;
-    }
-    #qr-reader {
-      width: 100%; max-width: 260px; border: 1px solid #ff0055; border-radius: 8px; overflow: hidden;
-    }
+    #qrcode-display { background: #fff; padding: 10px; border-radius: 8px; }
+    #qr-reader { width: 100%; max-width: 260px; border: 1px solid #ff0055; border-radius: 8px; overflow: hidden; }
 
     /* MOBİL KONTROLLER */
     #touch-controls {
@@ -167,25 +173,30 @@
 
   <div id="hud">
     <div class="top-bar">
-      <div class="stats">
-        <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">PLAZA</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
-        <div class="room-code-container">
-          <span>ODA:</span>
-          <span id="my-peer-id" style="color:#ffff00;">-</span>
-          <button id="copy-btn" class="copy-btn" onclick="copyRoomCode()">KOPYALA</button>
+      <div class="top-left">
+        <div class="stats">
+          <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">PLAZA</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
+          <div class="room-code-container">
+            <span>ODA:</span>
+            <span id="my-peer-id" style="color:#ffff00;">-</span>
+            <button id="copy-btn" class="copy-btn" onclick="copyRoomCode()">KOPYALA</button>
+          </div>
+        </div>
+
+        <div id="emote-bar">
+          <button class="emote-btn" onclick="triggerEmote('wave')">👋 Salla</button>
+          <button class="emote-btn" onclick="triggerEmote('dance')">🕺 Dans</button>
+          <button class="emote-btn" onclick="triggerEmote('nod')">🔴 Onay</button>
         </div>
       </div>
 
-      <div id="emote-bar">
-        <button class="emote-btn" onclick="triggerEmote('wave')">👋 Salla</button>
-        <button class="emote-btn" onclick="triggerEmote('dance')">🕺 Dans</button>
-        <button class="emote-btn" onclick="triggerEmote('nod')">🔴 Onay</button>
-      </div>
+      <!-- MOBİL TAM EKRAN BUTONU -->
+      <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Tam Ekran">⛶</button>
     </div>
 
     <div id="chat-container">
       <div id="chat-messages">
-        <div><span style="color:#ff0055;">[Sistem]:</span> QR Kod Taraması Aktif!</div>
+        <div><span style="color:#ff0055;">[Sistem]:</span> Tam Ekran Butonu Aktif!</div>
       </div>
       <input type="text" id="chat-input" placeholder="Mesaj..." />
     </div>
@@ -196,7 +207,6 @@
   <!-- KÜTÜPHANELER -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <!-- QR Kod Oluşturma ve Tarama Kütüphaneleri -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
@@ -230,6 +240,32 @@
       isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth < 768;
       if (isMobile) {
         document.getElementById('touch-controls').style.display = 'block';
+        document.getElementById('fullscreen-btn').style.display = 'block';
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+          docEl.mozRequestFullScreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
       }
     }
 
@@ -268,7 +304,6 @@
       setupTouchEvents();
       setupChat();
 
-      // URL Parametresinden Otomatik Katılma Denetimi
       checkUrlAutoJoin();
 
       window.addEventListener('resize', onWindowResize);
@@ -318,7 +353,6 @@
     function hostGame() {
       initPeer();
       peer.on('open', (id) => {
-        // QR Kod üretimi
         const qrcodeContainer = document.getElementById('qrcode-display');
         qrcodeContainer.innerHTML = "";
         
@@ -347,7 +381,6 @@
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 200, height: 200 } },
         (decodedText) => {
-          // QR Başarıyla Okunduğunda
           closeQRScanner();
           try {
             const url = new URL(decodedText);
@@ -357,7 +390,7 @@
             joinGame(decodedText);
           }
         },
-        (errorMessage) => { /* Tarama devam ediyor... */ }
+        (errorMessage) => {}
       ).catch(err => alert("Kamera açılamadı: " + err));
     }
 
