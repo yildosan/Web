@@ -1149,85 +1149,80 @@
         velocity.y -= 26.0 * delta;
 
         const moveDir = new THREE.Vector3();
-          velocity.x -= velocity.x * 10.0 * delta;
-          velocity.z -= velocity.z * 10.0 * delta;
-          velocity.y -= 26.0 * delta;
+        if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
+          moveDir.x = joystickVector.x;
+          moveDir.z = joystickVector.y;
+        } else {
+          if (moveForward) moveDir.z -= 1;
+          if (moveBackward) moveDir.z += 1;
+          if (moveLeft) moveDir.x -= 1;
+          if (moveRight) moveDir.x += 1;
+        }
+        if (moveDir.length() > 0) moveDir.normalize();
 
-          const moveDir = new THREE.Vector3();
-          if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
-            moveDir.x = joystickVector.x;
-            moveDir.z = joystickVector.y;
-          } else {
-            if (moveForward) moveDir.z -= 1;
-            if (moveBackward) moveDir.z += 1;
-            if (moveLeft) moveDir.x -= 1;
-            if (moveRight) moveDir.x += 1;
+        const isMoving = moveDir.length() > 0.1;
+
+        if (isMoving) {
+          const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
+          velocity.x = Math.sin(angle) * 11;
+          velocity.z = Math.cos(angle) * 11;
+          player.group.rotation.y = angle;
+        }
+
+        const targetPos = player.group.position.clone();
+        targetPos.x += velocity.x * delta;
+        targetPos.z += velocity.z * delta;
+        targetPos.y += velocity.y * delta;
+
+        const isGrounded = checkCollisions(targetPos);
+        player.group.position.copy(targetPos);
+
+        if (isGrounded) {
+          canJump = true;
+        }
+
+        // Lobi ve Parkour Harita Dışı Kontrolleri
+        if (currentMap === "parkour" && player.group.position.y < -12) {
+          fallCount++;
+          document.getElementById('fall-count').innerText = fallCount;
+          addChatMessage('Sistem', '⚠️ Düşüldü! Kontrol noktasına dönülüyor...');
+          player.group.position.copy(currentCheckpointPos);
+          velocity.set(0, 0, 0);
+        } else if (currentMap === "lobby" && player.group.position.y < -10) {
+          // Lobi harita dışına düşme koruması
+          player.group.position.set(0, 0.5, 0);
+          velocity.set(0, 0, 0);
+        }
+
+        animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote, false);
+
+        if (currentMap === "lobby") {
+          parkourPortalMesh.rotation.z += delta * 1.5;
+          const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -30));
+          if (distToPortal < 3.8) {
+            switchMap("parkour");
           }
-          if (moveDir.length() > 0) moveDir.normalize();
+        } else if (currentMap === "parkour" && cityPortalMesh) {
+          cityPortalMesh.rotation.z += delta * 1.5;
+        }
 
-          const isMoving = moveDir.length() > 0.1;
+        networkTimer += delta;
+        if (networkTimer > 0.033) {
+          networkTimer = 0;
+          broadcast({
+            type: 'transform',
+            x: player.group.position.x,
+            y: player.group.position.y,
+            z: player.group.position.z,
+            rotY: player.group.rotation.y,
+            isMoving: isMoving,
+            emote: currentEmote,
+            map: currentMap,
+            delta: delta
+          });
+        }
 
-          if (isMoving) {
-            const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
-            velocity.x = Math.sin(angle) * 11;
-            velocity.z = Math.cos(angle) * 11;
-            player.group.rotation.y = angle;
-          }
-
-          const targetPos = player.group.position.clone();
-          targetPos.x += velocity.x * delta;
-          targetPos.z += velocity.z * delta;
-          targetPos.y += velocity.y * delta;
-
-          const isGrounded = checkCollisions(targetPos);
-          player.group.position.copy(targetPos);
-
-          if (isGrounded) {
-            canJump = true;
-          }
-
-          // Lobi ve Parkour Harita Dışı Kontrolleri
-          if (currentMap === "parkour" && player.group.position.y < -12) {
-            fallCount++;
-            document.getElementById('fall-count').innerText = fallCount;
-            addChatMessage('Sistem', '⚠️ Düşüldü! Kontrol noktasına dönülüyor...');
-            player.group.position.copy(currentCheckpointPos);
-            velocity.set(0, 0, 0);
-          } else if (currentMap === "lobby" && player.group.position.y < -10) {
-            // Lobi harita dışına düşme koruması
-            player.group.position.set(0, 0.5, 0);
-            velocity.set(0, 0, 0);
-          }
-
-          animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote, false);
-
-          if (currentMap === "lobby") {
-            parkourPortalMesh.rotation.z += delta * 1.5;
-            const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -30));
-            if (distToPortal < 3.8) {
-              switchMap("parkour");
-            }
-          } else if (currentMap === "parkour" && cityPortalMesh) {
-            cityPortalMesh.rotation.z += delta * 1.5;
-          }
-
-          networkTimer += delta;
-          if (networkTimer > 0.033) {
-            networkTimer = 0;
-            broadcast({
-              type: 'transform',
-              x: player.group.position.x,
-              y: player.group.position.y,
-              z: player.group.position.z,
-              rotY: player.group.rotation.y,
-              isMoving: isMoving,
-              emote: currentEmote,
-              map: currentMap,
-              delta: delta
-            });
-          }
-
-          cameraPivot.position.copy(player.group.position);
+        cameraPivot.position.copy(player.group.position);
         cameraPivot.position.y += 1.2;
 
         camera.position.x = cameraPivot.position.x + cameraDistance * Math.sin(cameraYaw) * Math.cos(cameraPitch);
