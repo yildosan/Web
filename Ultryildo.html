@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyberpunk Metaverse 3D - Fixed Fullscreen</title>
+  <title>Cyberpunk Metaverse - Portal & Mini Game</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
@@ -27,6 +27,13 @@
       background: #ff0055; color: #fff; border: none; padding: 3px 6px;
       font-family: inherit; font-size: 10px; font-weight: bold; cursor: pointer;
       border-radius: 4px; transition: all 0.2s; text-shadow: none;
+    }
+
+    /* MINI GAME HUD */
+    #game-hud-panel {
+      display: none; background: rgba(20, 0, 10, 0.85); border: 1px solid #ff0055;
+      padding: 6px 12px; border-radius: 6px; margin-top: 5px; color: #fff; font-size: 11px;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
     }
 
     /* MOBİL TAM EKRAN BUTONU */
@@ -147,17 +154,15 @@
     </div>
   </div>
 
-  <!-- QR GÖSTERME MODAL (HOST) -->
   <div id="host-qr-modal" class="modal-overlay">
     <div class="modal-card">
       <h3 style="color:#00ffff; font-size:14px;">OYUNCULARI DAVET ET</h3>
       <div id="qrcode-display"></div>
-      <p style="font-size:10px; color:#aaa;">Diğer oyuncu bu QR kodu kamerasıyla taratarak doğrudan odaya katılabilir.</p>
+      <p style="font-size:10px; color:#aaa;">QR kodu taratarak odaya katılım sağlayabilirsiniz.</p>
       <button class="btn" style="width:100%;" onclick="closeHostQRAndStart()">OYUNA BAŞLA</button>
     </div>
   </div>
 
-  <!-- QR TARAMA MODAL (CLIENT) -->
   <div id="scanner-qr-modal" class="modal-overlay">
     <div class="modal-card">
       <h3 style="color:#ff0055; font-size:14px;">QR KODU TARAYIN</h3>
@@ -176,12 +181,16 @@
     <div class="top-bar">
       <div class="top-left">
         <div class="stats">
-          <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">PLAZA</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
+          <div>BÖLGE: <span id="zone-val" style="color:#00ffff;">LOBİ (PLAZA)</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
           <div class="room-code-container">
             <span>ODA:</span>
             <span id="my-peer-id" style="color:#ffff00;">-</span>
             <button id="copy-btn" class="copy-btn" onclick="copyRoomCode()">KOPYALA</button>
           </div>
+        </div>
+
+        <div id="game-hud-panel">
+          🎯 LAZER ARENA | CAN: <span id="player-hp" style="color:#ff0055; font-weight:bold;">100</span> | SKOR: <span id="player-score" style="color:#ffff00; font-weight:bold;">0</span>
         </div>
 
         <div id="emote-bar">
@@ -191,7 +200,6 @@
         </div>
       </div>
 
-      <!-- MOBİL TAM EKRAN BUTONU -->
       <button id="fullscreen-btn" title="Tam Ekran">⛶</button>
     </div>
 
@@ -217,6 +225,15 @@
     let isPlaying = false;
     let isChatting = false;
     let isMobile = false;
+
+    // HARİTA VE MİNİ OYUN DEĞİŞKENLERİ
+    let currentMap = "lobby"; // "lobby" veya "laser_game"
+    let lobbyGroup, gameGroup;
+    let laserBeamMesh, laserPortalMesh, lobbyPortalMesh;
+    let laserAngle = 0;
+    let playerHp = 100;
+    let playerScore = 0;
+    let portalCooldown = false;
 
     let peer = null;
     let connections = {};
@@ -246,46 +263,21 @@
       }
     }
 
-    // TARAYICI KISITLAMALARINI AŞAN TAM EKRAN MEKANİZMASI
     function setupFullscreenListener() {
       const fsBtn = document.getElementById('fullscreen-btn');
-      
       const toggleFullscreen = (e) => {
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         const doc = window.document;
         const docEl = doc.documentElement;
 
-        const requestFS = docEl.requestFullscreen || 
-                          docEl.webkitRequestFullscreen || 
-                          docEl.mozRequestFullScreen || 
-                          docEl.msRequestFullscreen;
-
-        const exitFS = doc.exitFullscreen || 
-                       doc.webkitExitFullscreen || 
-                       doc.mozCancelFullScreen || 
-                       doc.msExitFullscreen;
-
-        const isFS = doc.fullscreenElement || 
-                     doc.webkitFullscreenElement || 
-                     doc.mozFullScreenElement || 
-                     doc.msFullscreenElement;
+        const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+        const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+        const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
 
         if (!isFS) {
-          if (requestFS) {
-            requestFS.call(docEl).catch(err => {
-              console.warn("Tam ekran izni reddedildi:", err);
-            });
-          } else {
-            alert("Cihazınız varsayılan web tam ekran modunu desteklemiyor.");
-          }
+          if (requestFS) requestFS.call(docEl).catch(err => console.warn("Tam ekran hatası:", err));
         } else {
-          if (exitFS) {
-            exitFS.call(doc);
-          }
+          if (exitFS) exitFS.call(doc);
         }
       };
 
@@ -308,15 +300,25 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       container.appendChild(renderer.domElement);
 
-      const ambientLight = new THREE.AmbientLight(0x554466);
+      const ambientLight = new THREE.AmbientLight(0x666688);
       scene.add(ambientLight);
 
-      const dirLight = new THREE.DirectionalLight(0x00ffff, 1.0);
+      const dirLight = new THREE.DirectionalLight(0x00ffff, 1.2);
       dirLight.position.set(20, 40, 20);
       scene.add(dirLight);
 
-      createMetaverseWorld();
+      // SAHNELERİ OLUŞTUR
+      lobbyGroup = new THREE.Group();
+      gameGroup = new THREE.Group();
+      scene.add(lobbyGroup);
+      scene.add(gameGroup);
+
+      buildLobbyMap();
+      buildLaserGameMap();
       
+      // Varsayılan olarak oyun haritası gizli
+      gameGroup.visible = false;
+
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
       scene.add(player.group);
       playerLimbs = player.limbs;
@@ -333,14 +335,120 @@
       window.addEventListener('resize', onWindowResize);
     }
 
+    // 1. HARİTA: LOBİ (PLAZA)
+    function buildLobbyMap() {
+      const floorGeo = new THREE.PlaneGeometry(100, 100, 20, 20);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x050515, wireframe: true, emissive: 0x110022 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      lobbyGroup.add(floor);
+
+      // Lobi Dekoru / Platformlar
+      const stageGeo = new THREE.CylinderGeometry(8, 10, 1, 32);
+      const stageMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x003344 });
+      const stage = new THREE.Mesh(stageGeo, stageMat);
+      stage.position.set(0, 0.5, 0);
+      lobbyGroup.add(stage);
+
+      // OYUN HARİTASINA GEÇİŞ PORTALI
+      const portalFrameGeo = new THREE.TorusGeometry(3.5, 0.25, 16, 100);
+      const portalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+      lobbyPortalMesh = new THREE.Mesh(portalFrameGeo, portalMat);
+      lobbyPortalMesh.position.set(0, 4, -20);
+      lobbyGroup.add(lobbyPortalMesh);
+
+      // Portal İç Işığı
+      const portalLight = new THREE.PointLight(0x00ffff, 3, 15);
+      portalLight.position.set(0, 4, -20);
+      lobbyGroup.add(portalLight);
+    }
+
+    // 2. HARİTA: MİNİ OYUN (LAZER ARENA)
+    function buildLaserGameMap() {
+      const floorGeo = new THREE.CylinderGeometry(25, 25, 1, 32);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a0005, emissive: 0x330011 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.position.set(100, 0, 0); // Lobiden uzaklaştırıldı
+      gameGroup.add(floor);
+
+      // Kenar Çiti / Sınırlar
+      const ringGeo = new THREE.TorusGeometry(25, 0.5, 8, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: #ff0055 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(100, 0.5, 0);
+      gameGroup.add(ring);
+
+      // Dönen Lazer Mekanizması (Engeli)
+      const laserGeo = new THREE.BoxGeometry(46, 0.4, 0.4);
+      const laserMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      laserBeamMesh = new THREE.Mesh(laserGeo, laserMat);
+      laserBeamMesh.position.set(100, 0.6, 0);
+      gameGroup.add(laserBeamMesh);
+
+      // Merkez Kule
+      const towerGeo = new THREE.CylinderGeometry(1.5, 2, 4, 16);
+      const towerMat = new THREE.MeshStandardMaterial({ color: 0xff0055 });
+      const tower = new THREE.Mesh(towerGeo, towerMat);
+      tower.position.set(100, 2, 0);
+      gameGroup.add(tower);
+
+      // LOBİYE GERİ DÖNÜŞ PORTALI
+      const portalGeo = new THREE.TorusGeometry(3, 0.2, 16, 100);
+      const portalMat = new THREE.MeshBasicMaterial({ color: 0xff0055, wireframe: true });
+      laserPortalMesh = new THREE.Mesh(portalGeo, portalMat);
+      laserPortalMesh.position.set(100, 3.5, -20);
+      gameGroup.add(laserPortalMesh);
+    }
+
+    // MAP GEÇİŞ SİSTEMİ
+    function switchMap(targetMap) {
+      if (portalCooldown) return;
+      portalCooldown = true;
+      currentMap = targetMap;
+
+      const zoneVal = document.getElementById('zone-val');
+      const gameHud = document.getElementById('game-hud-panel');
+
+      if (targetMap === "laser_game") {
+        lobbyGroup.visible = false;
+        gameGroup.visible = true;
+        
+        // Oyuncuyu Oyun Arenasına Işınla
+        player.group.position.set(100, 1, 15);
+        zoneVal.innerText = "LAZER ARENASI";
+        zoneVal.style.color = "#ff0055";
+        gameHud.style.display = "block";
+
+        // Can Sıfırla
+        playerHp = 100;
+        playerScore = 0;
+        document.getElementById('player-hp').innerText = playerHp;
+
+        addChatMessage('Sistem', '🎮 LAZER ARENASINA HOŞGELDİNİZ! Lazerlerden zıplayarak kaçın!');
+      } 
+      else if (targetMap === "lobby") {
+        gameGroup.visible = false;
+        lobbyGroup.visible = true;
+
+        // Oyuncuyu Lobiye Işınla
+        player.group.position.set(0, 1, -12);
+        zoneVal.innerText = "LOBİ (PLAZA)";
+        zoneVal.style.color = "#00ffff";
+        gameHud.style.display = "none";
+
+        addChatMessage('Sistem', '🏛️ Lobiye geri döndünüz.');
+      }
+
+      setTimeout(() => { portalCooldown = false; }, 2000);
+    }
+
     function checkUrlAutoJoin() {
       const urlParams = new URLSearchParams(window.location.search);
       const targetRoom = urlParams.get('room');
       if (targetRoom) {
         document.getElementById('join-id-input').value = targetRoom;
-        setTimeout(() => {
-          joinGame(targetRoom);
-        }, 800);
+        setTimeout(() => { joinGame(targetRoom); }, 800);
       }
     }
 
@@ -362,12 +470,11 @@
       if (!myPeerId || myPeerId === "-") return;
       navigator.clipboard.writeText(myPeerId).then(() => {
         const btn = document.getElementById('copy-btn');
-        const origText = btn.innerText;
         btn.innerText = "KOPYALANDI!";
         btn.style.background = "#00ffff";
         btn.style.color = "#000";
         setTimeout(() => {
-          btn.innerText = origText;
+          btn.innerText = "KOPYALA";
           btn.style.background = "#ff0055";
           btn.style.color = "#fff";
         }, 2000);
@@ -379,15 +486,8 @@
       peer.on('open', (id) => {
         const qrcodeContainer = document.getElementById('qrcode-display');
         qrcodeContainer.innerHTML = "";
-        
         const joinUrl = `${window.location.origin}${window.location.pathname}?room=${id}`;
-        
-        new QRCode(qrcodeContainer, {
-          text: joinUrl,
-          width: 160,
-          height: 160
-        });
-
+        new QRCode(qrcodeContainer, { text: joinUrl, width: 160, height: 160 });
         document.getElementById('host-qr-modal').style.display = 'flex';
       });
     }
@@ -400,7 +500,6 @@
     function openQRScanner() {
       document.getElementById('scanner-qr-modal').style.display = 'flex';
       html5QrScanner = new Html5Qrcode("qr-reader");
-      
       html5QrScanner.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 200, height: 200 } },
@@ -408,14 +507,11 @@
           closeQRScanner();
           try {
             const url = new URL(decodedText);
-            const roomId = url.searchParams.get("room") || decodedText;
-            joinGame(roomId);
-          } catch(e) {
-            joinGame(decodedText);
-          }
+            joinGame(url.searchParams.get("room") || decodedText);
+          } catch(e) { joinGame(decodedText); }
         },
-        (errorMessage) => {}
-      ).catch(err => alert("Kamera açılamadı: " + err));
+        () => {}
+      ).catch(err => alert("Kamera hatası: " + err));
     }
 
     function closeQRScanner() {
@@ -423,9 +519,7 @@
         html5QrScanner.stop().then(() => {
           html5QrScanner.clear();
           document.getElementById('scanner-qr-modal').style.display = 'none';
-        }).catch(() => {
-          document.getElementById('scanner-qr-modal').style.display = 'none';
-        });
+        }).catch(() => { document.getElementById('scanner-qr-modal').style.display = 'none'; });
       } else {
         document.getElementById('scanner-qr-modal').style.display = 'none';
       }
@@ -433,7 +527,7 @@
 
     function joinGame(targetHostId = null) {
       const hostId = targetHostId || document.getElementById('join-id-input').value.trim();
-      if (!hostId) return alert("Geçerli Oda Kodu girin!");
+      if (!hostId) return alert("Oda Kodu girin!");
       initPeer();
       peer.on('open', () => {
         setupConnection(peer.connect(hostId));
@@ -444,7 +538,7 @@
     function setupConnection(conn) {
       connections[conn.peer] = conn;
       conn.on('open', () => {
-        addChatMessage('Sistem', `Oyuncu bağlandı! [${conn.peer.substring(0, 4)}]`);
+        addChatMessage('Sistem', `Oyuncu katıldı! [${conn.peer.substring(0, 4)}]`);
         if (!remotePlayers[conn.peer]) {
           const remoteAvatar = createHumanoidAvatar(0x00ff66, 0xffff00);
           scene.add(remoteAvatar.group);
@@ -476,6 +570,8 @@
       if (data.type === 'transform') {
         remote.group.position.set(data.x, data.y, data.z);
         remote.group.rotation.y = data.rotY;
+        // Eğer rakip farklı haritadaysa gizle
+        remote.group.visible = (data.map === currentMap);
         animateAvatarLimbs(remote.limbs, data.isMoving, data.delta, data.emote);
       }
       else if (data.type === 'chat') {
@@ -487,37 +583,29 @@
     function startGame() {
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
-      if (!isMobile) {
-        document.body.requestPointerLock();
-      }
+      if (!isMobile) document.body.requestPointerLock();
     }
 
     function createHumanoidAvatar(suitColor, visorColor) {
       const group = new THREE.Group();
       const limbs = {};
 
-      const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.3, metalness: 0.2 });
+      const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.3 });
       const jointMat = new THREE.MeshStandardMaterial({ color: 0x151518, roughness: 0.7 });
       const visorMat = new THREE.MeshBasicMaterial({ color: visorColor });
 
-      const torsoGeo = new THREE.CylinderGeometry(0.3, 0.2, 0.85, 12);
-      const torso = new THREE.Mesh(torsoGeo, suitMat);
+      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.85, 12), suitMat);
       torso.position.y = 1.15;
       group.add(torso);
       limbs.torso = torso;
 
       const headGroup = new THREE.Group();
       headGroup.position.y = 1.75;
-      
-      const headGeo = new THREE.SphereGeometry(0.2, 16, 16);
-      const head = new THREE.Mesh(headGeo, suitMat);
-      headGroup.add(head);
+      headGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), suitMat));
 
-      const visorGeo = new THREE.BoxGeometry(0.24, 0.08, 0.15);
-      const visor = new THREE.Mesh(visorGeo, visorMat);
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.15), visorMat);
       visor.position.set(0, 0.02, 0.12);
       headGroup.add(visor);
-      
       group.add(headGroup);
       limbs.head = headGroup;
 
@@ -525,14 +613,10 @@
         const pivot = new THREE.Group();
         pivot.position.set(xOffset, yPos, 0);
 
-        const meshGeo = new THREE.CylinderGeometry(radius, radius * 0.85, length, 8);
-        const mesh = new THREE.Mesh(meshGeo, suitMat);
+        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.85, length, 8), suitMat);
         mesh.position.y = -length / 2;
         pivot.add(mesh);
-
-        const jointGeo = new THREE.SphereGeometry(radius * 1.1, 8, 8);
-        const joint = new THREE.Mesh(jointGeo, jointMat);
-        pivot.add(joint);
+        pivot.add(new THREE.Mesh(new THREE.SphereGeometry(radius * 1.1, 8, 8), jointMat));
 
         group.add(pivot);
         return pivot;
@@ -546,26 +630,6 @@
       return { group, limbs };
     }
 
-    function createMetaverseWorld() {
-      const floorGeo = new THREE.PlaneGeometry(120, 120, 30, 30);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x050510, wireframe: true, emissive: 0x110022 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      scene.add(floor);
-
-      const portalGeo = new THREE.TorusGeometry(3, 0.2, 16, 100);
-      const portalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
-      const portal = new THREE.Mesh(portalGeo, portalMat);
-      portal.position.set(0, 3.5, -20);
-      scene.add(portal);
-
-      const stageGeo = new THREE.CylinderGeometry(8, 10, 1, 32);
-      const stageMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0x330011 });
-      const stage = new THREE.Mesh(stageGeo, stageMat);
-      stage.position.set(25, 0.5, 10);
-      scene.add(stage);
-    }
-
     function createSpeechBubble(targetGroup, text) {
       const oldSprite = targetGroup.getObjectByName("speechBubble");
       if (oldSprite) targetGroup.remove(oldSprite);
@@ -576,37 +640,20 @@
 
       ctx.fillStyle = 'rgba(10, 10, 25, 0.9)';
       ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 6;
-      
-      const x = 10, y = 10, w = 492, h = 108, r = 20;
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-      ctx.fill(); ctx.stroke();
+      ctx.fillRect(10, 10, 492, 108);
 
       ctx.fillStyle = '#ffffff';
       ctx.font = 'Bold 28px Courier New';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      
-      let displayText = text.length > 28 ? text.substring(0, 25) + '...' : text;
-      ctx.fillText(displayText, canvas.width / 2, canvas.height / 2);
+      ctx.fillText(text.length > 25 ? text.substring(0, 22) + '...' : text, canvas.width / 2, canvas.height / 2);
 
-      const texture = new THREE.CanvasTexture(canvas);
-      const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
-      const sprite = new THREE.Sprite(spriteMaterial);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
       sprite.name = "speechBubble";
-
       sprite.scale.set(2.4, 0.6, 1);
       sprite.position.set(0, 2.4, 0);
 
       targetGroup.add(sprite);
-
-      setTimeout(() => {
-        if (sprite.parent) sprite.parent.remove(sprite);
-      }, 4000);
+      setTimeout(() => { if (sprite.parent) sprite.parent.remove(sprite); }, 4000);
     }
 
     function triggerEmote(type) {
@@ -616,17 +663,10 @@
     }
 
     function setupControls() {
-      const startScreen = document.getElementById('start-screen');
-
       document.addEventListener('pointerlockchange', () => {
         if (!isMobile) {
-          if (document.pointerLockElement === document.body) {
-            isPlaying = true;
-            startScreen.style.display = 'none';
-          } else if (!isChatting && peer) {
-            isPlaying = false;
-            startScreen.style.display = 'flex';
-          }
+          isPlaying = (document.pointerLockElement === document.body);
+          document.getElementById('start-screen').style.display = isPlaying ? 'none' : 'flex';
         }
       });
 
@@ -639,7 +679,6 @@
 
       document.addEventListener('keydown', (e) => {
         if (isChatting) return;
-        
         switch (e.code) {
           case 'KeyW': moveForward = true; break;
           case 'KeyS': moveBackward = true; break;
@@ -650,10 +689,6 @@
           case 'Digit2': triggerEmote('dance'); break;
           case 'Digit3': triggerEmote('nod'); break;
           case 'KeyT': e.preventDefault(); focusChat(); break;
-        }
-
-        if (['KeyW', 'KeyS', 'KeyA', 'KeyD'].includes(e.code)) {
-          currentEmote = null;
         }
       });
 
@@ -673,12 +708,8 @@
       const cameraZone = document.getElementById('touch-camera-zone');
       const jumpBtn = document.getElementById('jump-btn');
 
-      let joystickTouchId = null;
-      let cameraTouchId = null;
+      let joystickTouchId = null, cameraTouchId = null;
       let lastTouchX = 0, lastTouchY = 0;
-
-      const center = { x: 50, y: 50 };
-      const maxRadius = 35;
 
       joystickZone.addEventListener('touchstart', (e) => {
         if (joystickTouchId !== null) return;
@@ -689,9 +720,7 @@
 
       joystickZone.addEventListener('touchmove', (e) => {
         for (let touch of e.changedTouches) {
-          if (touch.identifier === joystickTouchId) {
-            updateJoystick(touch);
-          }
+          if (touch.identifier === joystickTouchId) updateJoystick(touch);
         }
       });
 
@@ -710,50 +739,36 @@
 
       function updateJoystick(touch) {
         const rect = joystickZone.getBoundingClientRect();
-        let dx = touch.clientX - (rect.left + center.x);
-        let dy = touch.clientY - (rect.top + center.y);
+        let dx = touch.clientX - (rect.left + 50);
+        let dy = touch.clientY - (rect.top + 50);
         let dist = Math.hypot(dx, dy);
 
-        if (dist > maxRadius) {
-          dx = (dx / dist) * maxRadius;
-          dy = (dy / dist) * maxRadius;
-        }
-
+        if (dist > 35) { dx = (dx / dist) * 35; dy = (dy / dist) * 35; }
         joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-        joystickVector.x = dx / maxRadius;
-        joystickVector.y = dy / maxRadius;
-        currentEmote = null;
+        joystickVector.x = dx / 35; joystickVector.y = dy / 35;
       }
 
       cameraZone.addEventListener('touchstart', (e) => {
         if (cameraTouchId !== null) return;
         const touch = e.changedTouches[0];
         cameraTouchId = touch.identifier;
-        lastTouchX = touch.clientX;
-        lastTouchY = touch.clientY;
+        lastTouchX = touch.clientX; lastTouchY = touch.clientY;
       });
 
       cameraZone.addEventListener('touchmove', (e) => {
         for (let touch of e.changedTouches) {
           if (touch.identifier === cameraTouchId) {
-            let dx = touch.clientX - lastTouchX;
-            let dy = touch.clientY - lastTouchY;
-
-            cameraYaw -= dx * 0.005;
-            cameraPitch -= dy * 0.005;
+            cameraYaw -= (touch.clientX - lastTouchX) * 0.005;
+            cameraPitch -= (touch.clientY - lastTouchY) * 0.005;
             cameraPitch = Math.max(-0.2, Math.min(1.0, cameraPitch));
-
-            lastTouchX = touch.clientX;
-            lastTouchY = touch.clientY;
+            lastTouchX = touch.clientX; lastTouchY = touch.clientY;
           }
         }
       });
 
       const resetCamera = (e) => {
         for (let touch of e.changedTouches) {
-          if (touch.identifier === cameraTouchId) {
-            cameraTouchId = null;
-          }
+          if (touch.identifier === cameraTouchId) cameraTouchId = null;
         }
       };
 
@@ -762,19 +777,13 @@
 
       jumpBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
-        if (canJump) {
-          velocity.y = 8.5;
-          canJump = false;
-        }
+        if (canJump) { velocity.y = 8.5; canJump = false; }
       });
     }
 
     function setupChat() {
       const input = document.getElementById('chat-input');
-      input.addEventListener('focus', () => { 
-        isChatting = true; 
-        if (!isMobile) document.exitPointerLock(); 
-      });
+      input.addEventListener('focus', () => { isChatting = true; if (!isMobile) document.exitPointerLock(); });
       input.addEventListener('blur', () => { isChatting = false; });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== '') {
@@ -782,9 +791,7 @@
           addChatMessage('Sen', msg);
           createSpeechBubble(player.group, msg);
           broadcast({ type: 'chat', text: msg });
-
-          input.value = '';
-          input.blur();
+          input.value = ''; input.blur();
           if (!isMobile) document.body.requestPointerLock();
         }
       });
@@ -814,16 +821,11 @@
         if (activeEmote === 'wave') {
           limbs.rightArm.rotation.x = -Math.PI + 0.3;
           limbs.rightArm.rotation.z = Math.sin(animTime * 2) * 0.4;
-        } 
-        else if (activeEmote === 'dance') {
+        } else if (activeEmote === 'dance') {
           limbs.leftArm.rotation.x = Math.sin(animTime * 2) * 1.2;
           limbs.rightArm.rotation.x = -Math.sin(animTime * 2) * 1.2;
-          limbs.leftLeg.rotation.x = Math.cos(animTime * 2) * 0.5;
-          limbs.rightLeg.rotation.x = -Math.cos(animTime * 2) * 0.5;
           limbs.torso.position.y = 1.15 + Math.sin(animTime * 4) * 0.1;
-          limbs.head.rotation.z = Math.sin(animTime * 2) * 0.2;
-        } 
-        else if (activeEmote === 'nod') {
+        } else if (activeEmote === 'nod') {
           limbs.head.rotation.x = Math.sin(animTime * 3) * 0.3;
         }
         return;
@@ -834,11 +836,6 @@
         limbs.rightLeg.rotation.x = -Math.sin(animTime) * 0.6;
         limbs.leftArm.rotation.x = -Math.sin(animTime) * 0.5;
         limbs.rightArm.rotation.x = Math.sin(animTime) * 0.5;
-        limbs.torso.position.y = 1.15 + Math.abs(Math.sin(animTime * 2)) * 0.04;
-      } else {
-        limbs.leftArm.rotation.x = Math.sin(animTime) * 0.05;
-        limbs.rightArm.rotation.x = -Math.sin(animTime) * 0.05;
-        limbs.torso.position.y = 1.15 + Math.sin(animTime * 0.5) * 0.02;
       }
     }
 
@@ -855,7 +852,6 @@
         velocity.y -= 25.0 * delta;
 
         const moveDir = new THREE.Vector3();
-
         if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
           moveDir.x = joystickVector.x;
           moveDir.z = joystickVector.y;
@@ -865,7 +861,6 @@
           if (moveLeft) moveDir.x -= 1;
           if (moveRight) moveDir.x += 1;
         }
-        
         if (moveDir.length() > 0) moveDir.normalize();
 
         const isMoving = moveDir.length() > 0.1;
@@ -887,13 +882,56 @@
           canJump = true;
         }
 
-        if (currentEmote) {
-          emoteTimer -= delta;
-          if (emoteTimer <= 0) currentEmote = null;
-        }
-
         animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
 
+        // --- HARİTA GEÇİŞ PORTALI KONTROLLERİ ---
+        if (currentMap === "lobby") {
+          lobbyPortalMesh.rotation.z += delta * 1.5;
+          const distToLobbyPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1, -20));
+          if (distToLobbyPortal < 3.5) {
+            switchMap("laser_game");
+          }
+        } 
+        else if (currentMap === "laser_game") {
+          laserPortalMesh.rotation.z += delta * 1.5;
+          
+          // Dönen Lazer Mantığı & Çarpışma Tespiti (Collision)
+          laserAngle += delta * 1.8;
+          laserBeamMesh.rotation.y = laserAngle;
+          laserBeamMesh.position.y = 0.8 + Math.sin(laserAngle * 2) * 0.3; // Yüksekliği hafifçe değişsin
+
+          const playerPos = player.group.position;
+          const distToCenter = Math.hypot(playerPos.x - 100, playerPos.z);
+          
+          // Lazer Temas Kontrolü
+          if (distToCenter < 22) {
+            const playerAngle = Math.atan2(playerPos.z, playerPos.x - 100);
+            let angleDiff = Math.abs((laserAngle % (Math.PI * 2)) - (playerAngle % (Math.PI * 2)));
+            if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+
+            // Zıplamadıysa ve lazere paralel açıda kaldıysa hasar al
+            if ((angleDiff < 0.15 || Math.abs(angleDiff - Math.PI) < 0.15) && playerPos.y < laserBeamMesh.position.y + 0.5) {
+              playerHp = Math.max(0, playerHp - 1);
+              document.getElementById('player-hp').innerText = playerHp;
+
+              if (playerHp === 0) {
+                alert("🎮 OYUN BİTTİ! Skorunuz: " + Math.floor(playerScore));
+                switchMap("lobby");
+              }
+            } else {
+              playerScore += delta * 10;
+              document.getElementById('player-score').innerText = Math.floor(playerScore);
+            }
+          }
+
+          // Oyun alanından Lobiye dönüş portalı
+          const distToReturnPortal = player.group.position.distanceTo(new THREE.Vector3(100, 1, -20));
+          if (distToReturnPortal < 3.5) {
+            switchMap("lobby");
+          }
+        }
+
+        // --- P2P SENKRONİZASYON ---
         networkTimer += delta;
         if (networkTimer > 0.033) {
           networkTimer = 0;
@@ -905,10 +943,12 @@
             rotY: player.group.rotation.y,
             isMoving: isMoving,
             emote: currentEmote,
+            map: currentMap,
             delta: delta
           });
         }
 
+        // Kamera Takip Sistemleri
         cameraPivot.position.copy(player.group.position);
         cameraPivot.position.y += 1.3;
 
@@ -917,16 +957,6 @@
         camera.position.y = cameraPivot.position.y + cameraDistance * Math.sin(cameraPitch);
 
         camera.lookAt(cameraPivot.position);
-
-        const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 0, -20));
-        const zoneElem = document.getElementById('zone-val');
-        if (distToPortal < 5) {
-          zoneElem.innerText = "PORTAL";
-          zoneElem.style.color = "#00ffff";
-        } else {
-          zoneElem.innerText = "PLAZA";
-          zoneElem.style.color = "#ff0055";
-        }
       }
 
       renderer.render(scene, camera);
