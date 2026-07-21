@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyber Park - Park & Parkour World</title>
+  <title>Cyber Park - Multiplayer & Parkour World</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #020208; font-family: 'Courier New', monospace; user-select: none; }
@@ -130,7 +130,7 @@
 
   <div id="start-screen">
     <h1>CYBER PARK METAVERSE</h1>
-    <p>🌳 Park, Banklar, Salıncak ve Parkur Macerası 🌳</p>
+    <p>Multiplayer Sosyal Alan & Parkur Macerası</p>
 
     <div class="p2p-box">
       <button id="btn-solo" class="btn" style="background:#00ff66; color:#000;">TEK BAŞINA OYNA</button>
@@ -199,21 +199,22 @@
 
     let physicsBoxes = []; 
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
+    let lastCheckpointName = "BAŞLANGIÇ";
 
-    // Oturma ve Salıncak Etkileşim Değişkenleri
+    // Oturma ve Salıncak Değişkenleri
     let isSeated = false;
     let seatedTargetPos = new THREE.Vector3();
     let seatedTargetRot = 0;
     let currentSeatObject = null;
-    let activeInteraction = null; // 'bench_left', 'bench_right', 'swing'
+    let activeInteraction = null;
     let canPushSwing = false;
 
-    // Salıncak Fizik Metrikleri
-    let swingPivotGroup, swingSeatMesh, swingRopes = [];
+    // Salıncak Fizik
+    let swingPivotGroup, swingSeatMesh;
     let swingAngle = 0;
     let swingVelocity = 0;
 
-    // P2P Ağ Yapısı
+    // P2P Değişkenleri
     let peer = null, connections = {}, remotePlayers = {}, myPeerId = "";
 
     // Kontroller
@@ -277,7 +278,7 @@
       setupChat();
 
       document.getElementById('btn-solo').onclick = () => startGame();
-      document.getElementById('btn-join').onclick = () => joinGame();
+      document.getElementById('btn-join').onclick = () => initPeerAndJoin();
 
       window.addEventListener('resize', onWindowResize);
     }
@@ -318,20 +319,17 @@
       pond.position.set(0, 0.2, 0);
       lobbyGroup.add(pond);
 
-      // --- 1. ÇİFT KİŞİLİK BENCH (BANK) ---
-      buildDoubleBench(5, 0, 8, 0); // X: 5, Z: 8, Rot: 0
+      // --- İSTENENLER: ÇİFT KİŞİLİK BANK & SALINCAK ---
+      buildDoubleBench(5, 0, 8, 0);
+      buildInteractiveSwing(-8, 0, 8, 0);
 
-      // --- 2. SALLANABİLİR SALINCAK ---
-      buildInteractiveSwing(-8, 0, 8, 0); // X: -8, Z: 8
-
-      // Portal
+      // Portal (Parkur Geçişi)
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
       parkourPortalMesh = new THREE.Mesh(portalFrameGeo, new THREE.MeshBasicMaterial({ color: 0xff0055 }));
       parkourPortalMesh.position.set(0, 4.5, -30);
       lobbyGroup.add(parkourPortalMesh);
     }
 
-    // Çift Kişilik Bank Yapıcı
     function buildDoubleBench(x, y, z, rotY) {
       const benchGroup = new THREE.Group();
       benchGroup.position.set(x, y, z);
@@ -340,23 +338,19 @@
       const benchMat = new THREE.MeshStandardMaterial({ color: 0x1a2e22, roughness: 0.4 });
       const neonMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.4 });
 
-      // Oturak
       const seat = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.2, 1.0), benchMat);
       seat.position.set(0, 0.45, 0);
       seat.userData = { isCollider: true };
       benchGroup.add(seat);
 
-      // Sırtlık
       const back = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.0, 0.15), benchMat);
       back.position.set(0, 1.0, -0.45);
       benchGroup.add(back);
 
-      // Neon Kenarlar
       const neonStrip = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.08, 0.1), neonMat);
       neonStrip.position.set(0, 0.46, 0.5);
       benchGroup.add(neonStrip);
 
-      // Ayaklar
       const leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.45, 0.9), benchMat);
       leg1.position.set(-1.4, 0.225, 0);
       benchGroup.add(leg1);
@@ -365,11 +359,9 @@
       leg2.position.set(1.4, 0.225, 0);
       benchGroup.add(leg2);
 
-      benchGroup.userData = { isBench: true, x: x, y: y, z: z, rotY: rotY };
       lobbyGroup.add(benchGroup);
     }
 
-    // Etkileşimli Salıncak Yapıcı
     function buildInteractiveSwing(x, y, z, rotY) {
       const swingFrameGroup = new THREE.Group();
       swingFrameGroup.position.set(x, y, z);
@@ -378,7 +370,6 @@
       const frameMat = new THREE.MeshStandardMaterial({ color: 0x222233, metalness: 0.8, roughness: 0.2 });
       const neonMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
 
-      // Direkler
       const postLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 4.5), frameMat);
       postLeft.position.set(-1.8, 2.25, 0);
       postLeft.rotation.z = -0.15;
@@ -389,17 +380,14 @@
       postRight.rotation.z = 0.15;
       swingFrameGroup.add(postRight);
 
-      // Üst Bar
       const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3.8), neonMat);
       topBar.rotation.z = Math.PI / 2;
       topBar.position.set(0, 4.4, 0);
       swingFrameGroup.add(topBar);
 
-      // Sallanan Pivot Grubu
       swingPivotGroup = new THREE.Group();
       swingPivotGroup.position.set(0, 4.3, 0);
 
-      // Halatlar
       const ropeMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
       const ropeL = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 3.4), ropeMat);
       ropeL.position.set(-0.9, -1.7, 0);
@@ -409,14 +397,12 @@
       ropeR.position.set(0.9, -1.7, 0);
       swingPivotGroup.add(ropeR);
 
-      // Salıncak Tahtası
       swingSeatMesh = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.12, 0.8), new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.3 }));
       swingSeatMesh.position.set(0, -3.4, 0);
       swingSeatMesh.userData = { isCollider: true };
       swingPivotGroup.add(swingSeatMesh);
 
       swingFrameGroup.add(swingPivotGroup);
-      swingFrameGroup.userData = { isSwing: true, x: x, y: y, z: z };
       lobbyGroup.add(swingFrameGroup);
     }
 
@@ -431,14 +417,23 @@
 
     function switchMap(targetMap) {
       currentMap = targetMap;
+      const zoneVal = document.getElementById('zone-val');
+      const gameHud = document.getElementById('game-hud-panel');
+
       if (targetMap === "parkour") {
         lobbyGroup.visible = false; gameGroup.visible = true;
         rebuildColliders(gameGroup);
         player.group.position.set(150, 1.05, 0);
+        zoneVal.innerText = "NEON PARKOUR";
+        zoneVal.style.color = "#ff0055";
+        gameHud.style.display = "block";
       } else {
         gameGroup.visible = false; lobbyGroup.visible = true;
         rebuildColliders(lobbyGroup);
         player.group.position.set(0, 0.5, 0);
+        zoneVal.innerText = "CYBER PARK";
+        zoneVal.style.color = "#00ff66";
+        gameHud.style.display = "none";
       }
     }
 
@@ -498,7 +493,7 @@
         return;
       }
 
-      // Bank Yakınlığı (X: 5, Z: 8)
+      // Bank Yakınlığı
       const benchDist = pPos.distanceTo(new THREE.Vector3(5, 0.5, 8));
       if (benchDist < 2.2) {
         prompt.style.display = 'block';
@@ -509,7 +504,7 @@
         return;
       }
 
-      // Salıncak Yakınlığı (X: -8, Z: 8)
+      // Salıncak Yakınlığı
       const swingPos = new THREE.Vector3(-8, 0.5, 8);
       const swingDist = pPos.distanceTo(swingPos);
 
@@ -525,6 +520,17 @@
         return;
       }
 
+      // Portal Kontrolü
+      const portalDist = pPos.distanceTo(parkourPortalMesh.position);
+      if (portalDist < 4.0) {
+        prompt.style.display = 'block';
+        prompt.innerText = "E - Parkura Gir";
+        interactBtn.style.display = 'flex';
+        interactBtn.innerText = "PORTAL";
+        activeInteraction = 'portal';
+        return;
+      }
+
       activeInteraction = null;
       canPushSwing = false;
       prompt.style.display = 'none';
@@ -534,7 +540,6 @@
 
     function handleInteraction() {
       if (isSeated) {
-        // Oturmayı Bırak
         isSeated = false;
         player.group.position.y += 0.5;
         player.group.position.z += 0.8;
@@ -545,27 +550,30 @@
         isSeated = true;
         seatedTargetPos.set(4.2, 0.55, 8.1);
         seatedTargetRot = 0;
+        currentSeatObject = 'bench';
       } else if (activeInteraction === 'bench_right') {
         isSeated = true;
         seatedTargetPos.set(5.8, 0.55, 8.1);
         seatedTargetRot = 0;
+        currentSeatObject = 'bench';
       } else if (activeInteraction === 'swing') {
         isSeated = true;
         currentSeatObject = 'swing';
+      } else if (activeInteraction === 'portal') {
+        switchMap(currentMap === "lobby" ? "parkour" : "lobby");
       }
     }
 
     function pushSwingAction() {
       if (canPushSwing) {
-        swingVelocity += 0.15; // Salıncağı it ve hızlandır
+        swingVelocity += 0.15;
         broadcast({ type: 'push_swing', force: 0.15 });
       }
     }
 
     function updateSwingPhysics(delta) {
-      // Salıncak Sarkaç Fiziği
       const gravity = 6.0;
-      const damping = 0.988; // Sürtünme Yavaşlaması
+      const damping = 0.988;
 
       const accel = -gravity * Math.sin(swingAngle);
       swingVelocity += accel * delta;
@@ -576,7 +584,6 @@
         swingPivotGroup.rotation.x = swingAngle;
       }
 
-      // Eğer oyuncu salıncaktaysa karakteri salıncakla birlikte hareket ettir
       if (isSeated && currentSeatObject === 'swing') {
         const worldSeatPos = new THREE.Vector3();
         swingSeatMesh.getWorldPosition(worldSeatPos);
@@ -617,7 +624,6 @@
       animTime += delta * 8;
 
       if (isSeated) {
-        // Oturma Pozu Animasyonu
         limbs.leftLeg.rotation.x = -Math.PI / 2 + 0.2;
         limbs.rightLeg.rotation.x = -Math.PI / 2 + 0.2;
         limbs.leftArm.rotation.x = -0.2;
@@ -674,14 +680,18 @@
           player.group.position.copy(targetPos);
 
           animateAvatarLimbs(playerLimbs, isMoving, delta);
-        } else if (currentSeatObject !== 'swing') {
-          // Bankta Oturma
+
+          broadcast({
+            pos: player.group.position,
+            rot: player.group.rotation.y,
+            map: currentMap
+          });
+        } else if (currentSeatObject === 'bench') {
           player.group.position.copy(seatedTargetPos);
           player.group.rotation.y = seatedTargetRot;
           animateAvatarLimbs(playerLimbs, false, delta);
         }
 
-        // Kamera Takibi
         cameraPivot.position.copy(player.group.position);
         cameraPivot.position.y += 1.2;
 
@@ -781,6 +791,7 @@
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== '') {
           addChatMessage('Sen', input.value.trim());
+          broadcast({ type: 'chat', msg: input.value.trim() });
           input.value = ''; input.blur();
         }
       });
@@ -794,14 +805,92 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
+    // P2P / Çok Oyunculu Altyapı
+    function initPeerAndJoin() {
+      const joinId = document.getElementById('join-id-input').value.trim();
+      peer = new Peer();
+
+      peer.on('open', (id) => {
+        myPeerId = id;
+        document.getElementById('my-peer-id').innerText = id;
+        document.getElementById('peer-status').innerText = "ONLINE";
+        document.getElementById('peer-status').style.color = "#00ff66";
+
+        if (joinId !== "") {
+          connectToPeer(joinId);
+        }
+        startGame();
+      });
+
+      peer.on('connection', (conn) => {
+        setupConnection(conn);
+      });
+    }
+
+    function connectToPeer(id) {
+      const conn = peer.connect(id);
+      setupConnection(conn);
+    }
+
+    function setupConnection(conn) {
+      connections[conn.peer] = conn;
+
+      conn.on('data', (data) => {
+        handlePeerData(conn.peer, data);
+      });
+
+      conn.on('close', () => {
+        if (remotePlayers[conn.peer]) {
+          scene.remove(remotePlayers[conn.peer].group);
+          delete remotePlayers[conn.peer];
+        }
+        delete connections[conn.peer];
+      });
+    }
+
+    function broadcast(data) {
+      for (let id in connections) {
+        connections[id].send(data);
+      }
+    }
+
+    function handlePeerData(peerId, data) {
+      if (data.type === 'chat') {
+        addChatMessage(peerId.substring(0, 4), data.msg);
+        return;
+      }
+      if (data.type === 'push_swing') {
+        swingVelocity += data.force;
+        return;
+      }
+
+      if (!remotePlayers[peerId]) {
+        const remoteAvatar = createHumanoidAvatar(0x00ffff, 0xff0055);
+        scene.add(remoteAvatar.group);
+        remotePlayers[peerId] = remoteAvatar;
+      }
+
+      const rp = remotePlayers[peerId];
+      rp.group.position.copy(data.pos);
+      rp.group.rotation.y = data.rot;
+      rp.group.visible = (data.map === currentMap);
+    }
+
+    function copyRoomCode() {
+      navigator.clipboard.writeText(myPeerId);
+      document.getElementById('copy-btn').innerText = "KOPYALANDI!";
+      setTimeout(() => { document.getElementById('copy-btn').innerText = "KOPYALA"; }, 2000);
+    }
+
+    function triggerEmote(type) {
+      addChatMessage('Sen', type === 'wave' ? '👋 El salladı' : '🕺 Dans ediyor!');
+      broadcast({ type: 'chat', msg: type === 'wave' ? '👋 El salladı' : '🕺 Dans ediyor!' });
+    }
+
     function startGame() {
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
       switchMap("lobby");
-    }
-
-    function joinGame() {
-      startGame();
     }
 
     function onWindowResize() {
