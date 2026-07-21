@@ -948,7 +948,7 @@
 
     function setupChat() {
       const input = document.getElementById('chat-input');
-      input.addEventListener('focus', () => { isChatting = true; if (!isMobile) document.exitPointerLock(); });
+      input.addEventListener('focus', () => { isChatting = true; });
       input.addEventListener('blur', () => { isChatting = false; });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -964,7 +964,7 @@
           broadcast({ type: 'chat', text: msg });
           input.value = '';
           input.blur();
-          if (!isMobile) {
+          if (!isMobile && isPlaying) {
             try { document.body.requestPointerLock(); } catch (err) { console.warn('Pointer lock hatası:', err); }
           }
         }
@@ -976,9 +976,6 @@
       if (!input) return;
       input.focus();
       isChatting = true;
-      if (!isMobile) {
-        document.exitPointerLock();
-      }
       if (typeof input.setSelectionRange === 'function') {
         const len = input.value.length;
         input.setSelectionRange(len, len);
