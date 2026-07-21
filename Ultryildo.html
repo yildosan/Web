@@ -849,7 +849,11 @@
           case 'Digit1': triggerEmote('wave'); break;
           case 'Digit2': triggerEmote('dance'); break;
           case 'Digit3': triggerEmote('nod'); break;
-          case 'KeyT': e.preventDefault(); focusChat(); break;
+          case 'KeyT':
+            if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) break;
+            e.preventDefault();
+            openChatInput();
+            break;
         }
       });
 
@@ -947,18 +951,41 @@
       input.addEventListener('focus', () => { isChatting = true; if (!isMobile) document.exitPointerLock(); });
       input.addEventListener('blur', () => { isChatting = false; });
       input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          input.blur();
+          return;
+        }
         if (e.key === 'Enter' && input.value.trim() !== '') {
+          e.preventDefault();
           const msg = input.value.trim();
           addChatMessage('Sen', msg);
           createSpeechBubble(player.group, msg);
           broadcast({ type: 'chat', text: msg });
-          input.value = ''; input.blur();
-          if (!isMobile) document.body.requestPointerLock();
+          input.value = '';
+          input.blur();
+          if (!isMobile) {
+            try { document.body.requestPointerLock(); } catch (err) { console.warn('Pointer lock hatası:', err); }
+          }
         }
       });
     }
 
-    function focusChat() { document.getElementById('chat-input').focus(); }
+    function openChatInput() {
+      const input = document.getElementById('chat-input');
+      if (!input) return;
+      input.focus();
+      isChatting = true;
+      if (!isMobile) {
+        document.exitPointerLock();
+      }
+      if (typeof input.setSelectionRange === 'function') {
+        const len = input.value.length;
+        input.setSelectionRange(len, len);
+      }
+    }
+
+    function focusChat() { openChatInput(); }
 
     function addChatMessage(user, msg) {
       const messages = document.getElementById('chat-messages');
