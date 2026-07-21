@@ -18,7 +18,6 @@
     .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
     .stats { color: #00ffff; font-size: 16px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
     
-    /* Oda Kodu & Kopyala Butonu Stili */
     .room-code-container {
       display: inline-flex; align-items: center; gap: 8px; pointer-events: auto; margin-top: 4px;
     }
@@ -130,7 +129,7 @@
 
       <div id="chat-container">
         <div id="chat-messages">
-          <div><span style="color:#ff0055;">[Sistem]:</span> PeerJS Multi-Player Modu Hazır!</div>
+          <div><span style="color:#ff0055;">[Sistem]:</span> Kendi Animasyon Takibiniz Aktifleştirildi!</div>
         </div>
         <input type="text" id="chat-input" placeholder="Mesaj yazın (Enter)..." />
       </div>
@@ -205,7 +204,6 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    // --- P2P PEERJS MİMARİSİ ---
     function initPeer(customId = null) {
       peer = customId ? new Peer(customId) : new Peer();
 
@@ -233,8 +231,6 @@
           btn.style.background = "#ff0055";
           btn.style.color = "#fff";
         }, 2000);
-      }).catch(err => {
-        console.error("Kopyalama Hatası: ", err);
       });
     }
 
@@ -301,7 +297,6 @@
       document.body.requestPointerLock();
     }
 
-    // --- YENİDEN TASARLANMIŞ ORANTILI İNSANSI AVATAR ---
     function createHumanoidAvatar(suitColor, visorColor) {
       const group = new THREE.Group();
       const limbs = {};
@@ -376,7 +371,6 @@
       scene.add(stage);
     }
 
-    // --- SPEECH BUBBLE ---
     function createSpeechBubble(targetGroup, text) {
       const oldSprite = targetGroup.getObjectByName("speechBubble");
       if (oldSprite) targetGroup.remove(oldSprite);
@@ -504,11 +498,12 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    // --- ANIMASYON ENGINE ---
+    // --- ANIMASYON MOTORU (DÜZELTİLDİ) ---
     function animateAvatarLimbs(limbs, isMoving, delta, emoteOverride = null) {
       animTime += delta * (isMoving ? 12 : 3);
       const activeEmote = emoteOverride !== undefined ? emoteOverride : currentEmote;
 
+      // Varsayılana sıfırla
       limbs.head.rotation.set(0, 0, 0);
       limbs.leftArm.rotation.set(0, 0, 0);
       limbs.rightArm.rotation.set(0, 0, 0);
@@ -590,7 +585,8 @@
           if (emoteTimer <= 0) currentEmote = null;
         }
 
-        animateAvatarLimbs(playerLimbs, isMoving, delta);
+        // KENDİ ANİMASYONUNU HER KAREDE ÇALIŞTIR
+        animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
 
         // P2P Senkronizasyonu
         networkTimer += delta;
