@@ -344,7 +344,7 @@
       gameGroup.visible = false;
 
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
-      player.group.position.set(0, 0.05, 0); 
+      player.group.position.set(0, 0.5, 0); 
       scene.add(player.group);
       playerLimbs = player.limbs;
 
@@ -391,7 +391,7 @@
       floor.userData = { isCollider: true };
       lobbyGroup.add(floor);
 
-      // Park Yolları (Kavisli / Çapraz Yürüyüş Yolları)
+      // Park Yolları
       const pathMat = new THREE.MeshStandardMaterial({ color: 0x1f2e24, roughness: 0.5 });
       const mainPath = new THREE.Mesh(new THREE.PlaneGeometry(16, 180), pathMat);
       mainPath.rotation.x = -Math.PI / 2;
@@ -428,13 +428,11 @@
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
 
-        // Yol üzerine ağaç gelmesin
         if (Math.abs(x) < 10 || Math.abs(z) < 10) continue;
 
         const treeGroup = new THREE.Group();
         treeGroup.position.set(x, 0, z);
 
-        // Gövde
         const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 4, 8);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x0f1a12 });
         const trunk = new THREE.Mesh(trunkGeo, trunkMat);
@@ -442,7 +440,6 @@
         trunk.userData = { isCollider: true };
         treeGroup.add(trunk);
 
-        // Neon Yaprak Kümeleri (Kristal/Küresel)
         const leafColor = (i % 2 === 0) ? 0x00ff66 : 0xff00aa;
         const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 0.3, emissive: leafColor, emissiveIntensity: 0.2 });
         
@@ -468,7 +465,7 @@
         lobbyGroup.add(bench);
       }
 
-      // Parkour Portal (Park İçindeki Tak)
+      // Parkour Portal
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
       const portalMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
       parkourPortalMesh = new THREE.Mesh(portalFrameGeo, portalMat);
@@ -486,34 +483,26 @@
       lobbyGroup.add(portalLight);
     }
 
-    // --- NEON PARKOUR HARİTASI (BASAMAK MESAFELERİ YAKINLAŞTIRILDI) ---
+    // --- NEON PARKOUR HARİTASI ---
     function buildParkourGameMap() {
       const platformColor = 0x111122;
       const neonEdges = [0x00ffff, 0xff0055, 0x00ff66, 0xffff00, 0xff00aa];
 
-      // Yakınlaştırılmış basamak koordinatları [x, y, z, genişlik, yükseklik, derinlik, isCheckpoint, cpId]
       const parkourData = [
-        // Başlangıç Platformu
         [150, 0, 0, 10, 1, 10, true, 1],
-        
-        // Bölüm 1: Yakın Basamaklar (3.5 - 4.5 birim mesafe)
         [150, 1.0, -9, 4, 1, 4, false, 0],
         [150, 2.0, -16, 4, 1, 4, false, 0],
         [154, 3.0, -22, 4, 1, 4, false, 0],
         [160, 4.0, -27, 4, 1, 4, false, 0],
-        [160, 5.0, -34, 6, 1, 6, true, 2], // CP 2
-
-        // Bölüm 2: Tırmanış
+        [160, 5.0, -34, 6, 1, 6, true, 2],
         [154, 6.5, -40, 3.5, 1, 3.5, false, 0],
         [147, 8.0, -40, 3.5, 1, 3.5, false, 0],
         [140, 9.5, -35, 3.5, 1, 3.5, false, 0],
-        [140, 11.0, -28, 5, 1, 5, true, 3], // CP 3
-
-        // Bölüm 3: Zirve Yolu
+        [140, 11.0, -28, 5, 1, 5, true, 3],
         [133, 12.5, -22, 3.5, 1, 3.5, false, 0],
         [126, 14.0, -16, 3.5, 1, 3.5, false, 0],
         [120, 15.5, -9, 3.5, 1, 3.5, false, 0],
-        [120, 17.0, 0, 8, 1, 8, true, 4], // CP 4 - BİTİŞ & LOBİye DÖNÜŞ
+        [120, 17.0, 0, 8, 1, 8, true, 4],
       ];
 
       parkourData.forEach((p, idx) => {
@@ -555,6 +544,7 @@
       if (portalCooldown) return;
       portalCooldown = true;
       currentMap = targetMap;
+      velocity.set(0, 0, 0); // İvmeyi sıfırla
 
       const zoneVal = document.getElementById('zone-val');
       const gameHud = document.getElementById('game-hud-panel');
@@ -584,7 +574,8 @@
 
         rebuildColliders(lobbyGroup);
 
-        player.group.position.set(0, 0.05, -20); 
+        // GÜVENLİ DOĞMA NOKTASI: Tam merkezde, zeminin hafif üstünde (0, 0.5, 0)
+        player.group.position.set(0, 0.5, 0); 
         zoneVal.innerText = "CYBER PARK (LOBİ)";
         zoneVal.style.color = "#00ff66";
         gameHud.style.display = "none";
@@ -1101,11 +1092,16 @@
           canJump = true;
         }
 
+        // Lobi ve Parkour Harita Dışı Kontrolleri
         if (currentMap === "parkour" && player.group.position.y < -12) {
           fallCount++;
           document.getElementById('fall-count').innerText = fallCount;
           addChatMessage('Sistem', '⚠️ Düşüldü! Kontrol noktasına dönülüyor...');
           player.group.position.copy(currentCheckpointPos);
+          velocity.set(0, 0, 0);
+        } else if (currentMap === "lobby" && player.group.position.y < -10) {
+          // Lobi harita dışına düşme koruması
+          player.group.position.set(0, 0.5, 0);
           velocity.set(0, 0, 0);
         }
 
