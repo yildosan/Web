@@ -236,9 +236,8 @@
     let portalCooldown = false;
 
     // FİZİK & COLLIDER SİSTEMİ
-    let physicsBoxes = []; // { box: THREE.Box3, mesh: THREE.Mesh, isCheckpoint: bool, id: number }
-    let activeCheckpoints = [];
-    let currentCheckpointPos = new THREE.Vector3(0, 1.0, 0);
+    let physicsBoxes = []; 
+    let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
     let fallCount = 0;
     const PLAYER_RADIUS = 0.35;
     const PLAYER_HEIGHT = 1.7;
@@ -353,7 +352,7 @@
 
       // KARAKTER
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
-      player.group.position.set(0, 1.0, 0); 
+      player.group.position.set(0, 0.05, 0); 
       scene.add(player.group);
       playerLimbs = player.limbs;
 
@@ -369,7 +368,7 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    // --- SİLİNDİR VEYA KUTU İÇİN OYUN İÇİ FİZİK EKLENMESİ ---
+    // --- FİZİK / COLLIDER DÜZELTMESİ ---
     function addCollider(mesh, isPassable = false, isCheckpoint = false, cpId = 0) {
       mesh.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(mesh);
@@ -382,6 +381,15 @@
       });
     }
 
+    function rebuildColliders(group) {
+      physicsBoxes = [];
+      group.traverse((child) => {
+        if (child.isMesh && child.userData && child.userData.isCollider) {
+          addCollider(child, false, child.userData.isCheckpoint || false, child.userData.cpId || 0);
+        }
+      });
+    }
+
     // --- CYBERPUNK ŞEHİR LOBİSİ ---
     function buildCyberCityLobby() {
       // Zemin Grid
@@ -389,8 +397,8 @@
       const floorMat = new THREE.MeshStandardMaterial({ color: 0x08081a, roughness: 0.2, metalness: 0.8 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
+      floor.userData = { isCollider: true };
       lobbyGroup.add(floor);
-      addCollider(floor);
 
       // Neon Izgara Yolları
       const gridHelper = new THREE.GridHelper(160, 40, 0xff0055, 0x00ffff);
@@ -418,8 +426,8 @@
         });
         const bMesh = new THREE.Mesh(bGeo, bMat);
         bMesh.position.set(x, h / 2, z);
+        bMesh.userData = { isCollider: true };
         lobbyGroup.add(bMesh);
-        addCollider(bMesh);
 
         // Bina Neon Trim Çizgileri
         const trimGeo = new THREE.BoxGeometry(w + 0.2, 0.8, d + 0.2);
@@ -447,8 +455,8 @@
       const stageMat = new THREE.MeshStandardMaterial({ color: 0x112244, emissive: 0x00ffff, emissiveIntensity: 0.2 });
       const stage = new THREE.Mesh(stageGeo, stageMat);
       stage.position.set(0, 0.6, 0);
+      stage.userData = { isCollider: true };
       lobbyGroup.add(stage);
-      addCollider(stage);
 
       // Parkour Dünyasına Geçiş Portalı
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
@@ -474,7 +482,6 @@
       const platformColor = 0x111122;
       const neonEdges = [0x00ffff, 0xff0055, 0x00ff66, 0xffff00, 0xff00aa];
 
-      // Parkour Platform Verileri [x, y, z, w, h, d, isCheckpoint, cpId]
       const parkourData = [
         // Başlangıç Platformu
         [150, 0, 0, 14, 1, 14, true, 1],
@@ -506,8 +513,8 @@
         const mat = new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.3, metalness: 0.7 });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.position.set(x, y + h / 2, z);
+        mesh.userData = { isCollider: true, isCheckpoint: isCP, cpId: cpId };
         gameGroup.add(mesh);
-        addCollider(mesh, false, isCP, cpId);
 
         // Platform Kenar Neonu
         const edgeGeo = new THREE.BoxGeometry(w + 0.1, 0.2, d + 0.1);
@@ -525,7 +532,6 @@
           gameGroup.add(cpMesh);
 
           if (cpId === 4) {
-            // Bitiş Portalı (Lobiye döner)
             const exitPortalGeo = new THREE.TorusGeometry(3, 0.25, 16, 50);
             const exitPortalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
             cityPortalMesh = new THREE.Mesh(exitPortalGeo, exitPortalMat);
@@ -541,9 +547,6 @@
       portalCooldown = true;
       currentMap = targetMap;
 
-      // Nesne Çakışmalarını Sıfırla / Yeniden Yükle
-      physicsBoxes = [];
-
       const zoneVal = document.getElementById('zone-val');
       const gameHud = document.getElementById('game-hud-panel');
 
@@ -551,14 +554,9 @@
         lobbyGroup.visible = false;
         gameGroup.visible = true;
 
-        // Parkour collider'larını aktif et
-        gameGroup.traverse((child) => {
-          if (child.isMesh && child.geometry.type === "BoxGeometry") {
-            addCollider(child);
-          }
-        });
+        rebuildColliders(gameGroup);
 
-        currentCheckpointPos.set(150, 1.5, 0);
+        currentCheckpointPos.set(150, 1.05, 0);
         player.group.position.copy(currentCheckpointPos);
 
         zoneVal.innerText = "NEON PARKOUR";
@@ -575,14 +573,9 @@
         gameGroup.visible = false;
         lobbyGroup.visible = true;
 
-        // Lobi collider'larını aktif et
-        lobbyGroup.traverse((child) => {
-          if (child.isMesh && (child.geometry.type === "BoxGeometry" || child.geometry.type === "CylinderGeometry" || child.geometry.type === "PlaneGeometry")) {
-            addCollider(child);
-          }
-        });
+        rebuildColliders(lobbyGroup);
 
-        player.group.position.set(0, 1.2, -14); // Şehir meydanına doğuş
+        player.group.position.set(0, 0.05, -14); 
         zoneVal.innerText = "CYBER CITY (LOBİ)";
         zoneVal.style.color = "#00ffff";
         gameHud.style.display = "none";
@@ -754,6 +747,7 @@
       if (!isMobile) document.body.requestPointerLock();
     }
 
+    // --- TABANA SAPLANMA DÜZELTİLMİŞ AVATAR MODELİ ---
     function createHumanoidAvatar(suitColor, visorColor) {
       const group = new THREE.Group();
       const limbs = {};
@@ -762,13 +756,14 @@
       const jointMat = new THREE.MeshStandardMaterial({ color: 0x151518, roughness: 0.7 });
       const visorMat = new THREE.MeshBasicMaterial({ color: visorColor });
 
+      // Gövde Yüzeyi Düzeltildi
       const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.85, 12), suitMat);
-      torso.position.y = 0.425; 
+      torso.position.y = 1.225; 
       group.add(torso);
       limbs.torso = torso;
 
       const headGroup = new THREE.Group();
-      headGroup.position.y = 1.0;
+      headGroup.position.y = 1.8;
       headGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), suitMat));
 
       const visor = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.15), visorMat);
@@ -790,10 +785,11 @@
         return pivot;
       }
 
-      limbs.leftArm = createLimb(-0.38, 0.75, 0.65, 0.07);
-      limbs.rightArm = createLimb(0.38, 0.75, 0.65, 0.07);
-      limbs.leftLeg = createLimb(-0.16, 0.0, 0.8, 0.09);
-      limbs.rightLeg = createLimb(0.16, 0.0, 0.8, 0.09);
+      // Bacak boyları Y=0 hizasına oturtuldu
+      limbs.leftArm = createLimb(-0.38, 1.55, 0.65, 0.07);
+      limbs.rightArm = createLimb(0.38, 1.55, 0.65, 0.07);
+      limbs.leftLeg = createLimb(-0.16, 0.8, 0.8, 0.09);
+      limbs.rightLeg = createLimb(0.16, 0.8, 0.8, 0.09);
 
       return { group, limbs };
     }
@@ -818,7 +814,7 @@
       const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
       sprite.name = "speechBubble";
       sprite.scale.set(2.4, 0.6, 1);
-      sprite.position.set(0, 1.6, 0);
+      sprite.position.set(0, 2.3, 0);
 
       targetGroup.add(sprite);
       setTimeout(() => { if (sprite.parent) sprite.parent.remove(sprite); }, 4000);
@@ -992,7 +988,7 @@
         } else if (activeEmote === 'dance') {
           limbs.leftArm.rotation.x = Math.sin(animTime * 2) * 1.2;
           limbs.rightArm.rotation.x = -Math.sin(animTime * 2) * 1.2;
-          limbs.torso.position.y = 0.425 + Math.sin(animTime * 4) * 0.05;
+          limbs.torso.position.y = 1.225 + Math.sin(animTime * 4) * 0.05;
         } else if (activeEmote === 'nod') {
           limbs.head.rotation.x = Math.sin(animTime * 3) * 0.3;
         }
@@ -1007,11 +1003,10 @@
       }
     }
 
-    // --- GELİŞMİŞ OYUNCU-OBJE ÇARPIŞMA (COLLISION) KONTROLÜ ---
+    // --- GELİŞMİŞ VE DÜZELTİLMİŞ ÇARPIŞMA (COLLISION) KONTROLÜ ---
     function checkCollisions(newPos) {
       let grounded = false;
 
-      // Oyuncunun Bounding Box'ı
       const pBox = new THREE.Box3(
         new THREE.Vector3(newPos.x - PLAYER_RADIUS, newPos.y, newPos.z - PLAYER_RADIUS),
         new THREE.Vector3(newPos.x + PLAYER_RADIUS, newPos.y + PLAYER_HEIGHT, newPos.z + PLAYER_RADIUS)
@@ -1020,9 +1015,8 @@
       for (let item of physicsBoxes) {
         if (pBox.intersectsBox(item.box)) {
           
-          // Checkpoint Algılama
           if (item.isCheckpoint && currentMap === "parkour") {
-            currentCheckpointPos.set(item.mesh.position.x, item.mesh.position.y + 1.0, item.mesh.position.z);
+            currentCheckpointPos.set(item.mesh.position.x, item.box.max.y + 0.05, item.mesh.position.z);
             document.getElementById('checkpoint-val').innerText = `${item.cpId} / 4`;
             
             if (item.cpId === 4) {
@@ -1032,17 +1026,15 @@
             }
           }
 
-          // Objenin üstüne basma ve yanlardan geçememe hesaplaması
           const pBottom = newPos.y;
           const boxTop = item.box.max.y;
 
-          // Eğer ayak hizası objenin üstüne yakınsa -> Yüzeyde Dur (Grounded)
-          if (pBottom <= boxTop && pBottom >= boxTop - 0.45 && velocity.y <= 0) {
+          // Ayakların zemine basma toleransı artırıldı
+          if (pBottom <= boxTop + 0.2 && pBottom >= boxTop - 0.5 && velocity.y <= 0) {
             newPos.y = boxTop;
             velocity.y = 0;
             grounded = true;
           } 
-          // Yan kenar çarpışmaları (Objelerin içinden geçmeyi engeller)
           else {
             const overlapX = Math.min(pBox.max.x - item.box.min.x, item.box.max.x - pBox.min.x);
             const overlapZ = Math.min(pBox.max.z - item.box.min.z, item.box.max.z - pBox.min.z);
@@ -1093,13 +1085,11 @@
           player.group.rotation.y = angle;
         }
 
-        // Pozisyon Adayı Hesaplama
         const targetPos = player.group.position.clone();
         targetPos.x += velocity.x * delta;
         targetPos.z += velocity.z * delta;
         targetPos.y += velocity.y * delta;
 
-        // Çarpışma ve Katı Cisim Kontrolü
         const isGrounded = checkCollisions(targetPos);
         player.group.position.copy(targetPos);
 
@@ -1107,7 +1097,6 @@
           canJump = true;
         }
 
-        // Parkour Aşağı Düşme Kontrolü
         if (currentMap === "parkour" && player.group.position.y < -12) {
           fallCount++;
           document.getElementById('fall-count').innerText = fallCount;
@@ -1118,7 +1107,6 @@
 
         animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
 
-        // Portal Etkileşimleri
         if (currentMap === "lobby") {
           parkourPortalMesh.rotation.z += delta * 1.5;
           const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -22));
@@ -1146,7 +1134,7 @@
         }
 
         cameraPivot.position.copy(player.group.position);
-        cameraPivot.position.y += 0.85;
+        cameraPivot.position.y += 1.2;
 
         camera.position.x = cameraPivot.position.x + cameraDistance * Math.sin(cameraYaw) * Math.cos(cameraPitch);
         camera.position.z = cameraPivot.position.z + cameraDistance * Math.cos(cameraYaw) * Math.cos(cameraPitch);
