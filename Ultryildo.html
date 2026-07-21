@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyberpunk City & Neon Parkour</title>
+  <title>Cyber Park & Neon Parkour World</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #020208; font-family: 'Courier New', monospace; user-select: none; }
@@ -18,7 +18,7 @@
     
     .top-bar { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
     .top-left { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-    .stats { color: #00ffff; font-size: 12px; font-weight: bold; text-shadow: 0 0 8px #00ffff; background: rgba(5,5,15,0.7); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(0,255,255,0.3); }
+    .stats { color: #00ffff; font-size: 12px; font-weight: bold; text-shadow: 0 0 8px #00ffff; background: rgba(5,15,10,0.85); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(0,255,100,0.4); }
     
     .room-code-container {
       display: inline-flex; align-items: center; gap: 6px; pointer-events: auto; margin-top: 3px;
@@ -29,35 +29,33 @@
       border-radius: 4px; transition: all 0.2s; text-shadow: none;
     }
 
-    /* MINI GAME HUD */
     #game-hud-panel {
       display: none; background: rgba(15, 0, 30, 0.85); border: 1px solid #ff0055;
       padding: 6px 12px; border-radius: 6px; margin-top: 5px; color: #fff; font-size: 12px;
       box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
     }
 
-    /* MOBİL TAM EKRAN BUTONU */
     #fullscreen-btn {
       display: none;
-      pointer-events: auto; background: rgba(10, 10, 20, 0.9); color: #00ffff;
-      border: 2px solid #00ffff; font-size: 18px; padding: 8px 14px;
-      border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+      pointer-events: auto; background: rgba(10, 20, 10, 0.9); color: #00ff66;
+      border: 2px solid #00ff66; font-size: 18px; padding: 8px 14px;
+      border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(0, 255, 100, 0.6);
       z-index: 999; touch-action: manipulation;
     }
-    #fullscreen-btn:active { background: #00ffff; color: #000; }
+    #fullscreen-btn:active { background: #00ff66; color: #000; }
 
     #emote-bar { display: flex; gap: 6px; pointer-events: auto; margin-top: 5px; }
     .emote-btn {
-      background: rgba(10, 10, 20, 0.85); color: #00ffff; border: 1px solid #00ffff;
+      background: rgba(10, 25, 15, 0.85); color: #00ff66; border: 1px solid #00ff66;
       padding: 4px 8px; font-family: inherit; font-size: 11px;
       cursor: pointer; font-weight: bold; border-radius: 4px;
     }
 
     #chat-container {
       width: 240px; pointer-events: auto;
-      background: rgba(10, 10, 25, 0.85); border: 1px solid #00ffff;
+      background: rgba(10, 20, 15, 0.85); border: 1px solid #00ff66;
       border-radius: 6px; padding: 6px;
-      box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 10px rgba(0, 255, 100, 0.2);
       margin-bottom: 5px;
     }
     #chat-messages {
@@ -66,24 +64,23 @@
     }
     #chat-input {
       width: 100%; background: #000; border: 1px solid #ff0055;
-      color: #00ffff; padding: 5px; font-family: inherit; font-size: 11px; outline: none;
+      color: #00ff66; padding: 5px; font-family: inherit; font-size: 11px; outline: none;
     }
 
-    /* GİRİŞ EKRANI */
     #start-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(2, 2, 8, 0.94); display: flex; flex-direction: column;
+      background: rgba(2, 8, 4, 0.94); display: flex; flex-direction: column;
       justify-content: center; align-items: center; color: #fff; z-index: 10;
       padding: 20px; pointer-events: auto;
     }
-    h1 { font-size: 28px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 8px; text-align: center; letter-spacing: 2px; }
+    h1 { font-size: 28px; color: #00ff66; text-shadow: 0 0 15px #00ff66; margin-bottom: 8px; text-align: center; letter-spacing: 2px; }
     p { font-size: 12px; color: #00ffff; margin-bottom: 20px; text-align: center; line-height: 1.4; text-shadow: 0 0 8px #00ffff; }
     
     .p2p-box {
-      background: rgba(20, 20, 35, 0.9); border: 1px solid #00ffff;
+      background: rgba(15, 30, 20, 0.9); border: 1px solid #00ff66;
       padding: 18px; border-radius: 12px; display: flex; flex-direction: column;
       gap: 10px; width: 100%; max-width: 320px; z-index: 20;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 100, 0.2);
     }
     .p2p-input {
       background: #000; border: 1px solid #ff0055; color: #00ffff;
@@ -95,24 +92,22 @@
       border-radius: 6px; user-select: none; -webkit-tap-highlight-color: transparent;
       box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
     }
-    .btn-secondary { background: #00ffff; color: #000; box-shadow: 0 0 10px rgba(0, 255, 255, 0.4); }
+    .btn-secondary { background: #00ff66; color: #000; box-shadow: 0 0 10px rgba(0, 255, 100, 0.4); }
 
-    /* QR MODALLAR */
     .modal-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.95); display: none; flex-direction: column;
       justify-content: center; align-items: center; z-index: 15; padding: 20px;
     }
     .modal-card {
-      background: rgba(15, 15, 25, 0.95); border: 2px solid #00ffff;
+      background: rgba(15, 25, 20, 0.95); border: 2px solid #00ff66;
       border-radius: 12px; padding: 15px; display: flex; flex-direction: column;
       align-items: center; gap: 12px; max-width: 320px; width: 100%;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
     }
     #qrcode-display { background: #fff; padding: 10px; border-radius: 8px; }
     #qr-reader { width: 100%; max-width: 260px; border: 1px solid #ff0055; border-radius: 8px; overflow: hidden; }
 
-    /* MOBİL KONTROLLER */
     #touch-controls {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 6; display: none;
@@ -120,7 +115,7 @@
     #joystick-zone {
       position: absolute; bottom: 25px; left: 25px;
       width: 110px; height: 110px; border-radius: 50%;
-      background: rgba(0, 255, 255, 0.15); border: 2px solid rgba(0, 255, 255, 0.5);
+      background: rgba(0, 255, 100, 0.15); border: 2px solid rgba(0, 255, 100, 0.5);
       pointer-events: auto; touch-action: none;
     }
     #joystick-knob {
@@ -145,8 +140,8 @@
 <body>
 
   <div id="start-screen">
-    <h1>CYBER METAVERSE</h1>
-    <p>⚡ Cyber City Lobby & Neon Parkour World ⚡</p>
+    <h1>CYBER PARK METAVERSE</h1>
+    <p>🌳 Neon Cyber Park & Parkour Adventure 🌳</p>
 
     <div class="p2p-box">
       <button id="btn-solo" class="btn" style="background:#00ff66; color:#000;">TEK BAŞINA OYNA</button>
@@ -154,13 +149,13 @@
       <button id="btn-host" class="btn">1. ODA KUR & QR GÖSTER</button>
       <button id="btn-scan" class="btn btn-secondary">📷 QR TARAYIP KATIL</button>
       <input type="text" id="join-id-input" class="p2p-input" placeholder="ODA KODU GİRİN" />
-      <button id="btn-join" class="btn btn-secondary" style="background:#111; color:#00ffff; border:1px solid #00ffff">KOD İLE KATIL</button>
+      <button id="btn-join" class="btn btn-secondary" style="background:#111; color:#00ff66; border:1px solid #00ff66">KOD İLE KATIL</button>
     </div>
   </div>
 
   <div id="host-qr-modal" class="modal-overlay">
     <div class="modal-card">
-      <h3 style="color:#00ffff; font-size:14px;">OYUNCULARI DAVET ET</h3>
+      <h3 style="color:#00ff66; font-size:14px;">OYUNCULARI DAVET ET</h3>
       <div id="qrcode-display"></div>
       <p style="font-size:10px; color:#aaa;">QR kodu taratarak odaya katılım sağlayabilirsiniz.</p>
       <button id="btn-close-qr" class="btn" style="width:100%;">OYUNA BAŞLA</button>
@@ -185,7 +180,7 @@
     <div class="top-bar">
       <div class="top-left">
         <div class="stats">
-          <div>BÖLGE: <span id="zone-val" style="color:#00ffff;">CYBER CITY (LOBİ)</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">OFFLINE</span></div>
+          <div>BÖLGE: <span id="zone-val" style="color:#00ff66;">CYBER PARK (LOBİ)</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">OFFLINE</span></div>
           <div class="room-code-container">
             <span>ODA:</span>
             <span id="my-peer-id" style="color:#ffff00;">-</span>
@@ -209,7 +204,7 @@
 
     <div id="chat-container">
       <div id="chat-messages">
-        <div><span style="color:#ff0055;">[Sistem]:</span> Cyber City'ye Hoşgeldiniz!</div>
+        <div><span style="color:#00ff66;">[Sistem]:</span> Cyber Park'a Hoşgeldiniz!</div>
       </div>
       <input type="text" id="chat-input" placeholder="Mesaj..." />
     </div>
@@ -235,7 +230,6 @@
     let parkourPortalMesh, cityPortalMesh;
     let portalCooldown = false;
 
-    // FİZİK & COLLIDER SİSTEMİ
     let physicsBoxes = []; 
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
     let fallCount = 0;
@@ -316,8 +310,8 @@
       const container = document.getElementById('canvas-container');
 
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x020208);
-      scene.fog = new THREE.FogExp2(0x050518, 0.015);
+      scene.background = new THREE.Color(0x020a05);
+      scene.fog = new THREE.FogExp2(0x05150d, 0.012);
 
       camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
@@ -328,15 +322,14 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       container.appendChild(renderer.domElement);
 
-      // IŞIKLANDIRMA
-      const ambientLight = new THREE.AmbientLight(0x223355, 1.5);
+      const ambientLight = new THREE.AmbientLight(0x335544, 1.6);
       scene.add(ambientLight);
 
-      const dirLight = new THREE.DirectionalLight(0x00ffff, 1.2);
+      const dirLight = new THREE.DirectionalLight(0x00ff66, 1.2);
       dirLight.position.set(30, 60, 20);
       scene.add(dirLight);
 
-      const magentaLight = new THREE.PointLight(0xff0055, 2, 50);
+      const magentaLight = new THREE.PointLight(0xff00aa, 2, 60);
       magentaLight.position.set(0, 15, 0);
       scene.add(magentaLight);
 
@@ -345,12 +338,11 @@
       scene.add(lobbyGroup);
       scene.add(gameGroup);
 
-      buildCyberCityLobby();
+      buildCyberParkLobby();
       buildParkourGameMap();
       
       gameGroup.visible = false;
 
-      // KARAKTER
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
       player.group.position.set(0, 0.05, 0); 
       scene.add(player.group);
@@ -368,7 +360,6 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    // --- FİZİK / COLLIDER DÜZELTMESİ ---
     function addCollider(mesh, isPassable = false, isCheckpoint = false, cpId = 0) {
       mesh.updateMatrixWorld(true);
       const box = new THREE.Box3().setFromObject(mesh);
@@ -390,119 +381,139 @@
       });
     }
 
-    // --- CYBERPUNK ŞEHİR LOBİSİ ---
-    function buildCyberCityLobby() {
-      // Zemin Grid
-      const floorGeo = new THREE.PlaneGeometry(160, 160);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x08081a, roughness: 0.2, metalness: 0.8 });
+    // --- CYBER PARK (YENİ ŞEHİR PARKI LOBİSİ) ---
+    function buildCyberParkLobby() {
+      // Park Yeşil Zemin
+      const floorGeo = new THREE.PlaneGeometry(180, 180);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0b2612, roughness: 0.8, metalness: 0.1 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
       floor.userData = { isCollider: true };
       lobbyGroup.add(floor);
 
-      // Neon Izgara Yolları
-      const gridHelper = new THREE.GridHelper(160, 40, 0xff0055, 0x00ffff);
+      // Park Yolları (Kavisli / Çapraz Yürüyüş Yolları)
+      const pathMat = new THREE.MeshStandardMaterial({ color: 0x1f2e24, roughness: 0.5 });
+      const mainPath = new THREE.Mesh(new THREE.PlaneGeometry(16, 180), pathMat);
+      mainPath.rotation.x = -Math.PI / 2;
+      mainPath.position.y = 0.01;
+      lobbyGroup.add(mainPath);
+
+      const crossPath = new THREE.Mesh(new THREE.PlaneGeometry(180, 16), pathMat);
+      crossPath.rotation.x = -Math.PI / 2;
+      crossPath.position.y = 0.01;
+      lobbyGroup.add(crossPath);
+
+      // Park Çim Grid Hatları
+      const gridHelper = new THREE.GridHelper(180, 45, 0x00ff66, 0x004411);
       gridHelper.position.y = 0.02;
       lobbyGroup.add(gridHelper);
 
-      // Cyber Binalar
-      const buildingColors = [0x050f26, 0x1a0022, 0x0a1a20];
-      const neonColors = [0x00ffff, 0xff0055, 0x00ff66, 0xff00aa];
+      // Süs Havuzu (Merkez Gölet)
+      const pondGeo = new THREE.CylinderGeometry(14, 14, 0.4, 32);
+      const pondMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.7 });
+      const pond = new THREE.Mesh(pondGeo, pondMat);
+      pond.position.set(0, 0.2, 0);
+      lobbyGroup.add(pond);
 
-      for (let i = 0; i < 24; i++) {
-        const angle = (i / 24) * Math.PI * 2;
-        const radius = 30 + Math.random() * 35;
+      const pondRim = new THREE.Mesh(new THREE.TorusGeometry(14, 0.6, 16, 50), new THREE.MeshStandardMaterial({ color: 0x334433 }));
+      pondRim.rotation.x = Math.PI / 2;
+      pondRim.position.set(0, 0.4, 0);
+      pondRim.userData = { isCollider: true };
+      lobbyGroup.add(pondRim);
+
+      // Dijital Cyber Ağaçlar
+      for (let i = 0; i < 35; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 18 + Math.random() * 60;
         const x = Math.cos(angle) * radius;
         const z = Math.sin(angle) * radius;
-        const h = 25 + Math.random() * 45;
-        const w = 8 + Math.random() * 8;
-        const d = 8 + Math.random() * 8;
 
-        const bGeo = new THREE.BoxGeometry(w, h, d);
-        const bMat = new THREE.MeshStandardMaterial({
-          color: buildingColors[Math.floor(Math.random() * buildingColors.length)],
-          roughness: 0.4,
-          metalness: 0.6
-        });
-        const bMesh = new THREE.Mesh(bGeo, bMat);
-        bMesh.position.set(x, h / 2, z);
-        bMesh.userData = { isCollider: true };
-        lobbyGroup.add(bMesh);
+        // Yol üzerine ağaç gelmesin
+        if (Math.abs(x) < 10 || Math.abs(z) < 10) continue;
 
-        // Bina Neon Trim Çizgileri
-        const trimGeo = new THREE.BoxGeometry(w + 0.2, 0.8, d + 0.2);
-        const trimMat = new THREE.MeshBasicMaterial({ color: neonColors[i % neonColors.length] });
-        const trim = new THREE.Mesh(trimGeo, trimMat);
-        trim.position.set(x, Math.random() * h, z);
-        lobbyGroup.add(trim);
+        const treeGroup = new THREE.Group();
+        treeGroup.position.set(x, 0, z);
 
-        // Holo Reklam Panoları
-        if (i % 3 === 0) {
-          const signGeo = new THREE.PlaneGeometry(8, 4);
-          const signMat = new THREE.MeshBasicMaterial({
-            color: neonColors[(i + 1) % neonColors.length],
-            side: THREE.DoubleSide
-          });
-          const sign = new THREE.Mesh(signGeo, signMat);
-          sign.position.set(x * 0.85, 12 + Math.random() * 10, z * 0.85);
-          sign.rotation.y = angle + Math.PI / 2;
-          lobbyGroup.add(sign);
-        }
+        // Gövde
+        const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 4, 8);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x0f1a12 });
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 2;
+        trunk.userData = { isCollider: true };
+        treeGroup.add(trunk);
+
+        // Neon Yaprak Kümeleri (Kristal/Küresel)
+        const leafColor = (i % 2 === 0) ? 0x00ff66 : 0xff00aa;
+        const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 0.3, emissive: leafColor, emissiveIntensity: 0.2 });
+        
+        const topLeaf = new THREE.Mesh(new THREE.IcosahedronGeometry(2.2, 1), leafMat);
+        topLeaf.position.y = 4.8;
+        treeGroup.add(topLeaf);
+
+        lobbyGroup.add(treeGroup);
       }
 
-      // Merkez Hologram/Plaza
-      const stageGeo = new THREE.CylinderGeometry(10, 12, 1.2, 32);
-      const stageMat = new THREE.MeshStandardMaterial({ color: 0x112244, emissive: 0x00ffff, emissiveIntensity: 0.2 });
-      const stage = new THREE.Mesh(stageGeo, stageMat);
-      stage.position.set(0, 0.6, 0);
-      stage.userData = { isCollider: true };
-      lobbyGroup.add(stage);
+      // Neon Park Bankları
+      for (let b = 0; b < 8; b++) {
+        const bAngle = (b / 8) * Math.PI * 2;
+        const bx = Math.cos(bAngle) * 12;
+        const bz = Math.sin(bAngle) * 12;
 
-      // Parkour Dünyasına Geçiş Portalı
+        const benchGeo = new THREE.BoxGeometry(3, 0.4, 1.2);
+        const benchMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.3 });
+        const bench = new THREE.Mesh(benchGeo, benchMat);
+        bench.position.set(bx, 0.2, bz);
+        bench.rotation.y = -bAngle;
+        bench.userData = { isCollider: true };
+        lobbyGroup.add(bench);
+      }
+
+      // Parkour Portal (Park İçindeki Tak)
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
       const portalMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
       parkourPortalMesh = new THREE.Mesh(portalFrameGeo, portalMat);
-      parkourPortalMesh.position.set(0, 4.5, -22);
+      parkourPortalMesh.position.set(0, 4.5, -30);
       lobbyGroup.add(parkourPortalMesh);
 
-      // Portal İç Halkası
       const innerGeo = new THREE.CircleGeometry(3.7, 32);
       const innerMat = new THREE.MeshBasicMaterial({ color: 0xff0055, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
       const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-      innerMesh.position.set(0, 4.5, -22);
+      innerMesh.position.set(0, 4.5, -30);
       lobbyGroup.add(innerMesh);
 
       const portalLight = new THREE.PointLight(0xff0055, 4, 20);
-      portalLight.position.set(0, 4.5, -22);
+      portalLight.position.set(0, 4.5, -30);
       lobbyGroup.add(portalLight);
     }
 
-    // --- NEON PARKOUR HARİTASI ---
+    // --- NEON PARKOUR HARİTASI (BASAMAK MESAFELERİ YAKINLAŞTIRILDI) ---
     function buildParkourGameMap() {
       const platformColor = 0x111122;
       const neonEdges = [0x00ffff, 0xff0055, 0x00ff66, 0xffff00, 0xff00aa];
 
+      // Yakınlaştırılmış basamak koordinatları [x, y, z, genişlik, yükseklik, derinlik, isCheckpoint, cpId]
       const parkourData = [
         // Başlangıç Platformu
-        [150, 0, 0, 14, 1, 14, true, 1],
+        [150, 0, 0, 10, 1, 10, true, 1],
         
-        // Bölüm 1: Basamaklar
-        [150, 2, -15, 5, 1, 5, false, 0],
-        [150, 4, -25, 4, 1, 4, false, 0],
-        [155, 6, -34, 4, 1, 4, false, 0],
-        [162, 8, -42, 5, 1, 5, true, 2], // CP 2
+        // Bölüm 1: Yakın Basamaklar (3.5 - 4.5 birim mesafe)
+        [150, 1.0, -9, 4, 1, 4, false, 0],
+        [150, 2.0, -16, 4, 1, 4, false, 0],
+        [154, 3.0, -22, 4, 1, 4, false, 0],
+        [160, 4.0, -27, 4, 1, 4, false, 0],
+        [160, 5.0, -34, 6, 1, 6, true, 2], // CP 2
 
-        // Bölüm 2: Dar Duvar ve Yüksek Tırmanış
-        [162, 10, -53, 3, 1, 7, false, 0],
-        [152, 13, -62, 3, 1, 3, false, 0],
-        [142, 16, -62, 3, 1, 3, false, 0],
-        [132, 18, -52, 6, 1, 6, true, 3], // CP 3
+        // Bölüm 2: Tırmanış
+        [154, 6.5, -40, 3.5, 1, 3.5, false, 0],
+        [147, 8.0, -40, 3.5, 1, 3.5, false, 0],
+        [140, 9.5, -35, 3.5, 1, 3.5, false, 0],
+        [140, 11.0, -28, 5, 1, 5, true, 3], // CP 3
 
-        // Bölüm 3: Zirveye İlerleme
-        [120, 21, -42, 4, 1, 4, false, 0],
-        [110, 24, -30, 4, 1, 4, false, 0],
-        [110, 27, -15, 4, 1, 4, false, 0],
-        [120, 30, 0, 8, 1, 8, true, 4], // CP 4 - BİTİŞ & LOBİye DÖNÜŞ
+        // Bölüm 3: Zirve Yolu
+        [133, 12.5, -22, 3.5, 1, 3.5, false, 0],
+        [126, 14.0, -16, 3.5, 1, 3.5, false, 0],
+        [120, 15.5, -9, 3.5, 1, 3.5, false, 0],
+        [120, 17.0, 0, 8, 1, 8, true, 4], // CP 4 - BİTİŞ & LOBİye DÖNÜŞ
       ];
 
       parkourData.forEach((p, idx) => {
@@ -516,14 +527,12 @@
         mesh.userData = { isCollider: true, isCheckpoint: isCP, cpId: cpId };
         gameGroup.add(mesh);
 
-        // Platform Kenar Neonu
         const edgeGeo = new THREE.BoxGeometry(w + 0.1, 0.2, d + 0.1);
         const edgeMat = new THREE.MeshBasicMaterial({ color: isCP ? 0x00ff66 : neonEdges[idx % neonEdges.length] });
         const edge = new THREE.Mesh(edgeGeo, edgeMat);
         edge.position.set(x, y + h, z);
         gameGroup.add(edge);
 
-        // Checkpoint Işın Sütunu
         if (isCP) {
           const cpGeo = new THREE.CylinderGeometry(1.2, 1.2, 8, 16);
           const cpMat = new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.25, wireframe: true });
@@ -575,12 +584,12 @@
 
         rebuildColliders(lobbyGroup);
 
-        player.group.position.set(0, 0.05, -14); 
-        zoneVal.innerText = "CYBER CITY (LOBİ)";
-        zoneVal.style.color = "#00ffff";
+        player.group.position.set(0, 0.05, -20); 
+        zoneVal.innerText = "CYBER PARK (LOBİ)";
+        zoneVal.style.color = "#00ff66";
         gameHud.style.display = "none";
 
-        addChatMessage('Sistem', '🏙️ Cyber City Lobisine geri döndünüz.');
+        addChatMessage('Sistem', '🌳 Cyber Park Lobisine geri döndünüz.');
       }
 
       setTimeout(() => { portalCooldown = false; }, 2000);
@@ -615,7 +624,7 @@
       navigator.clipboard.writeText(myPeerId).then(() => {
         const btn = document.getElementById('copy-btn');
         btn.innerText = "KOPYALANDI!";
-        btn.style.background = "#00ffff";
+        btn.style.background = "#00ff66";
         btn.style.color = "#000";
         setTimeout(() => {
           btn.innerText = "KOPYALA";
@@ -649,7 +658,7 @@
 
     function openQRScanner() {
       if (typeof Html5Qrcode === 'undefined') {
-        alert("Kamera tarayıcı kütüphanesi yüklenemedi.");
+        alert("Kamera kütüphanesi yüklenemedi.");
         return;
       }
       document.getElementById('scanner-qr-modal').style.display = 'flex';
@@ -747,7 +756,6 @@
       if (!isMobile) document.body.requestPointerLock();
     }
 
-    // --- TABANA SAPLANMA DÜZELTİLMİŞ AVATAR MODELİ ---
     function createHumanoidAvatar(suitColor, visorColor) {
       const group = new THREE.Group();
       const limbs = {};
@@ -756,7 +764,6 @@
       const jointMat = new THREE.MeshStandardMaterial({ color: 0x151518, roughness: 0.7 });
       const visorMat = new THREE.MeshBasicMaterial({ color: visorColor });
 
-      // Gövde Yüzeyi Düzeltildi
       const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.85, 12), suitMat);
       torso.position.y = 1.225; 
       group.add(torso);
@@ -785,7 +792,6 @@
         return pivot;
       }
 
-      // Bacak boyları Y=0 hizasına oturtuldu
       limbs.leftArm = createLimb(-0.38, 1.55, 0.65, 0.07);
       limbs.rightArm = createLimb(0.38, 1.55, 0.65, 0.07);
       limbs.leftLeg = createLimb(-0.16, 0.8, 0.8, 0.09);
@@ -802,8 +808,8 @@
       const ctx = canvas.getContext('2d');
       canvas.width = 512; canvas.height = 128;
 
-      ctx.fillStyle = 'rgba(10, 10, 25, 0.9)';
-      ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 6;
+      ctx.fillStyle = 'rgba(10, 25, 15, 0.9)';
+      ctx.strokeStyle = '#00ff66'; ctx.lineWidth = 6;
       ctx.fillRect(10, 10, 492, 108);
 
       ctx.fillStyle = '#ffffff';
@@ -966,7 +972,7 @@
     function addChatMessage(user, msg) {
       const messages = document.getElementById('chat-messages');
       const msgDiv = document.createElement('div');
-      msgDiv.innerHTML = `<span style="color:#00ffff;">[${user}]:</span> ${msg}`;
+      msgDiv.innerHTML = `<span style="color:#00ff66;">[${user}]:</span> ${msg}`;
       messages.appendChild(msgDiv);
       messages.scrollTop = messages.scrollHeight;
     }
@@ -1003,7 +1009,6 @@
       }
     }
 
-    // --- GELİŞMİŞ VE DÜZELTİLMİŞ ÇARPIŞMA (COLLISION) KONTROLÜ ---
     function checkCollisions(newPos) {
       let grounded = false;
 
@@ -1020,7 +1025,7 @@
             document.getElementById('checkpoint-val').innerText = `${item.cpId} / 4`;
             
             if (item.cpId === 4) {
-              addChatMessage('Sistem', '🎉 TEBRİKLER! Parkuru başarıyla tamamladınız!');
+              addChatMessage('Sistem', '🎉 TEBRİKLER! Parkuru tamamladınız!');
               switchMap("lobby");
               return grounded;
             }
@@ -1029,7 +1034,6 @@
           const pBottom = newPos.y;
           const boxTop = item.box.max.y;
 
-          // Ayakların zemine basma toleransı artırıldı
           if (pBottom <= boxTop + 0.2 && pBottom >= boxTop - 0.5 && velocity.y <= 0) {
             newPos.y = boxTop;
             velocity.y = 0;
@@ -1062,7 +1066,7 @@
       if (isPlaying) {
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
-        velocity.y -= 26.0 * delta; // Yerçekimi
+        velocity.y -= 26.0 * delta;
 
         const moveDir = new THREE.Vector3();
         if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
@@ -1109,7 +1113,7 @@
 
         if (currentMap === "lobby") {
           parkourPortalMesh.rotation.z += delta * 1.5;
-          const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -22));
+          const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -30));
           if (distToPortal < 3.8) {
             switchMap("parkour");
           }
