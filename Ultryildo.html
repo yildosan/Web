@@ -29,13 +29,13 @@
       border-radius: 4px; transition: all 0.2s; text-shadow: none;
     }
 
-    /* MOBİL TAM EKRAN BUTONU (GÜÇLENDİRİLMİŞ DOKUNMA ALANI VE Z-INDEX) */
+    /* MOBİL TAM EKRAN BUTONU */
     #fullscreen-btn {
       display: none;
       pointer-events: auto; background: rgba(10, 10, 20, 0.9); color: #00ffff;
       border: 2px solid #00ffff; font-size: 18px; padding: 8px 14px;
       border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
-      z-index: 99; touch-action: manipulation;
+      z-index: 999; touch-action: manipulation;
     }
     #fullscreen-btn:active { background: #00ffff; color: #000; }
 
@@ -197,7 +197,7 @@
 
     <div id="chat-container">
       <div id="chat-messages">
-        <div><span style="color:#ff0055;">[Sistem]:</span> Tam Ekran Modu Hazır.</div>
+        <div><span style="color:#ff0055;">[Sistem]:</span> Hoşgeldiniz!</div>
       </div>
       <input type="text" id="chat-input" placeholder="Mesaj..." />
     </div>
@@ -246,39 +246,51 @@
       }
     }
 
-    // TARAYICI KISITLAMALARINI AŞAN GARANTİ TAM EKRAN MEKANİZMASI
+    // TARAYICI KISITLAMALARINI AŞAN TAM EKRAN MEKANİZMASI
     function setupFullscreenListener() {
       const fsBtn = document.getElementById('fullscreen-btn');
       
-      const requestFS = (e) => {
-        if (e) e.preventDefault();
-        
+      const toggleFullscreen = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
         const doc = window.document;
         const docEl = doc.documentElement;
 
-        const requestNativeFS = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullscreen || docEl.msRequestFullscreen;
-        const cancelNativeFS = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+        const requestFS = docEl.requestFullscreen || 
+                          docEl.webkitRequestFullscreen || 
+                          docEl.mozRequestFullScreen || 
+                          docEl.msRequestFullscreen;
 
-        const isFS = doc.fullscreenElement || doc.mozFullScreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+        const exitFS = doc.exitFullscreen || 
+                       doc.webkitExitFullscreen || 
+                       doc.mozCancelFullScreen || 
+                       doc.msExitFullscreen;
+
+        const isFS = doc.fullscreenElement || 
+                     doc.webkitFullscreenElement || 
+                     doc.mozFullScreenElement || 
+                     doc.msFullscreenElement;
 
         if (!isFS) {
-          if (requestNativeFS) {
-            requestNativeFS.call(docEl).catch(err => {
-              console.warn("Standart tam ekran reddedildi, safari deneniyor...", err);
+          if (requestFS) {
+            requestFS.call(docEl).catch(err => {
+              console.warn("Tam ekran izni reddedildi:", err);
             });
-          } else if (typeof docEl.webkitEnterFullscreen === 'function') {
-            docEl.webkitEnterFullscreen();
+          } else {
+            alert("Cihazınız varsayılan web tam ekran modunu desteklemiyor.");
           }
         } else {
-          if (cancelNativeFS) {
-            cancelNativeFS.call(doc);
+          if (exitFS) {
+            exitFS.call(doc);
           }
         }
       };
 
-      // Mobilde tam ekran tetiklenmesi için hem touchstart hem click olayı bağlanıyor
-      fsBtn.addEventListener('touchstart', requestFS, { passive: false });
-      fsBtn.addEventListener('click', requestFS);
+      fsBtn.addEventListener('touchend', toggleFullscreen, { passive: false });
+      fsBtn.addEventListener('click', toggleFullscreen);
     }
 
     function init() {
