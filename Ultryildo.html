@@ -2,39 +2,48 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>ULTRAKILL 3D WebGL Clone</title>
+  <title>Retro Cyberpunk Metaverse 3D</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
     #canvas-container { width: 100%; height: 100%; display: block; }
     
+    /* HUD & UI */
     #hud {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; padding: 20px;
       display: flex; flex-direction: column; justify-content: space-between;
       z-index: 5;
     }
-    #crosshair {
-      position: absolute; top: 50%; left: 50%;
-      width: 10px; height: 10px; transform: translate(-50%, -50%);
-      border: 2px solid #00ffff; border-radius: 50%;
-    }
-    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
-    .bottom-bar { display: flex; justify-content: space-between; align-items: flex-end; }
     
-    .stats { color: #00ffff; font-size: 24px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
-    .hp-bar { font-size: 36px; color: #ff0055; text-shadow: 0 0 10px #ff0055; }
-    .style-meter { text-align: right; color: #ffcc00; font-size: 28px; text-shadow: 0 0 10px #ffcc00; }
-    .style-rank { font-size: 42px; font-weight: 900; color: #ff0055; }
+    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
+    .stats { color: #00ffff; font-size: 20px; font-weight: bold; text-shadow: 0 0 8px #00ffff; }
+    
+    /* Chat Box */
+    #chat-container {
+      position: absolute; bottom: 20px; left: 20px; width: 350px;
+      background: rgba(10, 10, 20, 0.85); border: 1px solid #00ffff;
+      border-radius: 8px; padding: 10px; pointer-events: auto;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+    #chat-messages {
+      height: 120px; overflow-y: auto; color: #fff; font-size: 14px;
+      margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px;
+    }
+    #chat-input {
+      width: 100%; background: #000; border: 1px solid #ff0055;
+      color: #00ffff; padding: 8px; font-family: inherit; font-size: 14px;
+      outline: none;
+    }
 
-    #start-screen, #game-over {
+    #start-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
+      background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
       justify-content: center; align-items: center; color: #fff; z-index: 10;
       cursor: pointer;
     }
-    h1 { font-size: 60px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 10px; }
-    p { font-size: 18px; color: #aaa; margin-bottom: 20px; text-align: center; }
+    h1 { font-size: 50px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 10px; text-align: center; }
+    p { font-size: 16px; color: #aaa; margin-bottom: 20px; text-align: center; line-height: 1.5; }
     .btn { padding: 12px 30px; font-size: 20px; background: #ff0055; color: #fff; border: none; cursor: pointer; font-family: inherit; font-weight: bold; }
     .btn:hover { background: #ff3377; box-shadow: 0 0 15px #ff0055; }
   </style>
@@ -42,148 +51,204 @@
 <body>
 
   <div id="start-screen">
-    <h1>ULTRAKILL 3D</h1>
-    <p>MANKIND IS DEAD. BLOOD IS FUEL. HELL IS FULL.</p>
-    <p>WASD: Hareket | Shift: Dash | Sol Tık: Ateş | F: Parry / Yumruk | Boşluk: Zıpla</p>
-    <button class="btn" id="start-btn">OYUNA BAŞLA (BAŞLAMAK İÇİN TIKLA)</button>
-  </div>
-
-  <div id="game-over" style="display: none;">
-    <h1>YOU DIED</h1>
-    <p id="final-score">Skor: 0</p>
-    <button class="btn" onclick="location.reload()">TEKRAR DENE</button>
+    <h1>CYBER METAVERSE 3D</h1>
+    <p>3. ŞAHIS DÜNYAYA HOŞ GELDİNİZ<br>WASD: Hareket | Fare: Kamerayı Çevir | Boşluk: Zıpla | T veya Enter: Chat</p>
+    <button class="btn" id="start-btn">METAVERSE'E GİRİŞ YAP</button>
   </div>
 
   <div id="hud">
-    <div id="crosshair"></div>
     <div class="top-bar">
       <div class="stats">
-        <div>WAVE: <span id="wave-val">1</span></div>
-        <div>SKOR: <span id="score-val">0</span></div>
-      </div>
-      <div class="style-meter">
-        <div id="style-title">STYLE</div>
-        <div class="style-rank" id="style-rank">DESTRUCTIVE</div>
+        <div>BÖLGE: <span id="zone-val" style="color:#ff0055;">MERKEZ PLAZA</span></div>
+        <div>ONLINE AVATARLAR: <span>12</span></div>
       </div>
     </div>
-    <div class="bottom-bar">
-      <div class="hp-bar">HP: <span id="hp-val">100</span></div>
-      <div class="stats" style="color: #ffcc00;">DASH: <span id="dash-val">|||</span></div>
+
+    <div id="chat-container">
+      <div id="chat-messages">
+        <div><span style="color:#ff0055;">[Sistem]:</span> Cyber Metaverse'e hoş geldiniz!</div>
+      </div>
+      <input type="text" id="chat-input" placeholder="Mesaj yazın (Enter)..." />
     </div>
   </div>
 
   <div id="canvas-container"></div>
 
-  <!-- Güvenilir CDN ile Three.js -->
+  <!-- Three.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 
   <script>
     let scene, camera, renderer;
-    let hp = 100, score = 0, wave = 1, styleScore = 0;
+    let player, playerBody, cameraPivot;
     let isPlaying = false;
-    
+    let isChatting = false;
+
+    // Kontroller
     let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
     let velocity = new THREE.Vector3();
-    let direction = new THREE.Vector3();
     let canJump = false;
-    let dashCooldown = 0, dashCharges = 3;
-    
-    let enemies = [];
-    let particles = [];
-    let bullets = [];
-    
-    const styleRanks = [
-      { score: 0, text: "DESTRUCTIVE", color: "#888" },
-      { score: 50, text: "SAVAGE", color: "#00ccff" },
-      { score: 150, text: "RADIANT", color: "#00ff66" },
-      { score: 300, text: "ULTRAGREAT", color: "#ffcc00" },
-      { score: 500, text: "ULTRAKILL", color: "#ff0055" }
-    ];
+
+    // Kamera Kontrolleri
+    let cameraYaw = 0;
+    let cameraPitch = 0.3;
+    const cameraDistance = 6;
 
     function init() {
       const container = document.getElementById('canvas-container');
-      
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x050508);
-      scene.fog = new THREE.FogExp2(0x050508, 0.03);
 
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.y = 2;
+      // Sahne Kurulumu (ULTRAKILL Stilinde Karanlık/Neon)
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x020205);
+      scene.fog = new THREE.FogExp2(0x020205, 0.02);
+
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
       container.appendChild(renderer.domElement);
 
+      // Işıklar
       const ambientLight = new THREE.AmbientLight(0x221133);
       scene.add(ambientLight);
 
-      const dirLight = new THREE.DirectionalLight(0xffaa55, 0.8);
+      const dirLight = new THREE.DirectionalLight(0x00ffff, 0.8);
       dirLight.position.set(20, 40, 20);
       scene.add(dirLight);
 
-      createArena();
+      // Metaverse Alanları ve Oyuncu Oluşturma
+      createMetaverseWorld();
+      createPlayer();
+
       setupControls();
+      setupChat();
 
       window.addEventListener('resize', onWindowResize);
     }
 
-    function createArena() {
-      const floorGeo = new THREE.PlaneGeometry(100, 100, 20, 20);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x11111a, wireframe: true, emissive: 0x220033 });
+    // --- METAVERSE DÜNYASI VE YAPILARI ---
+    function createMetaverseWorld() {
+      // Retro Izgara Zemin (100x100)
+      const floorGeo = new THREE.PlaneGeometry(120, 120, 30, 30);
+      const floorMat = new THREE.MeshStandardMaterial({ 
+        color: 0x050510, 
+        wireframe: true,
+        emissive: 0x110022 
+      });
       const floor = new THREE.Mesh(floorGeo, floorMat);
       floor.rotation.x = -Math.PI / 2;
       scene.add(floor);
 
-      for (let i = -40; i <= 40; i += 20) {
-        const pLight = new THREE.PointLight(0xff0044, 2, 25);
-        pLight.position.set(i, 2, -45);
-        scene.add(pLight);
-      }
+      // 1. Merkez Portal (Işınlanma Alanı)
+      const portalGeo = new THREE.TorusGeometry(3, 0.2, 16, 100);
+      const portalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+      const portal = new THREE.Mesh(portalGeo, portalMat);
+      portal.position.set(0, 3.5, -20);
+      scene.add(portal);
+
+      const portalLight = new THREE.PointLight(0x00ffff, 3, 15);
+      portalLight.position.set(0, 3.5, -20);
+      scene.add(portalLight);
+
+      // 2. Sahne / Etkinlik Alanı (Podyum)
+      const stageGeo = new THREE.CylinderGeometry(8, 10, 1, 32);
+      const stageMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0x330011 });
+      const stage = new THREE.Mesh(stageGeo, stageMat);
+      stage.position.set(25, 0.5, 10);
+      scene.add(stage);
+
+      // 3. Statik Diğer Avatar/NPC'ler (Metaverse Hissiyatı)
+      createNPC(-10, 10, 0xffcc00);
+      createNPC(15, -15, 0x00ff66);
     }
 
-    function startGame() {
-      const startScreen = document.getElementById('start-screen');
-      startScreen.style.display = 'none';
-      
-      // Pointer Lock isteği doğrudan kullanıcı tıklamasıyla tetiklenir
-      document.body.requestPointerLock = document.body.requestPointerLock || document.body.mozRequestPointerLock;
-      document.body.requestPointerLock();
-      isPlaying = true;
+    function createNPC(x, z, color) {
+      const npcGroup = new THREE.Group();
+      const bodyGeo = new THREE.BoxGeometry(0.8, 1.8, 0.5);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: color });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.9;
+
+      const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+      const headMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 2.1;
+
+      npcGroup.add(body);
+      npcGroup.add(head);
+      npcGroup.position.set(x, 0, z);
+      scene.add(npcGroup);
     }
 
+    // --- 3. ŞAHIS OYUNCU (AVATAR) OLUŞTURMA ---
+    function createPlayer() {
+      player = new THREE.Group();
+
+      // Gövde
+      const bodyGeo = new THREE.BoxGeometry(0.8, 1.6, 0.5);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.2 });
+      playerBody = new THREE.Mesh(bodyGeo, bodyMat);
+      playerBody.position.y = 0.8;
+      player.add(playerBody);
+
+      // Baş (Kask)
+      const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      const headMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 1.85;
+      player.add(head);
+
+      scene.add(player);
+
+      // Kamera Pivotu (Kamerayı karaktere bağlayan sanal kol)
+      cameraPivot = new THREE.Object3D();
+      scene.add(cameraPivot);
+    }
+
+    // --- KONTROLLER VE FARE TAKİBİ ---
     function setupControls() {
       const startScreen = document.getElementById('start-screen');
-      startScreen.addEventListener('click', startGame);
+      startScreen.addEventListener('click', () => {
+        document.body.requestPointerLock();
+      });
 
       document.addEventListener('pointerlockchange', () => {
         if (document.pointerLockElement === document.body) {
           isPlaying = true;
-          document.getElementById('start-screen').style.display = 'none';
-        } else if (hp > 0) {
+          startScreen.style.display = 'none';
+        } else if (!isChatting) {
           isPlaying = false;
-          document.getElementById('start-screen').style.display = 'flex';
+          startScreen.style.display = 'flex';
         }
       });
 
+      // 3. Şahıs Kamera Döndürme
       document.addEventListener('mousemove', (e) => {
-        if (!isPlaying) return;
-        camera.rotation.y -= e.movementX * 0.0025;
-        camera.rotation.x -= e.movementY * 0.0025;
-        camera.rotation.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camera.rotation.x));
-        camera.rotation.z = 0;
+        if (!isPlaying || isChatting) return;
+
+        cameraYaw -= e.movementX * 0.003;
+        cameraPitch -= e.movementY * 0.003;
+
+        // Dikey bakış açısını sınırla (Yere veya tavana gömülmemesi için)
+        cameraPitch = Math.max(-0.2, Math.min(1.2, cameraPitch));
       });
 
+      // Tuş Basışları
       document.addEventListener('keydown', (e) => {
-        if (!isPlaying) return;
+        if (isChatting) return;
+
         switch (e.code) {
           case 'KeyW': moveForward = true; break;
           case 'KeyS': moveBackward = true; break;
           case 'KeyA': moveLeft = true; break;
           case 'KeyD': moveRight = true; break;
-          case 'Space': if (canJump) { velocity.y = 12; canJump = false; } break;
-          case 'ShiftLeft': case 'ShiftRight': performDash(); break;
-          case 'KeyF': performParry(); break;
+          case 'Space': 
+            if (canJump) { velocity.y = 10; canJump = false; }
+            break;
+          case 'KeyT':
+            e.preventDefault();
+            focusChat();
+            break;
         }
       });
 
@@ -195,261 +260,112 @@
           case 'KeyD': moveRight = false; break;
         }
       });
-
-      document.addEventListener('mousedown', (e) => {
-        if (isPlaying && e.button === 0) shootRevolver();
-      });
     }
 
-    function performDash() {
-      if (dashCharges <= 0) return;
-      dashCharges--;
+    // --- SOHBET (CHAT) SİSTEMİ ---
+    function setupChat() {
+      const input = document.getElementById('chat-input');
       
-      const dashDir = new THREE.Vector3();
-      camera.getWorldDirection(dashDir);
-      dashDir.y = 0;
-      dashDir.normalize();
-
-      velocity.addScaledVector(dashDir, 35);
-      
-      camera.fov = 85;
-      camera.updateProjectionMatrix();
-      setTimeout(() => { camera.fov = 75; camera.updateProjectionMatrix(); }, 150);
-    }
-
-    function shootRevolver() {
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-
-      const laserGeo = new THREE.BufferGeometry().setFromPoints([
-        camera.position.clone().add(new THREE.Vector3(0.2, -0.2, -0.5).applyQuaternion(camera.quaternion)),
-        camera.position.clone().add(raycaster.ray.direction.clone().multiplyScalar(50))
-      ]);
-      const laserMat = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 3 });
-      const laser = new THREE.Line(laserGeo, laserMat);
-      scene.add(laser);
-      setTimeout(() => scene.remove(laser), 50);
-
-      const enemyMeshes = enemies.map(e => e.mesh);
-      const intersects = raycaster.intersectObjects(enemyMeshes);
-
-      if (intersects.length > 0) {
-        const hitObject = intersects[0].object;
-        const enemy = enemies.find(e => e.mesh === hitObject);
-        if (enemy) {
-          enemy.takeDamage(35, intersects[0].point);
-          addStyle(20);
-        }
-      }
-    }
-
-    function performParry() {
-      const pPos = camera.position;
-      let parried = false;
-
-      bullets.forEach((b, idx) => {
-        if (pPos.distanceTo(b.position) < 3.5) {
-          scene.remove(b);
-          bullets.splice(idx, 1);
-          parried = true;
-        }
+      input.addEventListener('focus', () => {
+        isChatting = true;
+        document.exitPointerLock();
       });
 
-      enemies.forEach(e => {
-        if (pPos.distanceTo(e.mesh.position) < 4) {
-          e.takeDamage(100, e.mesh.position);
-          parried = true;
-        }
+      input.addEventListener('blur', () => {
+        isChatting = false;
       });
 
-      if (parried) {
-        hp = Math.min(100, hp + 50);
-        addStyle(100);
-        
-        const flash = new THREE.PointLight(0xffff00, 10, 15);
-        flash.position.copy(pPos);
-        scene.add(flash);
-        setTimeout(() => scene.remove(flash), 100);
-      }
-    }
-
-    function spawnBlood(pos) {
-      for (let i = 0; i < 20; i++) {
-        const geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-        const mat = new THREE.MeshBasicMaterial({ color: 0xff0033 });
-        const p = new THREE.Mesh(geo, mat);
-        p.position.copy(pos);
-        
-        p.velocity = new THREE.Vector3(
-          (Math.random() - 0.5) * 12,
-          Math.random() * 8,
-          (Math.random() - 0.5) * 12
-        );
-        
-        scene.add(p);
-        particles.push(p);
-
-        if (pos.distanceTo(camera.position) < 6) {
-          hp = Math.min(100, hp + 1);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim() !== '') {
+          addChatMessage('Sen', input.value.trim());
+          input.value = '';
+          input.blur();
+          document.body.requestPointerLock();
         }
-      }
+      });
     }
 
-    class Enemy {
-      constructor(x, z) {
-        const geo = new THREE.BoxGeometry(1.5, 3, 1.5);
-        const mat = new THREE.MeshStandardMaterial({ color: 0xff0055, roughness: 0.3 });
-        this.mesh = new THREE.Mesh(geo, mat);
-        this.mesh.position.set(x, 1.5, z);
-        scene.add(this.mesh);
-
-        this.hp = 60;
-        this.speed = 6 + Math.random() * 3;
-        this.attackTimer = 0;
-      }
-
-      update(delta) {
-        const dir = new THREE.Vector3().subVectors(camera.position, this.mesh.position);
-        dir.y = 0;
-        dir.normalize();
-        this.mesh.position.addScaledVector(dir, this.speed * delta);
-
-        this.attackTimer += delta;
-        if (this.attackTimer > 2.5) {
-          this.shootProjectile();
-          this.attackTimer = 0;
-        }
-      }
-
-      shootProjectile() {
-        const geo = new THREE.SphereGeometry(0.4);
-        const mat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
-        const bullet = new THREE.Mesh(geo, mat);
-        bullet.position.copy(this.mesh.position);
-        bullet.position.y += 1;
-        
-        const dir = new THREE.Vector3().subVectors(camera.position, bullet.position).normalize();
-        bullet.velocity = dir.multiplyScalar(15);
-        
-        scene.add(bullet);
-        bullets.push(bullet);
-      }
-
-      takeDamage(amount, hitPoint) {
-        this.hp -= amount;
-        spawnBlood(hitPoint);
-
-        if (this.hp <= 0) {
-          scene.remove(this.mesh);
-          enemies = enemies.filter(e => e !== this);
-          score += 100;
-          
-          if (enemies.length === 0) {
-            wave++;
-            spawnWave();
-          }
-        }
-      }
+    function focusChat() {
+      const input = document.getElementById('chat-input');
+      input.focus();
     }
 
-    function spawnWave() {
-      for (let i = 0; i < wave * 3; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 20 + Math.random() * 20;
-        enemies.push(new Enemy(Math.cos(angle) * dist, Math.sin(angle) * dist));
-      }
+    function addChatMessage(user, msg) {
+      const messages = document.getElementById('chat-messages');
+      const msgDiv = document.createElement('div');
+      msgDiv.innerHTML = `<span style="color:#00ffff;">[${user}]:</span> ${msg}`;
+      messages.appendChild(msgDiv);
+      messages.scrollTop = messages.scrollHeight;
     }
 
-    function addStyle(pts) { styleScore += pts; }
-
+    // --- OYUN DÖNGÜSÜ VE FİZİK ---
     let clock = new THREE.Clock();
 
     function animate() {
       requestAnimationFrame(animate);
-      
+
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if (isPlaying) {
+        // 1. Hareket Hesaplaması
         velocity.x -= velocity.x * 10.0 * delta;
         velocity.z -= velocity.z * 10.0 * delta;
-        velocity.y -= 30.0 * delta;
+        velocity.y -= 25.0 * delta; // Yerçekimi
 
-        direction.z = Number(moveForward) - Number(moveBackward);
-        direction.x = Number(moveRight) - Number(moveLeft);
-        direction.normalize();
+        // Kameranın yönüne göre hareket açılarını al
+        const moveDir = new THREE.Vector3();
+        if (moveForward) moveDir.z -= 1;
+        if (moveBackward) moveDir.z += 1;
+        if (moveLeft) moveDir.x -= 1;
+        if (moveRight) moveDir.x += 1;
+        moveDir.normalize();
 
-        const camDir = new THREE.Vector3();
-        camera.getWorldDirection(camDir);
-        camDir.y = 0;
-        camDir.normalize();
+        if (moveForward || moveBackward || moveLeft || moveRight) {
+          // Kameranın y eksenindeki açısını hareket yönüne uygula
+          const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
+          
+          velocity.x = Math.sin(angle) * 15;
+          velocity.z = Math.cos(angle) * 15;
 
-        const sideDir = new THREE.Vector3().crossVectors(camera.up, camDir).negate();
+          // Karakteri gittiği yöne döndür
+          player.rotation.y = angle + Math.PI;
+        }
 
-        if (moveForward || moveBackward) velocity.addScaledVector(camDir, direction.z * 60 * delta);
-        if (moveLeft || moveRight) velocity.addScaledVector(sideDir, direction.x * 60 * delta);
+        player.position.x += velocity.x * delta;
+        player.position.z += velocity.z * delta;
+        player.position.y += velocity.y * delta;
 
-        camera.position.addScaledVector(velocity, delta);
-
-        if (camera.position.y < 2) {
+        // Zemin Kontrolü
+        if (player.position.y < 0) {
           velocity.y = 0;
-          camera.position.y = 2;
+          player.position.y = 0;
           canJump = true;
         }
 
-        dashCooldown += delta;
-        if (dashCooldown > 1.2 && dashCharges < 3) {
-          dashCharges++;
-          dashCooldown = 0;
+        // 2. 3. Şahıs Kamera Takibi (Third-Person Camera Update)
+        cameraPivot.position.copy(player.position);
+        cameraPivot.position.y += 1.6; // Karakterin baş hizası
+
+        // Kamerayı pivot etrafında döndür ve konumlandır
+        camera.position.x = cameraPivot.position.x + cameraDistance * Math.sin(cameraYaw) * Math.cos(cameraPitch);
+        camera.position.z = cameraPivot.position.z + cameraDistance * Math.cos(cameraYaw) * Math.cos(cameraPitch);
+        camera.position.y = cameraPivot.position.y + cameraDistance * Math.sin(cameraPitch);
+
+        camera.lookAt(cameraPivot.position);
+
+        // 3. Bölge Kontrolü (Portal / Plaza algılama)
+        const distToPortal = player.position.distanceTo(new THREE.Vector3(0, 0, -20));
+        const zoneElem = document.getElementById('zone-val');
+        if (distToPortal < 5) {
+          zoneElem.innerText = "IŞINLANMA PORTALI";
+          zoneElem.style.color = "#00ffff";
+        } else {
+          zoneElem.innerText = "MERKEZ PLAZA";
+          zoneElem.style.color = "#ff0055";
         }
-
-        enemies.forEach(e => e.update(delta));
-
-        bullets.forEach((b, idx) => {
-          b.position.addScaledVector(b.velocity, delta);
-          if (b.position.distanceTo(camera.position) < 1.2) {
-            hp -= 20;
-            scene.remove(b);
-            bullets.splice(idx, 1);
-            if (hp <= 0) gameOver();
-          }
-        });
-
-        particles.forEach((p, idx) => {
-          p.position.addScaledVector(p.velocity, delta);
-          p.velocity.y -= 15 * delta;
-          if (p.position.y < 0) {
-            scene.remove(p);
-            particles.splice(idx, 1);
-          }
-        });
-
-        styleScore = Math.max(0, styleScore - 10 * delta);
-        updateHUD();
       }
 
       renderer.render(scene, camera);
-    }
-
-    function updateHUD() {
-      document.getElementById('hp-val').innerText = Math.max(0, Math.round(hp));
-      document.getElementById('score-val').innerText = score;
-      document.getElementById('wave-val').innerText = wave;
-      document.getElementById('dash-val').innerText = "|".repeat(dashCharges);
-
-      let currentRank = styleRanks[0];
-      for (let r of styleRanks) {
-        if (styleScore >= r.score) currentRank = r;
-      }
-      const rankElem = document.getElementById('style-rank');
-      rankElem.innerText = currentRank.text;
-      rankElem.style.color = currentRank.color;
-    }
-
-    function gameOver() {
-      isPlaying = false;
-      if (document.exitPointerLock) document.exitPointerLock();
-      document.getElementById('game-over').style.display = 'flex';
-      document.getElementById('final-score').innerText = `SKOR: ${score} | WAVE: ${wave}`;
     }
 
     function onWindowResize() {
@@ -460,7 +376,6 @@
 
     window.onload = () => {
       init();
-      spawnWave();
       animate();
     };
   </script>
