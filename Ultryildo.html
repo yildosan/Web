@@ -1,1236 +1,467 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyber Park & Neon Parkour World</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
-    body { width: 100vw; height: 100vh; overflow: hidden; background: #020208; font-family: 'Courier New', monospace; user-select: none; }
-    #canvas-container { width: 100%; height: 100%; display: block; }
-    
-    #hud {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; padding: 12px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      z-index: 5;
-    }
-    
-    .top-bar { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; }
-    .top-left { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-    .stats { color: #00ffff; font-size: 12px; font-weight: bold; text-shadow: 0 0 8px #00ffff; background: rgba(5,15,10,0.85); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(0,255,100,0.4); }
-    
-    .room-code-container {
-      display: inline-flex; align-items: center; gap: 6px; pointer-events: auto; margin-top: 3px;
-    }
-    .copy-btn {
-      background: #ff0055; color: #fff; border: none; padding: 3px 8px;
-      font-family: inherit; font-size: 10px; font-weight: bold; cursor: pointer;
-      border-radius: 4px; transition: all 0.2s; text-shadow: none;
-    }
-
-    #game-hud-panel {
-      display: none; background: rgba(15, 0, 30, 0.85); border: 1px solid #ff0055;
-      padding: 6px 12px; border-radius: 6px; margin-top: 5px; color: #fff; font-size: 12px;
-      box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
-    }
-
-    #fullscreen-btn {
-      display: none;
-      pointer-events: auto; background: rgba(10, 20, 10, 0.9); color: #00ff66;
-      border: 2px solid #00ff66; font-size: 18px; padding: 8px 14px;
-      border-radius: 8px; cursor: pointer; box-shadow: 0 0 12px rgba(0, 255, 100, 0.6);
-      z-index: 999; touch-action: manipulation;
-    }
-    #fullscreen-btn:active { background: #00ff66; color: #000; }
-
-    #emote-bar { display: flex; gap: 6px; pointer-events: auto; margin-top: 5px; }
-    .emote-btn {
-      background: rgba(10, 25, 15, 0.85); color: #00ff66; border: 1px solid #00ff66;
-      padding: 4px 8px; font-family: inherit; font-size: 11px;
-      cursor: pointer; font-weight: bold; border-radius: 4px;
-    }
-
-    #chat-container {
-      width: 240px; pointer-events: auto;
-      background: rgba(10, 20, 15, 0.85); border: 1px solid #00ff66;
-      border-radius: 6px; padding: 6px;
-      box-shadow: 0 0 10px rgba(0, 255, 100, 0.2);
-      margin-bottom: 5px;
-    }
-    #chat-messages {
-      height: 75px; overflow-y: auto; color: #fff; font-size: 11px;
-      margin-bottom: 4px; display: flex; flex-direction: column; gap: 3px;
-    }
-    #chat-input {
-      width: 100%; background: #000; border: 1px solid #ff0055;
-      color: #00ff66; padding: 5px; font-family: inherit; font-size: 11px; outline: none;
-    }
-
-    #start-screen {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(2, 8, 4, 0.94); display: flex; flex-direction: column;
-      justify-content: center; align-items: center; color: #fff; z-index: 10;
-      padding: 20px; pointer-events: auto;
-    }
-    h1 { font-size: 28px; color: #00ff66; text-shadow: 0 0 15px #00ff66; margin-bottom: 8px; text-align: center; letter-spacing: 2px; }
-    p { font-size: 12px; color: #00ffff; margin-bottom: 20px; text-align: center; line-height: 1.4; text-shadow: 0 0 8px #00ffff; }
-    
-    .p2p-box {
-      background: rgba(15, 30, 20, 0.9); border: 1px solid #00ff66;
-      padding: 18px; border-radius: 12px; display: flex; flex-direction: column;
-      gap: 10px; width: 100%; max-width: 320px; z-index: 20;
-      box-shadow: 0 0 20px rgba(0, 255, 100, 0.2);
-    }
-    .p2p-input {
-      background: #000; border: 1px solid #ff0055; color: #00ffff;
-      padding: 10px; font-family: inherit; text-align: center; font-size: 13px; outline: none; border-radius: 6px;
-    }
-    .btn {
-      padding: 12px; font-size: 13px; background: #ff0055; color: #fff;
-      border: none; cursor: pointer; font-family: inherit; font-weight: bold;
-      border-radius: 6px; user-select: none; -webkit-tap-highlight-color: transparent;
-      box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
-    }
-    .btn-secondary { background: #00ff66; color: #000; box-shadow: 0 0 10px rgba(0, 255, 100, 0.4); }
-
-    .modal-overlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.95); display: none; flex-direction: column;
-      justify-content: center; align-items: center; z-index: 15; padding: 20px;
-    }
-    .modal-card {
-      background: rgba(15, 25, 20, 0.95); border: 2px solid #00ff66;
-      border-radius: 12px; padding: 15px; display: flex; flex-direction: column;
-      align-items: center; gap: 12px; max-width: 320px; width: 100%;
-      box-shadow: 0 0 20px rgba(0, 255, 100, 0.3);
-    }
-    #qrcode-display { background: #fff; padding: 10px; border-radius: 8px; }
-    #qr-reader { width: 100%; max-width: 260px; border: 1px solid #ff0055; border-radius: 8px; overflow: hidden; }
-
-    #touch-controls {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 6; display: none;
-    }
-    #joystick-zone {
-      position: absolute; bottom: 25px; left: 25px;
-      width: 110px; height: 110px; border-radius: 50%;
-      background: rgba(0, 255, 100, 0.15); border: 2px solid rgba(0, 255, 100, 0.5);
-      pointer-events: auto; touch-action: none;
-    }
-    #joystick-knob {
-      position: absolute; top: 35px; left: 35px;
-      width: 40px; height: 40px; border-radius: 50%;
-      background: #ff0055; box-shadow: 0 0 12px #ff0055;
-    }
-    #touch-camera-zone {
-      position: absolute; top: 0; right: 0; width: 55%; height: 80%;
-      pointer-events: auto; touch-action: none;
-    }
-    #jump-btn {
-      position: absolute; bottom: 35px; right: 25px;
-      width: 65px; height: 65px; border-radius: 50%;
-      background: rgba(255, 0, 85, 0.85); border: 2px solid #fff;
-      color: #fff; font-weight: bold; font-size: 12px;
-      display: flex; justify-content: center; align-items: center;
-      pointer-events: auto; box-shadow: 0 0 12px #ff0055;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Bank ve Fizikli Oturma Simülasyonu</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #ui span {
+            background: #ffcc00;
+            color: #111;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            border: 1px solid rgba(0,0,0,0.4);
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #aaa;
+            font-size: 13px;
+            background: rgba(0,0,0,0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #ffcc00;
+            pointer-events: none;
+            line-height: 1.5;
+        }
+        #info-panel h3 {
+            margin: 0 0 5px 0;
+            color: #fff;
+            font-size: 15px;
+        }
+    </style>
 </head>
 <body>
 
-  <div id="start-screen">
-    <h1>CYBER PARK METAVERSE</h1>
-    <p>🌳 Neon Cyber Park & Parkour Adventure 🌳</p>
-
-    <div class="p2p-box">
-      <button id="btn-solo" class="btn" style="background:#00ff66; color:#000;">TEK BAŞINA OYNA</button>
-      <div style="text-align: center; color: #888; font-size: 10px;">--- VEYA ÇOK OYUNCULU ---</div>
-      <button id="btn-host" class="btn">1. ODA KUR & QR GÖSTER</button>
-      <button id="btn-scan" class="btn btn-secondary">📷 QR TARAYIP KATIL</button>
-      <input type="text" id="join-id-input" class="p2p-input" placeholder="ODA KODU GİRİN" />
-      <button id="btn-join" class="btn btn-secondary" style="background:#111; color:#00ff66; border:1px solid #00ff66">KOD İLE KATIL</button>
-    </div>
-  </div>
-
-  <div id="host-qr-modal" class="modal-overlay">
-    <div class="modal-card">
-      <h3 style="color:#00ff66; font-size:14px;">OYUNCULARI DAVET ET</h3>
-      <div id="qrcode-display"></div>
-      <p style="font-size:10px; color:#aaa;">QR kodu taratarak odaya katılım sağlayabilirsiniz.</p>
-      <button id="btn-close-qr" class="btn" style="width:100%;">OYUNA BAŞLA</button>
-    </div>
-  </div>
-
-  <div id="scanner-qr-modal" class="modal-overlay">
-    <div class="modal-card">
-      <h3 style="color:#ff0055; font-size:14px;">QR KODU TARAYIN</h3>
-      <div id="qr-reader"></div>
-      <button id="btn-cancel-scan" class="btn btn-secondary" style="width:100%; margin-top:5px;">İPTAL</button>
-    </div>
-  </div>
-
-  <div id="touch-controls">
-    <div id="joystick-zone"><div id="joystick-knob"></div></div>
-    <div id="touch-camera-zone"></div>
-    <div id="jump-btn">ZIPLA</div>
-  </div>
-
-  <div id="hud">
-    <div class="top-bar">
-      <div class="top-left">
-        <div class="stats">
-          <div>BÖLGE: <span id="zone-val" style="color:#00ff66;">CYBER PARK (LOBİ)</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">OFFLINE</span></div>
-          <div class="room-code-container">
-            <span>ODA:</span>
-            <span id="my-peer-id" style="color:#ffff00;">-</span>
-            <button id="copy-btn" class="copy-btn" onclick="copyRoomCode()">KOPYALA</button>
-          </div>
-        </div>
-
-        <div id="game-hud-panel">
-          🏃 NEON PARKOUR | KONTROL NOKTASI: <span id="checkpoint-val" style="color:#00ffff; font-weight:bold;">BAŞLANGIÇ</span> | DÜŞME: <span id="fall-count" style="color:#ff0055; font-weight:bold;">0</span>
-        </div>
-
-        <div id="emote-bar">
-          <button class="emote-btn" onclick="triggerEmote('wave')">👋 Salla</button>
-          <button class="emote-btn" onclick="triggerEmote('dance')">🕺 Dans</button>
-          <button class="emote-btn" onclick="triggerEmote('nod')">🔴 Onay</button>
-        </div>
-      </div>
-
-      <button id="fullscreen-btn" title="Tam Ekran">⛶</button>
+    <div id="canvas-container"></div>
+    <div id="crosshair"></div>
+    
+    <div id="info-panel">
+        <h3>Etkileşimli 3D Bank Sahnesi</h3>
+        • <b>WASD / Ok Tuşları:</b> Hareket Et<br>
+        • <b>Mouse:</b> Etrafa Bak<br>
+        • <b>E Tuşu:</b> Banka Otur / Kalk
     </div>
 
-    <div id="chat-container">
-      <div id="chat-messages">
-        <div><span style="color:#00ff66;">[Sistem]:</span> Cyber Park'a Hoşgeldiniz!</div>
-      </div>
-      <input type="text" id="chat-input" placeholder="Mesaj..." />
-    </div>
-  </div>
-
-  <div id="canvas-container"></div>
-
-  <!-- KÜTÜPHANELER -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
-  <script>
-    let scene, camera, renderer;
-    let player, playerLimbs = {}, cameraPivot;
-    let isPlaying = false;
-    let isChatting = false;
-    let isMobile = false;
-
-    let currentMap = "lobby";
-    let lobbyGroup, gameGroup;
-    let parkourPortalMesh, cityPortalMesh;
-    let portalCooldown = false;
-
-    let physicsBoxes = []; 
-    let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
-    let fallCount = 0;
-    const PLAYER_RADIUS = 0.35;
-    const PLAYER_HEIGHT = 1.7;
-
-    let peer = null;
-    let connections = {};
-    let remotePlayers = {};
-    let myPeerId = "";
-    let html5QrScanner = null;
-
-    let currentEmote = null;
-    let emoteTimer = 0;
-
-    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-    let joystickVector = { x: 0, y: 0 };
-    let velocity = new THREE.Vector3();
-    let canJump = false;
-    let animTime = 0;
-
-    let cameraYaw = 0;
-    let cameraPitch = 0.25;
-    const cameraDistance = 6.5;
-
-    function detectDevice() {
-      isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || window.innerWidth < 768;
-      if (isMobile) {
-        document.getElementById('touch-controls').style.display = 'block';
-        document.getElementById('fullscreen-btn').style.display = 'block';
-        setupFullscreenListener();
-      }
-    }
-
-    function setupFullscreenListener() {
-      const fsBtn = document.getElementById('fullscreen-btn');
-      const toggleFullscreen = (e) => {
-        if (e) { e.preventDefault(); e.stopPropagation(); }
-        const doc = window.document;
-        const docEl = doc.documentElement;
-
-        const requestFS = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-        const exitFS = doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
-        const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
-
-        if (!isFS) {
-          if (requestFS) requestFS.call(docEl).catch(err => console.warn("Tam ekran hatası:", err));
-        } else {
-          if (exitFS) exitFS.call(doc);
-        }
-      };
-
-      fsBtn.addEventListener('touchend', toggleFullscreen, { passive: false });
-      fsBtn.addEventListener('click', toggleFullscreen);
-    }
-
-    function bindUIEvents() {
-      const bind = (id, fn) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.addEventListener('click', fn);
-          el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
-        }
-      };
-
-      bind('btn-solo', () => startGame());
-      bind('btn-host', () => hostGame());
-      bind('btn-scan', () => openQRScanner());
-      bind('btn-join', () => joinGame());
-      bind('btn-close-qr', () => closeHostQRAndStart());
-      bind('btn-cancel-scan', () => closeQRScanner());
-    }
-
-    function init() {
-      detectDevice();
-      bindUIEvents();
-
-      const container = document.getElementById('canvas-container');
-
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x020a05);
-      scene.fog = new THREE.FogExp2(0x05150d, 0.012);
-
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      container.appendChild(renderer.domElement);
-
-      const ambientLight = new THREE.AmbientLight(0x335544, 1.6);
-      scene.add(ambientLight);
-
-      const dirLight = new THREE.DirectionalLight(0x00ff66, 1.2);
-      dirLight.position.set(30, 60, 20);
-      scene.add(dirLight);
-
-      const magentaLight = new THREE.PointLight(0xff00aa, 2, 60);
-      magentaLight.position.set(0, 15, 0);
-      scene.add(magentaLight);
-
-      lobbyGroup = new THREE.Group();
-      gameGroup = new THREE.Group();
-      scene.add(lobbyGroup);
-      scene.add(gameGroup);
-
-      buildCyberParkLobby();
-      buildParkourGameMap();
-      
-      gameGroup.visible = false;
-
-      player = createHumanoidAvatar(0xff0055, 0x00ffff);
-      player.group.position.set(0, 0.5, 0); 
-      scene.add(player.group);
-      playerLimbs = player.limbs;
-
-      cameraPivot = new THREE.Object3D();
-      scene.add(cameraPivot);
-
-      setupControls();
-      setupTouchEvents();
-      setupChat();
-
-      checkUrlAutoJoin();
-
-      window.addEventListener('resize', onWindowResize);
-    }
-
-    function addCollider(mesh, isPassable = false, isCheckpoint = false, cpId = 0) {
-      mesh.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(mesh);
-      physicsBoxes.push({
-        box: box,
-        mesh: mesh,
-        isPassable: isPassable,
-        isCheckpoint: isCheckpoint,
-        cpId: cpId
-      });
-    }
-
-    function rebuildColliders(group) {
-      physicsBoxes = [];
-      group.traverse((child) => {
-        if (child.isMesh && child.userData && child.userData.isCollider) {
-          addCollider(child, false, child.userData.isCheckpoint || false, child.userData.cpId || 0);
-        }
-      });
-    }
-
-    // --- CYBER PARK (YENİ ŞEHİR PARKI LOBİSİ) ---
-    function buildCyberParkLobby() {
-      // Park Yeşil Zemin
-      const floorGeo = new THREE.PlaneGeometry(180, 180);
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0b2612, roughness: 0.8, metalness: 0.1 });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.userData = { isCollider: true };
-      lobbyGroup.add(floor);
-
-      // Park Yolları
-      const pathMat = new THREE.MeshStandardMaterial({ color: 0x1f2e24, roughness: 0.5 });
-      const mainPath = new THREE.Mesh(new THREE.PlaneGeometry(16, 180), pathMat);
-      mainPath.rotation.x = -Math.PI / 2;
-      mainPath.position.y = 0.01;
-      lobbyGroup.add(mainPath);
-
-      const crossPath = new THREE.Mesh(new THREE.PlaneGeometry(180, 16), pathMat);
-      crossPath.rotation.x = -Math.PI / 2;
-      crossPath.position.y = 0.01;
-      lobbyGroup.add(crossPath);
-
-      // Park Çim Grid Hatları
-      const gridHelper = new THREE.GridHelper(180, 45, 0x00ff66, 0x004411);
-      gridHelper.position.y = 0.02;
-      lobbyGroup.add(gridHelper);
-
-      // Süs Havuzu (Merkez Gölet)
-      const pondGeo = new THREE.CylinderGeometry(14, 14, 0.4, 32);
-      const pondMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.7 });
-      const pond = new THREE.Mesh(pondGeo, pondMat);
-      pond.position.set(0, 0.2, 0);
-      lobbyGroup.add(pond);
-
-      const pondRim = new THREE.Mesh(new THREE.TorusGeometry(14, 0.6, 16, 50), new THREE.MeshStandardMaterial({ color: 0x334433 }));
-      pondRim.rotation.x = Math.PI / 2;
-      pondRim.position.set(0, 0.4, 0);
-      pondRim.userData = { isCollider: true };
-      lobbyGroup.add(pondRim);
-
-      // Dijital Cyber Ağaçlar
-      for (let i = 0; i < 35; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 18 + Math.random() * 60;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-
-        if (Math.abs(x) < 10 || Math.abs(z) < 10) continue;
-
-        const treeGroup = new THREE.Group();
-        treeGroup.position.set(x, 0, z);
-
-        const trunkGeo = new THREE.CylinderGeometry(0.4, 0.6, 4, 8);
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x0f1a12 });
-        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-        trunk.position.y = 2;
-        trunk.userData = { isCollider: true };
-        treeGroup.add(trunk);
-
-        const leafColor = (i % 2 === 0) ? 0x00ff66 : 0xff00aa;
-        const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 0.3, emissive: leafColor, emissiveIntensity: 0.2 });
-        
-        const topLeaf = new THREE.Mesh(new THREE.IcosahedronGeometry(2.2, 1), leafMat);
-        topLeaf.position.y = 4.8;
-        treeGroup.add(topLeaf);
-
-        lobbyGroup.add(treeGroup);
-      }
-
-      // Neon Park Bankları
-      for (let b = 0; b < 8; b++) {
-        const bAngle = (b / 8) * Math.PI * 2;
-        const bx = Math.cos(bAngle) * 12;
-        const bz = Math.sin(bAngle) * 12;
-
-        const benchGeo = new THREE.BoxGeometry(3, 0.4, 1.2);
-        const benchMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.3 });
-        const bench = new THREE.Mesh(benchGeo, benchMat);
-        bench.position.set(bx, 0.2, bz);
-        bench.rotation.y = -bAngle;
-        bench.userData = { isCollider: true };
-        lobbyGroup.add(bench);
-      }
-
-      // --- İKİ KİŞİNİN AYNI ANDA OTURABİLECEĞİ BANKLAR OLAN BİR ALAN ---
-      const seatingAreaGroup = new THREE.Group();
-      seatingAreaGroup.position.set(22, 0, 0);
-
-      // Zemin / Platform (Oturma Alanı)
-      const seatPlatformGeo = new THREE.CylinderGeometry(7, 7, 0.2, 32);
-      const seatPlatformMat = new THREE.MeshStandardMaterial({ color: 0x11221b, roughness: 0.6, metalness: 0.3 });
-      const seatPlatform = new THREE.Mesh(seatPlatformGeo, seatPlatformMat);
-      seatPlatform.position.y = 0.1;
-      seatPlatform.userData = { isCollider: true };
-      seatingAreaGroup.add(seatPlatform);
-
-      // Çevre Aydınlatma Halkası (Neon)
-      const seatRingGeo = new THREE.TorusGeometry(6.8, 0.15, 16, 50);
-      const seatRingMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      const seatRing = new THREE.Mesh(seatRingGeo, seatRingMat);
-      seatRing.rotation.x = Math.PI / 2;
-      seatRing.position.y = 0.22;
-      seatingAreaGroup.add(seatRing);
-
-      // Süs Işığı (Merkez Direk)
-      const poleGeo = new THREE.CylinderGeometry(0.15, 0.15, 4, 12);
-      const poleMat = new THREE.MeshStandardMaterial({ color: 0x222233, metalness: 0.8 });
-      const pole = new THREE.Mesh(poleGeo, poleMat);
-      pole.position.y = 2;
-      pole.userData = { isCollider: true };
-      seatingAreaGroup.add(pole);
-
-      const lampGeo = new THREE.SphereGeometry(0.4, 16, 16);
-      const lampMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      const lamp = new THREE.Mesh(lampGeo, lampMat);
-      lamp.position.y = 4;
-      seatingAreaGroup.add(lamp);
-
-      const lampLight = new THREE.PointLight(0x00ffff, 2, 15);
-      lampLight.position.y = 4;
-      seatingAreaGroup.add(lampLight);
-
-      // Karşılıklı İki Bank (İkişer Kişilik Oturma Kapasiteli)
-      // Bank 1 (Doğu Yönü)
-      const bench1Group = new THREE.Group();
-      bench1Group.position.set(3.5, 0, 0);
-      bench1Group.rotation.y = -Math.PI / 2;
-
-      // Oturak Yüzeyi (Genişletilmiş: iki kişinin yan yana oturabilmesi için uzunluk 3.2 birim)
-      const dualSeatGeo = new THREE.BoxGeometry(3.2, 0.3, 1.0);
-      const dualSeatMat = new THREE.MeshStandardMaterial({ color: 0x00ffaa, emissive: 0x00ffaa, emissiveIntensity: 0.2, roughness: 0.3, metalness: 0.5 });
-      const seat1 = new THREE.Mesh(dualSeatGeo, dualSeatMat);
-      seat1.position.y = 0.7;
-      seat1.userData = { isCollider: true };
-      bench1Group.add(seat1);
-
-      // Arkalık
-      const backGeo = new THREE.BoxGeometry(3.2, 1.0, 0.15);
-      const back1 = new THREE.Mesh(backGeo, dualSeatMat);
-      back1.position.set(0, 1.3, -0.42);
-      back1.userData = { isCollider: true };
-      bench1Group.add(back1);
-
-      // Ayaklar
-      const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.7, 8);
-      const legMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 });
-      const leg1 = new THREE.Mesh(legGeo, legMat); leg1.position.set(-1.4, 0.35, 0.3); leg1.userData = { isCollider: true }; bench1Group.add(leg1);
-      const leg2 = new THREE.Mesh(legGeo, legMat); leg2.position.set(1.4, 0.35, 0.3); leg2.userData = { isCollider: true }; bench1Group.add(leg2);
-      const leg3 = new THREE.Mesh(legGeo, legMat); leg3.position.set(-1.4, 0.35, -0.3); leg3.userData = { isCollider: true }; bench1Group.add(leg3);
-      const leg4 = new THREE.Mesh(legGeo, legMat); leg4.position.set(1.4, 0.35, -0.3); leg4.userData = { isCollider: true }; bench1Group.add(leg4);
-
-      seatingAreaGroup.add(bench1Group);
-
-      // Bank 2 (Batı Yönü - Karşılıklı)
-      const bench2Group = bench1Group.clone();
-      bench2Group.position.set(-3.5, 0, 0);
-      bench2Group.rotation.y = Math.PI / 2;
-      seatingAreaGroup.add(bench2Group);
-
-      lobbyGroup.add(seatingAreaGroup);
-      // --- OTURMA ALANI BİTİŞ ---
-
-      // Parkour Portal
-      const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
-      const portalMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
-      parkourPortalMesh = new THREE.Mesh(portalFrameGeo, portalMat);
-      parkourPortalMesh.position.set(0, 4.5, -30);
-      lobbyGroup.add(parkourPortalMesh);
-
-      const innerGeo = new THREE.CircleGeometry(3.7, 32);
-      const innerMat = new THREE.MeshBasicMaterial({ color: 0xff0055, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
-      const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-      innerMesh.position.set(0, 4.5, -30);
-      lobbyGroup.add(innerMesh);
-
-      const portalLight = new THREE.PointLight(0xff0055, 4, 20);
-      portalLight.position.set(0, 4.5, -30);
-      lobbyGroup.add(portalLight);
-    }
-
-    // --- NEON PARKOUR HARİTASI ---
-    function buildParkourGameMap() {
-      const platformColor = 0x111122;
-      const neonEdges = [0x00ffff, 0xff0055, 0x00ff66, 0xffff00, 0xff00aa];
-
-      const parkourData = [
-        [150, 0, 0, 10, 1, 10, true, 1],
-        [150, 1.0, -9, 4, 1, 4, false, 0],
-        [150, 2.0, -16, 4, 1, 4, false, 0],
-        [154, 3.0, -22, 4, 1, 4, false, 0],
-        [160, 4.0, -27, 4, 1, 4, false, 0],
-        [160, 5.0, -34, 6, 1, 6, true, 2],
-        [154, 6.5, -40, 3.5, 1, 3.5, false, 0],
-        [147, 8.0, -40, 3.5, 1, 3.5, false, 0],
-        [140, 9.5, -35, 3.5, 1, 3.5, false, 0],
-        [140, 11.0, -28, 5, 1, 5, true, 3],
-        [133, 12.5, -22, 3.5, 1, 3.5, false, 0],
-        [126, 14.0, -16, 3.5, 1, 3.5, false, 0],
-        [120, 15.5, -9, 3.5, 1, 3.5, false, 0],
-        [120, 17.0, 0, 8, 1, 8, true, 4],
-      ];
-
-      parkourData.forEach((p, idx) => {
-        const x = p[0], y = p[1], z = p[2], w = p[3], h = p[4], d = p[5];
-        const isCP = p[6], cpId = p[7];
-
-        const geo = new THREE.BoxGeometry(w, h, d);
-        const mat = new THREE.MeshStandardMaterial({ color: platformColor, roughness: 0.3, metalness: 0.7 });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(x, y + h / 2, z);
-        mesh.userData = { isCollider: true, isCheckpoint: isCP, cpId: cpId };
-        gameGroup.add(mesh);
-
-        const edgeGeo = new THREE.BoxGeometry(w + 0.1, 0.2, d + 0.1);
-        const edgeMat = new THREE.MeshBasicMaterial({ color: isCP ? 0x00ff66 : neonEdges[idx % neonEdges.length] });
-        const edge = new THREE.Mesh(edgeGeo, edgeMat);
-        edge.position.set(x, y + h, z);
-        gameGroup.add(edge);
-
-        if (isCP) {
-          const cpGeo = new THREE.CylinderGeometry(1.2, 1.2, 8, 16);
-          const cpMat = new THREE.MeshBasicMaterial({ color: 0x00ff66, transparent: true, opacity: 0.25, wireframe: true });
-          const cpMesh = new THREE.Mesh(cpGeo, cpMat);
-          cpMesh.position.set(x, y + 4, z);
-          gameGroup.add(cpMesh);
-
-          if (cpId === 4) {
-            const exitPortalGeo = new THREE.TorusGeometry(3, 0.25, 16, 50);
-            const exitPortalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-            cityPortalMesh = new THREE.Mesh(exitPortalGeo, exitPortalMat);
-            cityPortalMesh.position.set(x, y + 3.5, z);
-            gameGroup.add(cityPortalMesh);
-          }
-        }
-      });
-    }
-
-    function switchMap(targetMap) {
-      if (portalCooldown) return;
-      portalCooldown = true;
-      currentMap = targetMap;
-      velocity.set(0, 0, 0);
-
-      const zoneVal = document.getElementById('zone-val');
-      const gameHud = document.getElementById('game-hud-panel');
-
-      if (targetMap === "parkour") {
-        lobbyGroup.visible = false;
-        gameGroup.visible = true;
-
-        rebuildColliders(gameGroup);
-
-        currentCheckpointPos.set(150, 1.05, 0);
-        player.group.position.copy(currentCheckpointPos);
-
-        zoneVal.innerText = "NEON PARKOUR";
-        zoneVal.style.color = "#ff0055";
-        gameHud.style.display = "block";
-
-        fallCount = 0;
-        document.getElementById('fall-count').innerText = fallCount;
-        document.getElementById('checkpoint-val').innerText = "1 / 4";
-
-        addChatMessage('Sistem', '🏃 PARKOUR BAŞLADI! Düşmeden zirveye ulaşın!');
-      } 
-      else if (targetMap === "lobby") {
-        gameGroup.visible = false;
-        lobbyGroup.visible = true;
-
-        rebuildColliders(lobbyGroup);
-
-        player.group.position.set(0, 0.5, 0); 
-        zoneVal.innerText = "CYBER PARK (LOBİ)";
-        zoneVal.style.color = "#00ff66";
-        gameHud.style.display = "none";
-
-        addChatMessage('Sistem', '🌳 Cyber Park Lobisine geri döndünüz.');
-      }
-
-      setTimeout(() => { portalCooldown = false; }, 2000);
-    }
-
-    function checkUrlAutoJoin() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetRoom = urlParams.get('room');
-      if (targetRoom) {
-        document.getElementById('join-id-input').value = targetRoom;
-        setTimeout(() => { joinGame(targetRoom); }, 800);
-      }
-    }
-
-    function initPeer(customId = null) {
-      if (typeof Peer === 'undefined') return console.warn("PeerJS yüklenemedi");
-      peer = customId ? new Peer(customId) : new Peer();
-
-      peer.on('open', (id) => {
-        myPeerId = id;
-        document.getElementById('my-peer-id').innerText = id;
-        document.getElementById('peer-status').innerText = "ONLINE";
-        addChatMessage('Sistem', `Oda Kodu: ${id}`);
-      });
-
-      peer.on('connection', (conn) => setupConnection(conn));
-      peer.on('error', (err) => console.error("P2P Hata:", err));
-    }
-
-    function copyRoomCode() {
-      if (!myPeerId || myPeerId === "-") return;
-      navigator.clipboard.writeText(myPeerId).then(() => {
-        const btn = document.getElementById('copy-btn');
-        btn.innerText = "KOPYALANDI!";
-        btn.style.background = "#00ff66";
-        btn.style.color = "#000";
-        setTimeout(() => {
-          btn.innerText = "KOPYALA";
-          btn.style.background = "#ff0055";
-          btn.style.color = "#fff";
-        }, 2000);
-      });
-    }
-
-    function hostGame() {
-      initPeer();
-      if (peer) {
-        peer.on('open', (id) => {
-          const qrcodeContainer = document.getElementById('qrcode-display');
-          qrcodeContainer.innerHTML = "";
-          const joinUrl = `${window.location.origin}${window.location.pathname}?room=${id}`;
-          if (typeof QRCode !== 'undefined') {
-            new QRCode(qrcodeContainer, { text: joinUrl, width: 160, height: 160 });
-          }
-          document.getElementById('host-qr-modal').style.display = 'flex';
+    <div id="ui">Banka yaklaşın ve <span>E</span> tuşuna basın</div>
+
+    <!-- Üçüncü parti kütüphaneler (Three.js, Cannon.js, GSAP) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        // --- 1. SAHNE, FİZİK VE TEMEL BİLEŞENLER ---
+        const container = document.getElementById('canvas-container');
+        const uiElement = document.getElementById('ui');
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Cannon.js Fizik Dünyası
+        const world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+        world.broadphase = new CANNON.NaiveBroadphase();
+        world.solver.iterations = 10;
+
+        // --- 2. IŞIKLAR VE ÇEVRE ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xfff5ea, 1.2);
+        dirLight.position.set(15, 25, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 50;
+        dirLight.shadow.camera.left = -15;
+        dirLight.shadow.camera.right = 15;
+        dirLight.shadow.camera.top = 15;
+        dirLight.shadow.camera.bottom = -15;
+        dirLight.shadow.bias = -0.0005;
+        scene.add(dirLight);
+
+        // Zemin
+        const floorGeo = new THREE.PlaneGeometry(100, 100);
+        const floorMat = new THREE.MeshStandardMaterial({ 
+            color: 0x1e293b, 
+            roughness: 0.8,
+            metalness: 0.2
         });
-      } else {
-        startGame();
-      }
-    }
+        const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+        floorMesh.rotation.x = -Math.PI / 2;
+        floorMesh.receiveShadow = true;
+        scene.add(floorMesh);
 
-    function closeHostQRAndStart() {
-      document.getElementById('host-qr-modal').style.display = 'none';
-      startGame();
-    }
-
-    function openQRScanner() {
-      if (typeof Html5Qrcode === 'undefined') {
-        alert("Kamera kütüphanesi yüklenemedi.");
-        return;
-      }
-      document.getElementById('scanner-qr-modal').style.display = 'flex';
-      html5QrScanner = new Html5Qrcode("qr-reader");
-      html5QrScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 200, height: 200 } },
-        (decodedText) => {
-          closeQRScanner();
-          try {
-            const url = new URL(decodedText);
-            joinGame(url.searchParams.get("room") || decodedText);
-          } catch(e) { joinGame(decodedText); }
-        },
-        () => {}
-      ).catch(err => alert("Kamera hatası: " + err));
-    }
-
-    function closeQRScanner() {
-      if (html5QrScanner) {
-        html5QrScanner.stop().then(() => {
-          html5QrScanner.clear();
-          document.getElementById('scanner-qr-modal').style.display = 'none';
-        }).catch(() => { document.getElementById('scanner-qr-modal').style.display = 'none'; });
-      } else {
-        document.getElementById('scanner-qr-modal').style.display = 'none';
-      }
-    }
-
-    function joinGame(targetHostId = null) {
-      const hostId = targetHostId || document.getElementById('join-id-input').value.trim();
-      if (!hostId) {
-        startGame();
-        return;
-      }
-      initPeer();
-      if (peer) {
-        peer.on('open', () => {
-          setupConnection(peer.connect(hostId));
-          startGame();
+        const floorBody = new CANNON.Body({
+            mass: 0,
+            shape: new CANNON.Plane()
         });
-      } else {
-        startGame();
-      }
-    }
+        floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        world.addBody(floorBody);
 
-    function setupConnection(conn) {
-      connections[conn.peer] = conn;
-      conn.on('open', () => {
-        addChatMessage('Sistem', `Oyuncu katıldı! [${conn.peer.substring(0, 4)}]`);
-        if (!remotePlayers[conn.peer]) {
-          const remoteAvatar = createHumanoidAvatar(0x00ff66, 0xffff00);
-          scene.add(remoteAvatar.group);
-          remotePlayers[conn.peer] = remoteAvatar;
-        }
-      });
-
-      conn.on('data', (data) => handleNetworkData(conn.peer, data));
-      conn.on('close', () => {
-        addChatMessage('Sistem', `Oyuncu ayrıldı.`);
-        if (remotePlayers[conn.peer]) {
-          scene.remove(remotePlayers[conn.peer].group);
-          delete remotePlayers[conn.peer];
-        }
-        delete connections[conn.peer];
-      });
-    }
-
-    function broadcast(data) {
-      Object.values(connections).forEach(conn => {
-        if (conn.open) conn.send(data);
-      });
-    }
-
-    function handleNetworkData(peerId, data) {
-      const remote = remotePlayers[peerId];
-      if (!remote) return;
-
-      if (data.type === 'transform') {
-        remote.group.position.set(data.x, data.y, data.z);
-        remote.group.rotation.y = data.rotY;
-        remote.group.visible = (data.map === currentMap);
-        animateAvatarLimbs(remote.limbs, data.isMoving, data.delta, data.emote);
-      }
-      else if (data.type === 'chat') {
-        addChatMessage(peerId.substring(0, 4), data.text);
-        createSpeechBubble(remote.group, data.text);
-      }
-    }
-
-    function startGame() {
-      document.getElementById('start-screen').style.display = 'none';
-      isPlaying = true;
-      switchMap("lobby");
-      if (!isMobile) document.body.requestPointerLock();
-    }
-
-    function createHumanoidAvatar(suitColor, visorColor) {
-      const group = new THREE.Group();
-      const limbs = {};
-
-      const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.3 });
-      const jointMat = new THREE.MeshStandardMaterial({ color: 0x151518, roughness: 0.7 });
-      const visorMat = new THREE.MeshBasicMaterial({ color: visorColor });
-
-      const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.85, 12), suitMat);
-      torso.position.y = 1.225; 
-      group.add(torso);
-      limbs.torso = torso;
-
-      const headGroup = new THREE.Group();
-      headGroup.position.y = 1.8;
-      headGroup.add(new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), suitMat));
-
-      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.15), visorMat);
-      visor.position.set(0, 0.02, 0.12);
-      headGroup.add(visor);
-      group.add(headGroup);
-      limbs.head = headGroup;
-
-      function createLimb(xOffset, yPos, length, radius) {
-        const pivot = new THREE.Group();
-        pivot.position.set(xOffset, yPos, 0);
-
-        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 0.85, length, 8), suitMat);
-        mesh.position.y = -length / 2;
-        pivot.add(mesh);
-        pivot.add(new THREE.Mesh(new THREE.SphereGeometry(radius * 1.1, 8, 8), jointMat));
-
-        group.add(pivot);
-        return pivot;
-      }
-
-      limbs.leftArm = createLimb(-0.38, 1.55, 0.65, 0.07);
-      limbs.rightArm = createLimb(0.38, 1.55, 0.65, 0.07);
-      limbs.leftLeg = createLimb(-0.16, 0.8, 0.8, 0.09);
-      limbs.rightLeg = createLimb(0.16, 0.8, 0.8, 0.09);
-
-      return { group, limbs };
-    }
-
-    function createSpeechBubble(targetGroup, text) {
-      const oldSprite = targetGroup.getObjectByName("speechBubble");
-      if (oldSprite) targetGroup.remove(oldSprite);
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 512; canvas.height = 128;
-
-      ctx.fillStyle = 'rgba(10, 25, 15, 0.9)';
-      ctx.strokeStyle = '#00ff66'; ctx.lineWidth = 6;
-      ctx.fillRect(10, 10, 492, 108);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'Bold 28px Courier New';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(text.length > 25 ? text.substring(0, 22) + '...' : text, canvas.width / 2, canvas.height / 2);
-
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
-      sprite.name = "speechBubble";
-      sprite.scale.set(2.4, 0.6, 1);
-      sprite.position.set(0, 2.3, 0);
-
-      targetGroup.add(sprite);
-      setTimeout(() => { if (sprite.parent) sprite.parent.remove(sprite); }, 4000);
-    }
-
-    function triggerEmote(type) {
-      if (!isPlaying) return;
-      currentEmote = type;
-      emoteTimer = 3.0;
-    }
-
-    function setupControls() {
-      document.addEventListener('pointerlockchange', () => {
-        if (!isMobile) {
-          isPlaying = (document.pointerLockElement === document.body);
-          document.getElementById('start-screen').style.display = isPlaying ? 'none' : 'flex';
-        }
-      });
-
-      document.addEventListener('mousemove', (e) => {
-        if (!isPlaying || isChatting || isMobile) return;
-        cameraYaw -= e.movementX * 0.003;
-        cameraPitch -= e.movementY * 0.003;
-        cameraPitch = Math.max(-0.2, Math.min(1.0, cameraPitch));
-      });
-
-      document.addEventListener('keydown', (e) => {
-        if (isChatting) return;
-        switch (e.code) {
-          case 'KeyW': moveForward = true; break;
-          case 'KeyS': moveBackward = true; break;
-          case 'KeyA': moveLeft = true; break;
-          case 'KeyD': moveRight = true; break;
-          case 'Space': if (canJump) { velocity.y = 9.5; canJump = false; } break;
-          case 'Digit1': triggerEmote('wave'); break;
-          case 'Digit2': triggerEmote('dance'); break;
-          case 'Digit3': triggerEmote('nod'); break;
-          case 'KeyT': e.preventDefault(); focusChat(); break;
-        }
-      });
-
-      document.addEventListener('keyup', (e) => {
-        switch (e.code) {
-          case 'KeyW': moveForward = false; break;
-          case 'KeyS': moveBackward = false; break;
-          case 'KeyA': moveLeft = false; break;
-          case 'KeyD': moveRight = false; break;
-        }
-      });
-    }
-
-    function setupTouchEvents() {
-      const joystickZone = document.getElementById('joystick-zone');
-      const joystickKnob = document.getElementById('joystick-knob');
-      const cameraZone = document.getElementById('touch-camera-zone');
-      const jumpBtn = document.getElementById('jump-btn');
-
-      let joystickTouchId = null, cameraTouchId = null;
-      let lastTouchX = 0, lastTouchY = 0;
-
-      joystickZone.addEventListener('touchstart', (e) => {
-        if (joystickTouchId !== null) return;
-        const touch = e.changedTouches[0];
-        joystickTouchId = touch.identifier;
-        updateJoystick(touch);
-      });
-
-      joystickZone.addEventListener('touchmove', (e) => {
-        for (let touch of e.changedTouches) {
-          if (touch.identifier === joystickTouchId) updateJoystick(touch);
-        }
-      });
-
-      const resetJoystick = (e) => {
-        for (let touch of e.changedTouches) {
-          if (touch.identifier === joystickTouchId) {
-            joystickTouchId = null;
-            joystickKnob.style.transform = `translate(0px, 0px)`;
-            joystickVector = { x: 0, y: 0 };
-          }
-        }
-      };
-
-      joystickZone.addEventListener('touchend', resetJoystick);
-      joystickZone.addEventListener('touchcancel', resetJoystick);
-
-      function updateJoystick(touch) {
-        const rect = joystickZone.getBoundingClientRect();
-        let dx = touch.clientX - (rect.left + 55);
-        let dy = touch.clientY - (rect.top + 55);
-        let dist = Math.hypot(dx, dy);
-
-        if (dist > 35) { dx = (dx / dist) * 35; dy = (dy / dist) * 35; }
-        joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
-        joystickVector.x = dx / 35; joystickVector.y = dy / 35;
-      }
-
-      cameraZone.addEventListener('touchstart', (e) => {
-        if (cameraTouchId !== null) return;
-        const touch = e.changedTouches[0];
-        cameraTouchId = touch.identifier;
-        lastTouchX = touch.clientX; lastTouchY = touch.clientY;
-      });
-
-      cameraZone.addEventListener('touchmove', (e) => {
-        for (let touch of e.changedTouches) {
-          if (touch.identifier === cameraTouchId) {
-            cameraYaw -= (touch.clientX - lastTouchX) * 0.005;
-            cameraPitch -= (touch.clientY - lastTouchY) * 0.005;
-            cameraPitch = Math.max(-0.2, Math.min(1.0, cameraPitch));
-            lastTouchX = touch.clientX; lastTouchY = touch.clientY;
-          }
-        }
-      });
-
-      const resetCamera = (e) => {
-        for (let touch of e.changedTouches) {
-          if (touch.identifier === cameraTouchId) cameraTouchId = null;
-        }
-      };
-
-      cameraZone.addEventListener('touchend', resetCamera);
-      cameraZone.addEventListener('touchcancel', resetCamera);
-
-      jumpBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        if (canJump) { velocity.y = 9.5; canJump = false; }
-      });
-    }
-
-    function setupChat() {
-      const input = document.getElementById('chat-input');
-      input.addEventListener('focus', () => { isChatting = true; if (!isMobile) document.exitPointerLock(); });
-      input.addEventListener('blur', () => { isChatting = false; });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && input.value.trim() !== '') {
-          const msg = input.value.trim();
-          addChatMessage('Sen', msg);
-          createSpeechBubble(player.group, msg);
-          broadcast({ type: 'chat', text: msg });
-          input.value = ''; input.blur();
-          if (!isMobile) document.body.requestPointerLock();
-        }
-      });
-    }
-
-    function focusChat() { document.getElementById('chat-input').focus(); }
-
-    function addChatMessage(user, msg) {
-      const messages = document.getElementById('chat-messages');
-      const msgDiv = document.createElement('div');
-      msgDiv.innerHTML = `<span style="color:#00ff66;">[${user}]:</span> ${msg}`;
-      messages.appendChild(msgDiv);
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    function animateAvatarLimbs(limbs, isMoving, delta, emoteOverride = null) {
-      animTime += delta * (isMoving ? 12 : 3);
-      const activeEmote = emoteOverride !== undefined ? emoteOverride : currentEmote;
-
-      limbs.head.rotation.set(0, 0, 0);
-      limbs.leftArm.rotation.set(0, 0, 0);
-      limbs.rightArm.rotation.set(0, 0, 0);
-      limbs.leftLeg.rotation.set(0, 0, 0);
-      limbs.rightLeg.rotation.set(0, 0, 0);
-
-      if (activeEmote && !isMoving) {
-        if (activeEmote === 'wave') {
-          limbs.rightArm.rotation.x = -Math.PI + 0.3;
-          limbs.rightArm.rotation.z = Math.sin(animTime * 2) * 0.4;
-        } else if (activeEmote === 'dance') {
-          limbs.leftArm.rotation.x = Math.sin(animTime * 2) * 1.2;
-          limbs.rightArm.rotation.x = -Math.sin(animTime * 2) * 1.2;
-          limbs.torso.position.y = 1.225 + Math.sin(animTime * 4) * 0.05;
-        } else if (activeEmote === 'nod') {
-          limbs.head.rotation.x = Math.sin(animTime * 3) * 0.3;
-        }
-        return;
-      }
-
-      if (isMoving) {
-        limbs.leftLeg.rotation.x = Math.sin(animTime) * 0.6;
-        limbs.rightLeg.rotation.x = -Math.sin(animTime) * 0.6;
-        limbs.leftArm.rotation.x = -Math.sin(animTime) * 0.5;
-        limbs.rightArm.rotation.x = Math.sin(animTime) * 0.5;
-      }
-    }
-
-    function checkCollisions(newPos) {
-      let grounded = false;
-
-      const pBox = new THREE.Box3(
-        new THREE.Vector3(newPos.x - PLAYER_RADIUS, newPos.y, newPos.z - PLAYER_RADIUS),
-        new THREE.Vector3(newPos.x + PLAYER_RADIUS, newPos.y + PLAYER_HEIGHT, newPos.z + PLAYER_RADIUS)
-      );
-
-      for (let item of physicsBoxes) {
-        if (pBox.intersectsBox(item.box)) {
-          
-          if (item.isCheckpoint && currentMap === "parkour") {
-            currentCheckpointPos.set(item.mesh.position.x, item.box.max.y + 0.05, item.mesh.position.z);
-            document.getElementById('checkpoint-val').innerText = `${item.cpId} / 4`;
+        // --- 3. DETAYLI 3D BANK MODELİ OLUŞTURMA ---
+        function createDetailedBench(x, y, z, rotationY = 0) {
+            const benchGroup = new THREE.Group();
             
-            if (item.cpId === 4) {
-              addChatMessage('Sistem', '🎉 TEBRİKLER! Parkuru tamamladınız!');
-              switchMap("lobby");
-              return grounded;
+            // Materyaller
+            const woodMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x8b5a2b, 
+                roughness: 0.5,
+                metalness: 0.1 
+            });
+            const ironMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x222222, 
+                roughness: 0.3,
+                metalness: 0.8 
+            });
+
+            // Oturma tahtaları (4 adet çıta)
+            for (let i = 0; i < 4; i++) {
+                const slatGeo = new THREE.BoxGeometry(2.0, 0.06, 0.11);
+                const slat = new THREE.Mesh(slatGeo, woodMaterial);
+                slat.position.set(0, 0.45 + (i * 0.13), -0.05 + (i * 0.12));
+                slat.castShadow = true;
+                slat.receiveShadow = true;
+                benchGroup.add(slat);
             }
-          }
 
-          const pBottom = newPos.y;
-          const boxTop = item.box.max.y;
+            // Sırtlık tahtaları (3 adet çıta)
+            for (let i = 0; i < 3; i++) {
+                const backSlatGeo = new THREE.BoxGeometry(2.0, 0.08, 0.05);
+                const backSlat = new THREE.Mesh(backSlatGeo, woodMaterial);
+                backSlat.position.set(0, 0.75 + (i * 0.12), -0.32);
+                backSlat.rotation.x = -0.15;
+                backSlat.castShadow = true;
+                backSlat.receiveShadow = true;
+                benchGroup.add(backSlat);
+            }
 
-          if (pBottom <= boxTop + 0.2 && pBottom >= boxTop - 0.5 && velocity.y <= 0) {
-            newPos.y = boxTop;
-            velocity.y = 0;
-            grounded = true;
-          } 
-          else {
-            const overlapX = Math.min(pBox.max.x - item.box.min.x, item.box.max.x - pBox.min.x);
-            const overlapZ = Math.min(pBox.max.z - item.box.min.z, item.box.max.z - pBox.min.z);
+            // Demir Ayaklar ve Yan Profiller
+            const legGeo = new THREE.BoxGeometry(0.08, 0.45, 0.65);
+            const leftLeg = new THREE.Mesh(legGeo, ironMaterial);
+            leftLeg.position.set(-0.9, 0.22, -0.05);
+            leftLeg.castShadow = true;
+            benchGroup.add(leftLeg);
 
-            if (overlapX < overlapZ) {
-              if (newPos.x < item.mesh.position.x) newPos.x -= overlapX;
-              else newPos.x += overlapX;
+            const rightLeg = new THREE.Mesh(legGeo, ironMaterial);
+            rightLeg.position.set(0.9, 0.22, -0.05);
+            rightLeg.castShadow = true;
+            benchGroup.add(rightLeg);
+
+            benchGroup.position.set(x, y, z);
+            benchGroup.rotation.y = rotationY;
+            scene.add(benchGroup);
+
+            // Fiziksel Çarpışma Kutusu (Cannon.js)
+            const benchShape = new CANNON.Box(new CANNON.Vec3(1.0, 0.45, 0.4));
+            const benchBody = new CANNON.Body({
+                mass: 0, // Statik
+                position: new CANNON.Vec3(x, y + 0.45, z)
+            });
+            // Bank rotasyonunu fizik gövdesine uygular
+            benchBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), rotationY);
+            benchBody.addShape(benchShape);
+            world.addBody(benchBody);
+
+            return {
+                group: benchGroup,
+                position: new THREE.Vector3(x, y, z),
+                rotationY: rotationY,
+                sitTarget: new THREE.Vector3(x, y + 0.45, z).add(new THREE.Vector3(0, 0, 0.3).applyAxisAngle(new THREE.Vector3(0,1,0), rotationY))
+            };
+        }
+
+        // Sahneye birkaç bank ekleyelim
+        const benches = [
+            createDetailedBench(0, 0, -4, 0),
+            createDetailedBench(4, 0, 0, -Math.PI / 2),
+            createDetailedBench(-4, 0, 2, Math.PI / 4)
+        ];
+
+        // --- 4. KARAKTER MODELİ VE KONTROL SİSTEMİ ---
+        const characterGroup = new THREE.Group();
+        
+        // Basit kapsül/figür karakter temsili
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.4 });
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xfde047, roughness: 0.5 });
+        
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.2, 0.9, 16), bodyMat);
+        torso.position.y = 0.95;
+        torso.castShadow = true;
+        characterGroup.add(torso);
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), headMat);
+        head.position.y = 1.55;
+        head.castShadow = true;
+        characterGroup.add(head);
+
+        scene.add(characterGroup);
+
+        // Karakter Fizik Gövdesi (Kapsül benzeri küre/silindir kombinasyonu)
+        const charShape = new CANNON.Cylinder(0.3, 0.3, 1.4, 8);
+        const charBody = new CANNON.Body({
+            mass: 70,
+            position: new CANNON.Vec3(0, 1, 3),
+            fixedRotation: true // Devrilmeyi önle
+        });
+        charBody.addShape(charShape);
+        world.addBody(charBody);
+
+        // --- 5. ETKİLEŞİM VE ANİMASYON MANTIĞI ---
+        let gameState = {
+            isSitting: false,
+            activeBench: null,
+            transitioning: false
+        };
+
+        const keys = { w: false, a: false, s: false, d: false };
+        window.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'w') keys.w = true;
+            if (e.key.toLowerCase() === 'a') keys.a = true;
+            if (e.key.toLowerCase() === 's') keys.s = true;
+            if (e.key.toLowerCase() === 'd') keys.d = true;
+            
+            if (e.key.toLowerCase() === 'e') {
+                handleInteraction();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key.toLowerCase() === 'w') keys.w = false;
+            if (e.key.toLowerCase() === 'a') keys.a = false;
+            if (e.key.toLowerCase() === 's') keys.s = false;
+            if (e.key.toLowerCase() === 'd') keys.d = false;
+        });
+
+        // Mouse Kontrolleri (FPS / Kamera Açısı)
+        let isPointerLocked = false;
+        let pitch = 0;
+        let yaw = 0;
+
+        container.addEventListener('click', () => {
+            container.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === container;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isPointerLocked || gameState.isSitting) return;
+            const sensitivity = 0.003;
+            yaw -= e.movementX * sensitivity;
+            pitch -= e.movementY * sensitivity;
+            pitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
+        });
+
+        // En yakın bankı bulma fonksiyonu
+        function getNearestBench() {
+            let nearest = null;
+            let minDist = 2.2; // Etkileşim mesafesi
+            benches.forEach(bench => {
+                const dist = characterGroup.position.distanceTo(bench.position);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = bench;
+                }
+            });
+            return nearest;
+        }
+
+        // Oturma / Kalkma Fonksiyonu (GSAP Animasyonları ile)
+        function handleInteraction() {
+            if (gameState.transitioning) return;
+
+            if (!gameState.isSitting) {
+                const targetBench = getNearestBench();
+                if (targetBench) {
+                    gameState.transitioning = true;
+                    gameState.activeBench = targetBench;
+                    
+                    // Fizik motorunu devre dışı bırakıp karakteri sabitleyelim
+                    charBody.velocity.set(0, 0, 0);
+                    charBody.mass = 0; 
+                    world.remove(charBody);
+
+                    // GSAP ile kusursuz yumuşak oturma animasyonu
+                    gsap.to(characterGroup.position, {
+                        x: targetBench.sitTarget.x,
+                        y: targetBench.sitTarget.y - 0.2, // Oturma derinliği
+                        z: targetBench.sitTarget.z,
+                        duration: 0.8,
+                        ease: "power2.out"
+                    });
+
+                    gsap.to(characterGroup.rotation, {
+                        x: 0,
+                        y: targetBench.rotationY,
+                        z: 0,
+                        duration: 0.8,
+                        onComplete: () => {
+                            gameState.isSitting = true;
+                            gameState.transitioning = false;
+                            uiElement.innerHTML = "Ayağa kalkmak için <span>E</span> tuşuna basın";
+                        }
+                    });
+                }
             } else {
-              if (newPos.z < item.mesh.position.z) newPos.z -= overlapZ;
-              else newPos.z += overlapZ;
+                // Kalkma İşlemi
+                gameState.transitioning = true;
+                
+                const standUpPos = gameState.activeBench.sitTarget.clone().add(new THREE.Vector3(0, 0.5, 0.8).applyAxisAngle(new THREE.Vector3(0,1,0), gameState.activeBench.rotationY));
+
+                gsap.to(characterGroup.position, {
+                    x: standUpPos.x,
+                    y: standUpPos.y,
+                    z: standUpPos.z,
+                    duration: 0.6,
+                    ease: "power2.inOut",
+                    onComplete: () => {
+                        // Fizik dünyasını tekrar aktif et
+                        charBody.position.set(standUpPos.x, standUpPos.y, standUpPos.z);
+                        charBody.mass = 70;
+                        world.addBody(charBody);
+
+                        gameState.isSitting = false;
+                        gameState.activeBench = null;
+                        gameState.transitioning = false;
+                        uiElement.innerHTML = "Banka yaklaşın ve <span>E</span> tuşuna basın";
+                    }
+                });
             }
-          }
-        }
-      }
-      return grounded;
-    }
-
-    let clock = new THREE.Clock();
-    let networkTimer = 0;
-
-    function animate() {
-      requestAnimationFrame(animate);
-      const delta = Math.min(clock.getDelta(), 0.1);
-
-      if (isPlaying) {
-        velocity.x -= velocity.x * 10.0 * delta;
-        velocity.z -= velocity.z * 10.0 * delta;
-        velocity.y -= 26.0 * delta;
-
-        const moveDir = new THREE.Vector3();
-        if (isMobile && (joystickVector.x !== 0 || joystickVector.y !== 0)) {
-          moveDir.x = joystickVector.x;
-          moveDir.z = joystickVector.y;
-        } else {
-          if (moveForward) moveDir.z -= 1;
-          if (moveBackward) moveDir.z += 1;
-          if (moveLeft) moveDir.x -= 1;
-          if (moveRight) moveDir.x += 1;
-        }
-        if (moveDir.length() > 0) moveDir.normalize();
-
-        const isMoving = moveDir.length() > 0.1;
-
-        if (isMoving) {
-          const angle = cameraYaw + Math.atan2(moveDir.x, moveDir.z);
-          velocity.x = Math.sin(angle) * 11;
-          velocity.z = Math.cos(angle) * 11;
-          player.group.rotation.y = angle;
         }
 
-        const targetPos = player.group.position.clone();
-        targetPos.x += velocity.x * delta;
-        targetPos.z += velocity.z * delta;
-        targetPos.y += velocity.y * delta;
+        // --- 6. OYUN DÖNGÜSÜ (LOOP) ---
+        const clock = new THREE.Clock();
+        const moveSpeed = 5.0;
 
-        const isGrounded = checkCollisions(targetPos);
-        player.group.position.copy(targetPos);
+        function animate() {
+            requestAnimationFrame(animate);
 
-        if (isGrounded) {
-          canJump = true;
+            const delta = clock.getDelta();
+
+            if (!gameState.isSitting && !gameState.transitioning) {
+                // Klavye yön tuşlarına göre hareket vektörü hesaplama
+                const moveDir = new THREE.Vector3();
+                if (keys.w) moveDir.z -= 1;
+                if (keys.s) moveDir.z += 1;
+                if (keys.a) moveDir.x -= 1;
+                if (keys.d) moveDir.x += 1;
+                
+                moveDir.normalize();
+                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+
+                // Fiziksel hız güncellemesi
+                charBody.velocity.x = moveDir.x * moveSpeed;
+                charBody.velocity.z = moveDir.z * moveSpeed;
+
+                // Fizik dünyasını ilerlet
+                world.step(1 / 60, delta, 3);
+
+                // Mesh pozisyonunu fizik gövdesine eşitle
+                characterGroup.position.copy(charBody.position);
+                characterGroup.position.y -= 0.75; // Merkez hizalaması için
+
+                if (moveDir.lengthSq() > 0) {
+                    // Karakteri hareket yönüne döndür
+                    const targetAngle = Math.atan2(moveDir.x, moveDir.z);
+                    characterGroup.rotation.y = targetAngle;
+                }
+
+                // Yakında bank var mı kontrol et ve UI güncelle
+                const nearby = getNearestBench();
+                if (nearby) {
+                    uiElement.style.opacity = "1";
+                    uiElement.innerHTML = "Banka oturmak için <span>E</span> tuşuna basın";
+                } else {
+                    uiElement.style.opacity = "0.8";
+                    uiElement.innerHTML = "WASD ile hareket edin";
+                }
+            } else if (gameState.isSitting) {
+                // Otururken fizik motoru çalışmaz, sabit kalır
+                world.step(1 / 60, delta, 3);
+            }
+
+            // Kamera Takip Mekanizması (3. Şahıs / Orbit Karması)
+            const idealOffset = new THREE.Vector3(
+                Math.sin(yaw) * 4.5,
+                2.2 - pitch * 3,
+                Math.cos(yaw) * 4.5
+            );
+            const targetCameraPos = characterGroup.position.clone().add(new THREE.Vector3(0, 1.2, 0)).add(idealOffset);
+            
+            camera.position.lerp(targetCameraPos, 0.1);
+            
+            const lookTarget = characterGroup.position.clone().add(new THREE.Vector3(0, 1.0, 0));
+            camera.lookAt(lookTarget);
+
+            renderer.render(scene, camera);
         }
 
-        if (currentMap === "parkour" && player.group.position.y < -12) {
-          fallCount++;
-          document.getElementById('fall-count').innerText = fallCount;
-          addChatMessage('Sistem', '⚠️ Düşüldü! Kontrol noktasına dönülüyor...');
-          player.group.position.copy(currentCheckpointPos);
-          velocity.set(0, 0, 0);
-        } else if (currentMap === "lobby" && player.group.position.y < -10) {
-          player.group.position.set(0, 0.5, 0);
-          velocity.set(0, 0, 0);
-        }
+        animate();
 
-        animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
-
-        if (currentMap === "lobby") {
-          parkourPortalMesh.rotation.z += delta * 1.5;
-          const distToPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1.2, -30));
-          if (distToPortal < 3.8) {
-            switchMap("parkour");
-          }
-        } else if (currentMap === "parkour" && cityPortalMesh) {
-          cityPortalMesh.rotation.z += delta * 1.5;
-        }
-
-        networkTimer += delta;
-        if (networkTimer > 0.033) {
-          networkTimer = 0;
-          broadcast({
-            type: 'transform',
-            x: player.group.position.x,
-            y: player.group.position.y,
-            z: player.group.position.z,
-            rotY: player.group.rotation.y,
-            isMoving: isMoving,
-            emote: currentEmote,
-            map: currentMap,
-            delta: delta
-          });
-        }
-
-        cameraPivot.position.copy(player.group.position);
-        cameraPivot.position.y += 1.2;
-
-        camera.position.x = cameraPivot.position.x + cameraDistance * Math.sin(cameraYaw) * Math.cos(cameraPitch);
-        camera.position.z = cameraPivot.position.z + cameraDistance * Math.cos(cameraYaw) * Math.cos(cameraPitch);
-        camera.position.y = cameraPivot.position.y + cameraDistance * Math.sin(cameraPitch);
-
-        camera.lookAt(cameraPivot.position);
-      }
-
-      renderer.render(scene, camera);
-    }
-
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    window.onload = () => {
-      init();
-      animate();
-    };
-  </script>
+        // Pencere Boyutu Ayarlaması
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
-</html>
