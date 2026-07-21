@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyberpunk Metaverse - Portal & Mini Game</title>
+  <title>Cyberpunk Metaverse - Fixed Entry</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
@@ -69,12 +69,12 @@
       color: #00ffff; padding: 4px; font-family: inherit; font-size: 11px; outline: none;
     }
 
-    /* GİRİŞ EKRANI VE QR MODALLARI */
+    /* GİRİŞ EKRANI */
     #start-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
       justify-content: center; align-items: center; color: #fff; z-index: 10;
-      padding: 20px;
+      padding: 20px; pointer-events: auto;
     }
     h1 { font-size: 26px; color: #ff0055; text-shadow: 0 0 15px #ff0055; margin-bottom: 8px; text-align: center; }
     p { font-size: 11px; color: #aaa; margin-bottom: 15px; text-align: center; line-height: 1.4; }
@@ -82,15 +82,16 @@
     .p2p-box {
       background: rgba(20, 20, 35, 0.9); border: 1px solid #00ffff;
       padding: 15px; border-radius: 10px; display: flex; flex-direction: column;
-      gap: 10px; width: 100%; max-width: 300px;
+      gap: 10px; width: 100%; max-width: 300px; z-index: 20;
     }
     .p2p-input {
       background: #000; border: 1px solid #ff0055; color: #00ffff;
       padding: 8px; font-family: inherit; text-align: center; font-size: 13px; outline: none;
     }
     .btn {
-      padding: 10px; font-size: 13px; background: #ff0055; color: #fff;
+      padding: 12px; font-size: 13px; background: #ff0055; color: #fff;
       border: none; cursor: pointer; font-family: inherit; font-weight: bold;
+      border-radius: 6px; user-select: none; -webkit-tap-highlight-color: transparent;
     }
     .btn-secondary { background: #00ffff; color: #000; }
 
@@ -146,11 +147,12 @@
     <p>Mobil & Masaüstü Çok Oyunculu Evren</p>
 
     <div class="p2p-box">
-      <button class="btn" onclick="hostGame()">1. ODA KUR & QR GÖSTER</button>
-      <div style="text-align: center; color: #666; font-size: 10px;">--- VEYA ---</div>
-      <button class="btn btn-secondary" onclick="openQRScanner()">📷 QR KOD TARAYIP KATIL</button>
-      <input type="text" id="join-id-input" class="p2p-input" placeholder="VEYA ODA KODU GİRİN" />
-      <button class="btn btn-secondary" style="background:#111; color:#00ffff; border:1px solid #00ffff" onclick="joinGame()">KOD İLE KATIL</button>
+      <button id="btn-solo" class="btn" style="background:#00ff66; color:#000;">TEK BAŞINA OYNA</button>
+      <div style="text-align: center; color: #666; font-size: 10px;">--- VEYA ÇOK OYUNCULU ---</div>
+      <button id="btn-host" class="btn">1. ODA KUR & QR GÖSTER</button>
+      <button id="btn-scan" class="btn btn-secondary">📷 QR TARAYIP KATIL</button>
+      <input type="text" id="join-id-input" class="p2p-input" placeholder="ODA KODU GİRİN" />
+      <button id="btn-join" class="btn btn-secondary" style="background:#111; color:#00ffff; border:1px solid #00ffff">KOD İLE KATIL</button>
     </div>
   </div>
 
@@ -159,7 +161,7 @@
       <h3 style="color:#00ffff; font-size:14px;">OYUNCULARI DAVET ET</h3>
       <div id="qrcode-display"></div>
       <p style="font-size:10px; color:#aaa;">QR kodu taratarak odaya katılım sağlayabilirsiniz.</p>
-      <button class="btn" style="width:100%;" onclick="closeHostQRAndStart()">OYUNA BAŞLA</button>
+      <button id="btn-close-qr" class="btn" style="width:100%;">OYUNA BAŞLA</button>
     </div>
   </div>
 
@@ -167,7 +169,7 @@
     <div class="modal-card">
       <h3 style="color:#ff0055; font-size:14px;">QR KODU TARAYIN</h3>
       <div id="qr-reader"></div>
-      <button class="btn btn-secondary" style="width:100%; margin-top:5px;" onclick="closeQRScanner()">İPTAL</button>
+      <button id="btn-cancel-scan" class="btn btn-secondary" style="width:100%; margin-top:5px;">İPTAL</button>
     </div>
   </div>
 
@@ -181,7 +183,7 @@
     <div class="top-bar">
       <div class="top-left">
         <div class="stats">
-          <div>BÖLGE: <span id="zone-val" style="color:#00ffff;">LOBİ (PLAZA)</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">HAZIR</span></div>
+          <div>BÖLGE: <span id="zone-val" style="color:#00ffff;">LOBİ (PLAZA)</span> | BAGLANTI: <span id="peer-status" style="color:#00ffff;">OFFLINE</span></div>
           <div class="room-code-container">
             <span>ODA:</span>
             <span id="my-peer-id" style="color:#ffff00;">-</span>
@@ -226,8 +228,7 @@
     let isChatting = false;
     let isMobile = false;
 
-    // HARİTA VE MİNİ OYUN DEĞİŞKENLERİ
-    let currentMap = "lobby"; // "lobby" veya "laser_game"
+    let currentMap = "lobby";
     let lobbyGroup, gameGroup;
     let laserBeamMesh, laserPortalMesh, lobbyPortalMesh;
     let laserAngle = 0;
@@ -285,8 +286,27 @@
       fsBtn.addEventListener('click', toggleFullscreen);
     }
 
+    function bindUIEvents() {
+      const bind = (id, fn) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('click', fn);
+          el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
+        }
+      };
+
+      bind('btn-solo', () => startGame());
+      bind('btn-host', () => hostGame());
+      bind('btn-scan', () => openQRScanner());
+      bind('btn-join', () => joinGame());
+      bind('btn-close-qr', () => closeHostQRAndStart());
+      bind('btn-cancel-scan', () => closeQRScanner());
+    }
+
     function init() {
       detectDevice();
+      bindUIEvents();
+
       const container = document.getElementById('canvas-container');
 
       scene = new THREE.Scene();
@@ -307,7 +327,6 @@
       dirLight.position.set(20, 40, 20);
       scene.add(dirLight);
 
-      // SAHNELERİ OLUŞTUR
       lobbyGroup = new THREE.Group();
       gameGroup = new THREE.Group();
       scene.add(lobbyGroup);
@@ -316,7 +335,6 @@
       buildLobbyMap();
       buildLaserGameMap();
       
-      // Varsayılan olarak oyun haritası gizli
       gameGroup.visible = false;
 
       player = createHumanoidAvatar(0xff0055, 0x00ffff);
@@ -335,7 +353,6 @@
       window.addEventListener('resize', onWindowResize);
     }
 
-    // 1. HARİTA: LOBİ (PLAZA)
     function buildLobbyMap() {
       const floorGeo = new THREE.PlaneGeometry(100, 100, 20, 20);
       const floorMat = new THREE.MeshStandardMaterial({ color: 0x050515, wireframe: true, emissive: 0x110022 });
@@ -343,57 +360,49 @@
       floor.rotation.x = -Math.PI / 2;
       lobbyGroup.add(floor);
 
-      // Lobi Dekoru / Platformlar
       const stageGeo = new THREE.CylinderGeometry(8, 10, 1, 32);
       const stageMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x003344 });
       const stage = new THREE.Mesh(stageGeo, stageMat);
       stage.position.set(0, 0.5, 0);
       lobbyGroup.add(stage);
 
-      // OYUN HARİTASINA GEÇİŞ PORTALI
       const portalFrameGeo = new THREE.TorusGeometry(3.5, 0.25, 16, 100);
       const portalMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
       lobbyPortalMesh = new THREE.Mesh(portalFrameGeo, portalMat);
       lobbyPortalMesh.position.set(0, 4, -20);
       lobbyGroup.add(lobbyPortalMesh);
 
-      // Portal İç Işığı
       const portalLight = new THREE.PointLight(0x00ffff, 3, 15);
       portalLight.position.set(0, 4, -20);
       lobbyGroup.add(portalLight);
     }
 
-    // 2. HARİTA: MİNİ OYUN (LAZER ARENA)
     function buildLaserGameMap() {
       const floorGeo = new THREE.CylinderGeometry(25, 25, 1, 32);
       const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a0005, emissive: 0x330011 });
       const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.position.set(100, 0, 0); // Lobiden uzaklaştırıldı
+      floor.position.set(100, 0, 0);
       gameGroup.add(floor);
 
-      // Kenar Çiti / Sınırlar
       const ringGeo = new THREE.TorusGeometry(25, 0.5, 8, 32);
-      const ringMat = new THREE.MeshBasicMaterial({ color: #ff0055 });
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xff0055 });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = Math.PI / 2;
       ring.position.set(100, 0.5, 0);
       gameGroup.add(ring);
 
-      // Dönen Lazer Mekanizması (Engeli)
       const laserGeo = new THREE.BoxGeometry(46, 0.4, 0.4);
       const laserMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
       laserBeamMesh = new THREE.Mesh(laserGeo, laserMat);
       laserBeamMesh.position.set(100, 0.6, 0);
       gameGroup.add(laserBeamMesh);
 
-      // Merkez Kule
       const towerGeo = new THREE.CylinderGeometry(1.5, 2, 4, 16);
       const towerMat = new THREE.MeshStandardMaterial({ color: 0xff0055 });
       const tower = new THREE.Mesh(towerGeo, towerMat);
       tower.position.set(100, 2, 0);
       gameGroup.add(tower);
 
-      // LOBİYE GERİ DÖNÜŞ PORTALI
       const portalGeo = new THREE.TorusGeometry(3, 0.2, 16, 100);
       const portalMat = new THREE.MeshBasicMaterial({ color: 0xff0055, wireframe: true });
       laserPortalMesh = new THREE.Mesh(portalGeo, portalMat);
@@ -401,7 +410,6 @@
       gameGroup.add(laserPortalMesh);
     }
 
-    // MAP GEÇİŞ SİSTEMİ
     function switchMap(targetMap) {
       if (portalCooldown) return;
       portalCooldown = true;
@@ -413,25 +421,21 @@
       if (targetMap === "laser_game") {
         lobbyGroup.visible = false;
         gameGroup.visible = true;
-        
-        // Oyuncuyu Oyun Arenasına Işınla
         player.group.position.set(100, 1, 15);
         zoneVal.innerText = "LAZER ARENASI";
         zoneVal.style.color = "#ff0055";
         gameHud.style.display = "block";
 
-        // Can Sıfırla
         playerHp = 100;
         playerScore = 0;
         document.getElementById('player-hp').innerText = playerHp;
 
-        addChatMessage('Sistem', '🎮 LAZER ARENASINA HOŞGELDİNİZ! Lazerlerden zıplayarak kaçın!');
+        addChatMessage('Sistem', '🎮 LAZER ARENASINA HOŞGELDİNİZ!');
       } 
       else if (targetMap === "lobby") {
         gameGroup.visible = false;
         lobbyGroup.visible = true;
 
-        // Oyuncuyu Lobiye Işınla
         player.group.position.set(0, 1, -12);
         zoneVal.innerText = "LOBİ (PLAZA)";
         zoneVal.style.color = "#00ffff";
@@ -453,6 +457,7 @@
     }
 
     function initPeer(customId = null) {
+      if (typeof Peer === 'undefined') return console.warn("PeerJS yüklenemedi");
       peer = customId ? new Peer(customId) : new Peer();
 
       peer.on('open', (id) => {
@@ -483,13 +488,19 @@
 
     function hostGame() {
       initPeer();
-      peer.on('open', (id) => {
-        const qrcodeContainer = document.getElementById('qrcode-display');
-        qrcodeContainer.innerHTML = "";
-        const joinUrl = `${window.location.origin}${window.location.pathname}?room=${id}`;
-        new QRCode(qrcodeContainer, { text: joinUrl, width: 160, height: 160 });
-        document.getElementById('host-qr-modal').style.display = 'flex';
-      });
+      if (peer) {
+        peer.on('open', (id) => {
+          const qrcodeContainer = document.getElementById('qrcode-display');
+          qrcodeContainer.innerHTML = "";
+          const joinUrl = `${window.location.origin}${window.location.pathname}?room=${id}`;
+          if (typeof QRCode !== 'undefined') {
+            new QRCode(qrcodeContainer, { text: joinUrl, width: 160, height: 160 });
+          }
+          document.getElementById('host-qr-modal').style.display = 'flex';
+        });
+      } else {
+        startGame();
+      }
     }
 
     function closeHostQRAndStart() {
@@ -498,6 +509,10 @@
     }
 
     function openQRScanner() {
+      if (typeof Html5Qrcode === 'undefined') {
+        alert("Kamera tarayıcı kütüphanesi yüklenemedi.");
+        return;
+      }
       document.getElementById('scanner-qr-modal').style.display = 'flex';
       html5QrScanner = new Html5Qrcode("qr-reader");
       html5QrScanner.start(
@@ -527,12 +542,19 @@
 
     function joinGame(targetHostId = null) {
       const hostId = targetHostId || document.getElementById('join-id-input').value.trim();
-      if (!hostId) return alert("Oda Kodu girin!");
-      initPeer();
-      peer.on('open', () => {
-        setupConnection(peer.connect(hostId));
+      if (!hostId) {
         startGame();
-      });
+        return;
+      }
+      initPeer();
+      if (peer) {
+        peer.on('open', () => {
+          setupConnection(peer.connect(hostId));
+          startGame();
+        });
+      } else {
+        startGame();
+      }
     }
 
     function setupConnection(conn) {
@@ -570,7 +592,6 @@
       if (data.type === 'transform') {
         remote.group.position.set(data.x, data.y, data.z);
         remote.group.rotation.y = data.rotY;
-        // Eğer rakip farklı haritadaysa gizle
         remote.group.visible = (data.map === currentMap);
         animateAvatarLimbs(remote.limbs, data.isMoving, data.delta, data.emote);
       }
@@ -884,7 +905,6 @@
 
         animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
 
-        // --- HARİTA GEÇİŞ PORTALI KONTROLLERİ ---
         if (currentMap === "lobby") {
           lobbyPortalMesh.rotation.z += delta * 1.5;
           const distToLobbyPortal = player.group.position.distanceTo(new THREE.Vector3(0, 1, -20));
@@ -895,21 +915,18 @@
         else if (currentMap === "laser_game") {
           laserPortalMesh.rotation.z += delta * 1.5;
           
-          // Dönen Lazer Mantığı & Çarpışma Tespiti (Collision)
           laserAngle += delta * 1.8;
           laserBeamMesh.rotation.y = laserAngle;
-          laserBeamMesh.position.y = 0.8 + Math.sin(laserAngle * 2) * 0.3; // Yüksekliği hafifçe değişsin
+          laserBeamMesh.position.y = 0.8 + Math.sin(laserAngle * 2) * 0.3;
 
           const playerPos = player.group.position;
           const distToCenter = Math.hypot(playerPos.x - 100, playerPos.z);
           
-          // Lazer Temas Kontrolü
           if (distToCenter < 22) {
             const playerAngle = Math.atan2(playerPos.z, playerPos.x - 100);
             let angleDiff = Math.abs((laserAngle % (Math.PI * 2)) - (playerAngle % (Math.PI * 2)));
             if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
 
-            // Zıplamadıysa ve lazere paralel açıda kaldıysa hasar al
             if ((angleDiff < 0.15 || Math.abs(angleDiff - Math.PI) < 0.15) && playerPos.y < laserBeamMesh.position.y + 0.5) {
               playerHp = Math.max(0, playerHp - 1);
               document.getElementById('player-hp').innerText = playerHp;
@@ -924,14 +941,12 @@
             }
           }
 
-          // Oyun alanından Lobiye dönüş portalı
           const distToReturnPortal = player.group.position.distanceTo(new THREE.Vector3(100, 1, -20));
           if (distToReturnPortal < 3.5) {
             switchMap("lobby");
           }
         }
 
-        // --- P2P SENKRONİZASYON ---
         networkTimer += delta;
         if (networkTimer > 0.033) {
           networkTimer = 0;
@@ -948,7 +963,6 @@
           });
         }
 
-        // Kamera Takip Sistemleri
         cameraPivot.position.copy(player.group.position);
         cameraPivot.position.y += 1.3;
 
