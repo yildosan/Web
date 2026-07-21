@@ -67,6 +67,14 @@
       color: #00ff66; padding: 5px; font-family: inherit; font-size: 11px; outline: none;
     }
 
+    #interaction-hint {
+      position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%);
+      background: rgba(2, 8, 4, 0.85); color: #00ff66; border: 1px solid #00ff66;
+      padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: bold;
+      letter-spacing: 0.5px; text-shadow: 0 0 8px #00ff66; pointer-events: none;
+      display: none; z-index: 7;
+    }
+
     #start-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(2, 8, 4, 0.94); display: flex; flex-direction: column;
@@ -210,6 +218,8 @@
     </div>
   </div>
 
+  <div id="interaction-hint">Bankta oturmak için E</div>
+
   <div id="canvas-container"></div>
 
   <!-- KÜTÜPHANELER -->
@@ -225,6 +235,7 @@
     let isChatting = false;
     let isMobile = false;
     let pointerLocked = false;
+    let interactionHintEl = null;
 
     let currentMap = "lobby";
     let lobbyGroup, gameGroup;
@@ -360,6 +371,7 @@
       setupControls();
       setupTouchEvents();
       setupChat();
+      interactionHintEl = document.getElementById('interaction-hint');
 
       checkUrlAutoJoin();
 
@@ -500,21 +512,6 @@
         treeGroup.add(topLeaf);
 
         lobbyGroup.add(treeGroup);
-      }
-
-      // Neon Park Bankları
-      for (let b = 0; b < 8; b++) {
-        const bAngle = (b / 8) * Math.PI * 2;
-        const bx = Math.cos(bAngle) * 12;
-        const bz = Math.sin(bAngle) * 12;
-
-        const benchGeo = new THREE.BoxGeometry(3, 0.4, 1.2);
-        const benchMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.3 });
-        const bench = new THREE.Mesh(benchGeo, benchMat);
-        bench.position.set(bx, 0.2, bz);
-        bench.rotation.y = -bAngle;
-        bench.userData = { isCollider: true };
-        lobbyGroup.add(bench);
       }
 
       const seatingAreas = [
@@ -1134,7 +1131,7 @@
       messages.scrollTop = messages.scrollHeight;
     }
 
-    function animateAvatarLimbs(limbs, isMoving, delta, emoteOverride = null) {
+    function animateAvatarLimbs(limbs, isMoving, delta, emoteOverride = null, sittingPose = false) {
       animTime += delta * (isMoving ? 12 : 3);
       const activeEmote = emoteOverride !== undefined ? emoteOverride : currentEmote;
 
@@ -1143,6 +1140,20 @@
       limbs.rightArm.rotation.set(0, 0, 0);
       limbs.leftLeg.rotation.set(0, 0, 0);
       limbs.rightLeg.rotation.set(0, 0, 0);
+      limbs.torso.position.y = 1.225;
+      limbs.head.position.y = 1.8;
+
+      if (sittingPose) {
+        limbs.torso.position.y = 0.95;
+        limbs.head.position.y = 1.45;
+        limbs.leftArm.rotation.x = 1.25;
+        limbs.rightArm.rotation.x = 1.25;
+        limbs.leftLeg.rotation.x = 1.2;
+        limbs.rightLeg.rotation.x = 1.2;
+        limbs.leftArm.rotation.z = 0.2;
+        limbs.rightArm.rotation.z = -0.2;
+        return;
+      }
 
       if (activeEmote && !isMoving) {
         if (activeEmote === 'wave') {
@@ -1278,7 +1289,7 @@
             velocity.set(0, 0, 0);
           }
 
-          animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote);
+          animateAvatarLimbs(playerLimbs, isMoving, delta, currentEmote, false);
 
           if (currentMap === "lobby") {
             parkourPortalMesh.rotation.z += delta * 1.5;
@@ -1308,7 +1319,24 @@
         }
 
         if (isSitting) {
-          animateAvatarLimbs(playerLimbs, false, delta, currentEmote);
+          animateAvatarLimbs(playerLimbs, false, delta, currentEmote, true);
+        }
+
+        if (interactionHintEl) {
+          if (!isChatting && !isSitting && currentMap === 'lobby') {
+            const nearbyBench = seatingBenches.find((item) => player.group.position.distanceTo(item.anchor) < SIT_RANGE + 0.6);
+            if (nearbyBench) {
+              interactionHintEl.textContent = 'Bankta oturmak için E';
+              interactionHintEl.style.display = 'block';
+            } else {
+              interactionHintEl.style.display = 'none';
+            }
+          } else if (isSitting) {
+            interactionHintEl.textContent = 'Banktan kalkmak için E';
+            interactionHintEl.style.display = 'block';
+          } else {
+            interactionHintEl.style.display = 'none';
+          }
         }
 
         cameraPivot.position.copy(player.group.position);
