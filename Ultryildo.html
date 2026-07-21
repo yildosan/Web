@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Cyberpunk Metaverse 3D - Mobile Fixed</title>
+  <title>Cyberpunk Metaverse 3D - Mobile & QR Connect</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
     body { width: 100vw; height: 100vh; overflow: hidden; background: #000; font-family: 'Courier New', monospace; user-select: none; }
@@ -28,9 +28,7 @@
       border-radius: 4px; transition: all 0.2s; text-shadow: none;
     }
 
-    #emote-bar {
-      display: flex; gap: 6px; pointer-events: auto; margin-top: 5px;
-    }
+    #emote-bar { display: flex; gap: 6px; pointer-events: auto; margin-top: 5px; }
     .emote-btn {
       background: rgba(10, 10, 20, 0.85); color: #00ffff; border: 1px solid #00ffff;
       padding: 4px 8px; font-family: inherit; font-size: 11px;
@@ -50,10 +48,10 @@
     }
     #chat-input {
       width: 100%; background: #000; border: 1px solid #ff0055;
-      color: #00ffff; padding: 4px; font-family: inherit; font-size: 11px;
-      outline: none;
+      color: #00ffff; padding: 4px; font-family: inherit; font-size: 11px; outline: none;
     }
 
+    /* GİRİŞ EKRANI VE QR MODALLARI */
     #start-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.92); display: flex; flex-direction: column;
@@ -78,7 +76,26 @@
     }
     .btn-secondary { background: #00ffff; color: #000; }
 
-    /* MOBİL KONTROLLER (ÇAKIŞMALAR ENGELLENDİ) */
+    /* QR MODAL (HOST QR GOSTERICI & SCANNER) */
+    .modal-overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.95); display: none; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 15; padding: 20px;
+    }
+    .modal-card {
+      background: rgba(15, 15, 25, 0.95); border: 2px solid #00ffff;
+      border-radius: 12px; padding: 15px; display: flex; flex-direction: column;
+      align-items: center; gap: 12px; max-width: 320px; width: 100%;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+    }
+    #qrcode-display {
+      background: #fff; padding: 10px; border-radius: 8px;
+    }
+    #qr-reader {
+      width: 100%; max-width: 260px; border: 1px solid #ff0055; border-radius: 8px; overflow: hidden;
+    }
+
+    /* MOBİL KONTROLLER */
     #touch-controls {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 6; display: none;
@@ -112,16 +129,33 @@
 
   <div id="start-screen">
     <h1>CYBER METAVERSE</h1>
-    <p>
-      <b>PC:</b> WASD + Fare | <b>Mobil:</b> Dokunmatik Kontrol<br>
-      <b>Chat:</b> Sol Alt Kutu
-    </p>
+    <p>Mobil & Masaüstü Çok Oyunculu Evren</p>
 
     <div class="p2p-box">
-      <button class="btn" onclick="hostGame()">1. ODA KUR (HOST)</button>
+      <button class="btn" onclick="hostGame()">1. ODA KUR & QR GÖSTER</button>
       <div style="text-align: center; color: #666; font-size: 10px;">--- VEYA ---</div>
-      <input type="text" id="join-id-input" class="p2p-input" placeholder="ODA KODUNU GİRİN" />
-      <button class="btn btn-secondary" onclick="joinGame()">2. ODAYA KATIL</button>
+      <button class="btn btn-secondary" onclick="openQRScanner()">📷 QR KOD TARAYIP KATIL</button>
+      <input type="text" id="join-id-input" class="p2p-input" placeholder="VEYA ODA KODU GİRİN" />
+      <button class="btn btn-secondary" style="background:#111; color:#00ffff; border:1px solid #00ffff" onclick="joinGame()">KOD İLE KATIL</button>
+    </div>
+  </div>
+
+  <!-- QR GÖSTERME MODAL (HOST) -->
+  <div id="host-qr-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 style="color:#00ffff; font-size:14px;">OYUNCULARI DAVET ET</h3>
+      <div id="qrcode-display"></div>
+      <p style="font-size:10px; color:#aaa;">Diğer oyuncu bu QR kodu kamerasıyla taratarak doğrudan odaya katılabilir.</p>
+      <button class="btn" style="width:100%;" onclick="closeHostQRAndStart()">OYUNA BAŞLA</button>
+    </div>
+  </div>
+
+  <!-- QR TARAMA MODAL (CLIENT) -->
+  <div id="scanner-qr-modal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 style="color:#ff0055; font-size:14px;">QR KODU TARAYIN</h3>
+      <div id="qr-reader"></div>
+      <button class="btn btn-secondary" style="width:100%; margin-top:5px;" onclick="closeQRScanner()">İPTAL</button>
     </div>
   </div>
 
@@ -151,7 +185,7 @@
 
     <div id="chat-container">
       <div id="chat-messages">
-        <div><span style="color:#ff0055;">[Sistem]:</span> Mobil Arayüz Düzeltildi!</div>
+        <div><span style="color:#ff0055;">[Sistem]:</span> QR Kod Taraması Aktif!</div>
       </div>
       <input type="text" id="chat-input" placeholder="Mesaj..." />
     </div>
@@ -159,8 +193,12 @@
 
   <div id="canvas-container"></div>
 
+  <!-- KÜTÜPHANELER -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <!-- QR Kod Oluşturma ve Tarama Kütüphaneleri -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script>
     let scene, camera, renderer;
@@ -173,6 +211,7 @@
     let connections = {};
     let remotePlayers = {};
     let myPeerId = "";
+    let html5QrScanner = null;
 
     let currentEmote = null;
     let emoteTimer = 0;
@@ -229,7 +268,21 @@
       setupTouchEvents();
       setupChat();
 
+      // URL Parametresinden Otomatik Katılma Denetimi
+      checkUrlAutoJoin();
+
       window.addEventListener('resize', onWindowResize);
+    }
+
+    function checkUrlAutoJoin() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetRoom = urlParams.get('room');
+      if (targetRoom) {
+        document.getElementById('join-id-input').value = targetRoom;
+        setTimeout(() => {
+          joinGame(targetRoom);
+        }, 800);
+      }
     }
 
     function initPeer(customId = null) {
@@ -264,11 +317,65 @@
 
     function hostGame() {
       initPeer();
+      peer.on('open', (id) => {
+        // QR Kod üretimi
+        const qrcodeContainer = document.getElementById('qrcode-display');
+        qrcodeContainer.innerHTML = "";
+        
+        const joinUrl = `${window.location.origin}${window.location.pathname}?room=${id}`;
+        
+        new QRCode(qrcodeContainer, {
+          text: joinUrl,
+          width: 160,
+          height: 160
+        });
+
+        document.getElementById('host-qr-modal').style.display = 'flex';
+      });
+    }
+
+    function closeHostQRAndStart() {
+      document.getElementById('host-qr-modal').style.display = 'none';
       startGame();
     }
 
-    function joinGame() {
-      const hostId = document.getElementById('join-id-input').value.trim();
+    function openQRScanner() {
+      document.getElementById('scanner-qr-modal').style.display = 'flex';
+      html5QrScanner = new Html5Qrcode("qr-reader");
+      
+      html5QrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 200, height: 200 } },
+        (decodedText) => {
+          // QR Başarıyla Okunduğunda
+          closeQRScanner();
+          try {
+            const url = new URL(decodedText);
+            const roomId = url.searchParams.get("room") || decodedText;
+            joinGame(roomId);
+          } catch(e) {
+            joinGame(decodedText);
+          }
+        },
+        (errorMessage) => { /* Tarama devam ediyor... */ }
+      ).catch(err => alert("Kamera açılamadı: " + err));
+    }
+
+    function closeQRScanner() {
+      if (html5QrScanner) {
+        html5QrScanner.stop().then(() => {
+          html5QrScanner.clear();
+          document.getElementById('scanner-qr-modal').style.display = 'none';
+        }).catch(() => {
+          document.getElementById('scanner-qr-modal').style.display = 'none';
+        });
+      } else {
+        document.getElementById('scanner-qr-modal').style.display = 'none';
+      }
+    }
+
+    function joinGame(targetHostId = null) {
+      const hostId = targetHostId || document.getElementById('join-id-input').value.trim();
       if (!hostId) return alert("Geçerli Oda Kodu girin!");
       initPeer();
       peer.on('open', () => {
