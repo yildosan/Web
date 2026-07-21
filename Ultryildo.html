@@ -744,7 +744,6 @@
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
       switchMap("lobby");
-      if (!isMobile) document.body.requestPointerLock();
     }
 
     function createHumanoidAvatar(suitColor, visorColor) {
@@ -831,7 +830,6 @@
     function setupControls() {
       document.addEventListener('pointerlockchange', () => {
         if (!isMobile) {
-          isPlaying = (document.pointerLockElement === document.body);
           document.getElementById('start-screen').style.display = isPlaying ? 'none' : 'flex';
         }
       });
@@ -969,9 +967,6 @@
           broadcast({ type: 'chat', text: msg });
           input.value = '';
           input.blur();
-          if (!isMobile && isPlaying) {
-            try { document.body.requestPointerLock(); } catch (err) { console.warn('Pointer lock hatası:', err); }
-          }
         }
       });
     }
