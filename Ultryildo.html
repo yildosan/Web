@@ -218,8 +218,6 @@
     </div>
   </div>
 
-  <div id="interaction-hint">Bankta oturmak için E</div>
-
   <div id="canvas-container"></div>
 
   <!-- KÜTÜPHANELER -->
@@ -235,16 +233,11 @@
     let isChatting = false;
     let isMobile = false;
     let pointerLocked = false;
-    let interactionHintEl = null;
 
     let currentMap = "lobby";
     let lobbyGroup, gameGroup;
     let parkourPortalMesh, cityPortalMesh;
     let portalCooldown = false;
-    let seatingBenches = [];
-    let currentSeat = null;
-    let isSitting = false;
-    const SIT_RANGE = 1.8;
 
     let physicsBoxes = []; 
     let currentCheckpointPos = new THREE.Vector3(0, 0.05, 0);
@@ -371,7 +364,6 @@
       setupControls();
       setupTouchEvents();
       setupChat();
-      interactionHintEl = document.getElementById('interaction-hint');
 
       checkUrlAutoJoin();
 
@@ -399,60 +391,6 @@
       });
     }
 
-    function createDoubleBench(x, z, rotation = 0) {
-      const benchGroup = new THREE.Group();
-      benchGroup.position.set(x, 0, z);
-      benchGroup.rotation.y = rotation;
-
-      const seatMat = new THREE.MeshStandardMaterial({ color: 0x00ff66, emissive: 0x00ff66, emissiveIntensity: 0.2 });
-      const frameMat = new THREE.MeshStandardMaterial({ color: 0x0f1a12, roughness: 0.7 });
-
-      const leftSeatOffset = new THREE.Vector3(-0.7, 0.76, 0);
-      const rightSeatOffset = new THREE.Vector3(0.7, 0.76, 0);
-      const leftAnchor = leftSeatOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), rotation).add(new THREE.Vector3(x, 0, z));
-      const rightAnchor = rightSeatOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), rotation).add(new THREE.Vector3(x, 0, z));
-
-      const base = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.2, 0.9), seatMat);
-      base.position.y = 0.65;
-      base.userData = { isCollider: true };
-      benchGroup.add(base);
-
-      const leftPad = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.18, 0.75), seatMat);
-      leftPad.position.set(-0.7, 0.72, 0);
-      leftPad.userData = { isCollider: true };
-      benchGroup.add(leftPad);
-
-      const rightPad = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.18, 0.75), seatMat);
-      rightPad.position.set(0.7, 0.72, 0);
-      rightPad.userData = { isCollider: true };
-      benchGroup.add(rightPad);
-
-      const backrest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.9, 0.18), frameMat);
-      backrest.position.set(0, 1.15, 0.35);
-      backrest.userData = { isCollider: true };
-      benchGroup.add(backrest);
-
-      const benchCollider = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.4, 1.1), new THREE.MeshBasicMaterial({ visible: false }));
-      benchCollider.position.set(0, 0.75, 0.05);
-      benchCollider.userData = { isCollider: true };
-      benchGroup.add(benchCollider);
-
-      const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.12), frameMat);
-      leftLeg.position.set(-1.2, 0.4, 0.25);
-      leftLeg.userData = { isCollider: true };
-      benchGroup.add(leftLeg);
-
-      const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.8, 0.12), frameMat);
-      rightLeg.position.set(1.2, 0.4, 0.25);
-      rightLeg.userData = { isCollider: true };
-      benchGroup.add(rightLeg);
-
-      const light = new THREE.PointLight(0x00ff66, 1.2, 6);
-      light.position.set(0, 1.4, 0.2);
-      benchGroup.add(light);
-
-      return { group: benchGroup, anchors: [leftAnchor, rightAnchor] };
-    }
 
     // --- CYBER PARK (YENİ ŞEHİR PARKI LOBİSİ) ---
     function buildCyberParkLobby() {
@@ -529,12 +467,6 @@
         { x: 20, z: -12, rot: -Math.PI / 4 },
         { x: -22, z: -8, rot: Math.PI / 4 }
       ];
-
-      seatingAreas.forEach((area) => {
-        const bench = createDoubleBench(area.x, area.z, area.rot);
-        seatingBenches.push(bench);
-        lobbyGroup.add(bench.group);
-      });
 
       // Parkour Portal
       const portalFrameGeo = new THREE.TorusGeometry(4, 0.3, 16, 100);
@@ -815,8 +747,6 @@
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
       isChatting = false;
-      isSitting = false;
-      currentSeat = null;
       setCursorVisibility();
       requestGameplayPointerLock();
       switchMap("lobby");
@@ -929,46 +859,6 @@
       }
     }
 
-    function toggleSeat() {
-      if (!isPlaying || isChatting) return;
-
-      if (isSitting) {
-        if (currentSeat && currentSeat.bench) {
-          const exitDir = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), currentSeat.bench.group.rotation.y);
-          player.group.position.add(exitDir.multiplyScalar(0.9));
-          player.group.position.y = Math.max(player.group.position.y, 0.5);
-        }
-        isSitting = false;
-        currentSeat = null;
-        velocity.set(0, 0, 0);
-        moveForward = moveBackward = moveLeft = moveRight = false;
-        canJump = true;
-        return;
-      }
-
-      let selectedSeat = null;
-      let shortestDistance = SIT_RANGE;
-
-      seatingBenches.forEach((bench) => {
-        bench.anchors.forEach((anchor) => {
-          const dist = player.group.position.distanceTo(anchor);
-          if (dist < shortestDistance) {
-            shortestDistance = dist;
-            selectedSeat = { bench, anchor };
-          }
-        });
-      });
-
-      if (!selectedSeat) return;
-
-      currentSeat = selectedSeat;
-      isSitting = true;
-      player.group.position.copy(selectedSeat.anchor);
-      player.group.rotation.y = selectedSeat.bench.group.rotation.y + Math.PI;
-      velocity.set(0, 0, 0);
-      moveForward = moveBackward = moveLeft = moveRight = false;
-      canJump = false;
-    }
 
     function setupControls() {
       document.addEventListener('pointerlockchange', () => {
@@ -1005,7 +895,6 @@
           case 'KeyE':
             if (e.target && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) break;
             e.preventDefault();
-            toggleSeat();
             break;
         }
       });
@@ -1255,13 +1144,11 @@
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if (isPlaying) {
-        if (isSitting) {
-          velocity.set(0, 0, 0);
-          if (currentSeat) {
-            player.group.position.copy(currentSeat.anchor);
-            player.group.position.y = currentSeat.anchor.y;
-          }
-        } else {
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+        velocity.y -= 26.0 * delta;
+
+        const moveDir = new THREE.Vector3();
           velocity.x -= velocity.x * 10.0 * delta;
           velocity.z -= velocity.z * 10.0 * delta;
           velocity.y -= 26.0 * delta;
@@ -1339,37 +1226,8 @@
               delta: delta
             });
           }
-        }
 
-        if (isSitting) {
-          animateAvatarLimbs(playerLimbs, false, delta, currentEmote, true);
-        }
-
-        if (interactionHintEl) {
-          if (!isChatting && !isSitting && currentMap === 'lobby') {
-            let nearbySeat = null;
-            seatingBenches.forEach((bench) => {
-              bench.anchors.forEach((anchor) => {
-                if (!nearbySeat && player.group.position.distanceTo(anchor) < SIT_RANGE + 0.6) {
-                  nearbySeat = anchor;
-                }
-              });
-            });
-            if (nearbySeat) {
-              interactionHintEl.textContent = 'Bankta oturmak için E';
-              interactionHintEl.style.display = 'block';
-            } else {
-              interactionHintEl.style.display = 'none';
-            }
-          } else if (isSitting) {
-            interactionHintEl.textContent = 'Banktan kalkmak için E';
-            interactionHintEl.style.display = 'block';
-          } else {
-            interactionHintEl.style.display = 'none';
-          }
-        }
-
-        cameraPivot.position.copy(player.group.position);
+          cameraPivot.position.copy(player.group.position);
         cameraPivot.position.y += 1.2;
 
         camera.position.x = cameraPivot.position.x + cameraDistance * Math.sin(cameraYaw) * Math.cos(cameraPitch);
