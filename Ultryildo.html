@@ -224,6 +224,7 @@
     let isPlaying = false;
     let isChatting = false;
     let isMobile = false;
+    let pointerLocked = false;
 
     let currentMap = "lobby";
     let lobbyGroup, gameGroup;
@@ -744,7 +745,9 @@
     function startGame() {
       document.getElementById('start-screen').style.display = 'none';
       isPlaying = true;
-      document.body.style.cursor = 'none';
+      isChatting = false;
+      setCursorVisibility();
+      requestGameplayPointerLock();
       switchMap("lobby");
     }
 
@@ -829,11 +832,39 @@
       emoteTimer = 3.0;
     }
 
+    function setCursorVisibility() {
+      if (!isPlaying || isMobile) {
+        document.body.style.cursor = isChatting ? 'text' : 'default';
+        return;
+      }
+
+      if (isChatting) {
+        document.body.style.cursor = 'text';
+      } else {
+        document.body.style.cursor = pointerLocked ? 'none' : 'default';
+      }
+    }
+
+    function requestGameplayPointerLock() {
+      if (!isPlaying || isChatting || isMobile || pointerLocked) return;
+      if (document.body.requestPointerLock) {
+        document.body.requestPointerLock();
+      }
+    }
+
+    function releaseGameplayPointerLock() {
+      if (document.pointerLockElement && document.exitPointerLock) {
+        document.exitPointerLock();
+      }
+    }
+
     function setupControls() {
       document.addEventListener('pointerlockchange', () => {
+        pointerLocked = document.pointerLockElement === document.body;
         if (!isMobile) {
           document.getElementById('start-screen').style.display = isPlaying ? 'none' : 'flex';
         }
+        setCursorVisibility();
       });
 
       document.addEventListener('mousemove', (e) => {
@@ -953,8 +984,18 @@
 
     function setupChat() {
       const input = document.getElementById('chat-input');
-      input.addEventListener('focus', () => { isChatting = true; document.body.style.cursor = 'text'; });
-      input.addEventListener('blur', () => { isChatting = false; document.body.style.cursor = 'none'; });
+      input.addEventListener('focus', () => {
+        isChatting = true;
+        releaseGameplayPointerLock();
+        setCursorVisibility();
+      });
+      input.addEventListener('blur', () => {
+        isChatting = false;
+        if (isPlaying && !isMobile) {
+          requestGameplayPointerLock();
+        }
+        setCursorVisibility();
+      });
       input.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           e.preventDefault();
@@ -976,9 +1017,10 @@
     function openChatInput() {
       const input = document.getElementById('chat-input');
       if (!input) return;
+      releaseGameplayPointerLock();
       input.focus();
       isChatting = true;
-      document.body.style.cursor = 'text';
+      setCursorVisibility();
       if (typeof input.setSelectionRange === 'function') {
         const len = input.value.length;
         input.setSelectionRange(len, len);
