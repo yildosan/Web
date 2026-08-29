@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LifeOS - Mobil Deneyim</title>
+    <!-- Puter.js SDK -->
+    <script src="https://js.puter.com/v2/puter.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Telefon Kasa Tasarımı */
+        .phone-frame {
+            width: 380px;
+            height: 760px;
+            background: #000;
+            border-radius: 45px;
+            border: 12px solid #27272a;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Hoparlör ve Kamera Çentiği */
+        .phone-notch {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 25px;
+            background: #18181b;
+            border-radius: 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+
+        .notch-cam {
+            width: 10px;
+            height: 10px;
+            background: #09090b;
+            border-radius: 50%;
+        }
+
+        /* Ekran */
+        .phone-screen {
+            flex: 1;
+            background: linear-gradient(135deg, #0f172a 100%, #1e293b 0%);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            margin-top: 25px;
+        }
+
+        /* Durum Çubuğu */
+        .status-bar {
+            height: 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        /* Ana Ekran / Uygulama Alanı */
+        .app-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100%);
+            z-index: 20;
+        }
+
+        .screen-view.active {
+            transform: translateY(0);
+        }
+
+        /* Masaüstü Grid */
+        .home-grid {
+            padding: 30px 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px 15px;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .app-icon:active {
+            transform: scale(0.92);
+        }
+
+        .app-icon-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            margin-bottom: 6px;
+        }
+
+        .app-icon-title {
+            color: #f1f5f9;
+            font-size: 11px;
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Widget Alanı */
+        .home-widget {
+            margin: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px;
+            color: #fff;
+        }
+
+        .widget-title {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .widget-content {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        /* Alt Navigasyon Çubuğu (Dock) */
+        .phone-dock {
+            height: 90px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            margin: 0 15px 15px 15px;
+            border-radius: 25px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Uygulama Ortak Üst Çubuğu */
+        .app-header {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: #38bdf8;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- CHAT UYGULAMASI --- */
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s;
+        }
+
+        .chat-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .char-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: #334155;
+        }
+
+        .char-info h4 {
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .char-info p {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        /* Sohbet Ekranı İç Kısmı */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #fff;
+            word-wrap: break-word;
+        }
+
+        .message.user {
+            background: #2563eb;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai {
+            background: #334155;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-area {
+            padding: 12px;
+            background: #1e293b;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 10px 14px;
+            border-radius: 20px;
+            color: #fff;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-input-area button {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* --- GALERİ UYGULAMASI --- */
+        .gallery-grid {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .gallery-img-box {
+            height: 110px;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+        }
+
+        .gallery-caption {
+            padding: 8px;
+            color: #cbd5e1;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        /* --- NOTLAR / TARAYICI UYGULAMALARI --- */
+        .generic-app-content {
+            flex: 1;
+            padding: 20px;
+            color: #fff;
+            overflow-y: auto;
+        }
+
+        .generic-app-content h3 {
+            margin-bottom: 10px;
+            color: #38bdf8;
+        }
+
+        .generic-app-content p {
+            color: #94a3b8;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        /* Ana Ekran Ev Tuşu */
+        .home-indicator {
+            width: 130px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 10px;
+            margin: 8px auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <!-- Telefon Çentiği -->
+        <div class="phone-notch">
+            <div class="notch-cam"></div>
+            <div style="width: 12px; height: 12px; background: #000; border-radius: 50%;"></div>
+        </div>
+
+        <!-- Telefon Ekranı -->
+        <div class="phone-screen">
+            <!-- Durum Çubuğu -->
+            <div class="status-bar">
+                <span id="clock">19:00</span>
+                <span>4G 🔋</span>
+            </div>
+
+            <!-- Uygulama ve Masaüstü Konteynerı -->
+            <div class="app-container">
+                
+                <!-- ANA EKRAN (HOME) -->
+                <div id="home-screen" style="flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div>
+                        <!-- Widget -->
+                        <div class="home-widget">
+                            <div class="widget-title">Günlük Not</div>
+                            <div class="widget-content" id="widget-text">Bugün kahve içmeyi ve arkadaşlarınla buluşmayı unutma!</div>
+                        </div>
+
+                        <!-- Uygulama Grid -->
+                        <div class="home-grid">
+                            <div class="app-icon" onclick="openApp('chat-app')">
+                                <div class="app-icon-img" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">💬</div>
+                                <span class="app-icon-title">Mesajlar</span>
+                            </div>
+                            <div class="app-icon" onclick="openApp('gallery-app')">
+                                <div class="app-icon-img" style="background: linear-gradient(135deg, #db2777, #9d174d);">🖼️</div>
+                                <span class="app-icon-title">Galeri</span>
+                            </div>
+                            <div class="app-icon" onclick="openApp('notes-app')">
+                                <div class="app-icon-img" style="background: linear-gradient(135deg, #d97706, #b45309);">📝</div>
+                                <span class="app-icon-title">Notlar</span>
+                            </div>
+                            <div class="app-icon" onclick="openApp('settings-app')">
+                                <div class="app-icon-img" style="background: linear-gradient(135deg, #475569, #334155);">⚙️</div>
+                                <span class="app-icon-title">Ayarlar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dock (Alt Sabit Uygulamalar) -->
+                    <div class="phone-dock">
+                        <div class="app-icon" onclick="openApp('chat-app')">
+                            <div class="app-icon-img" style="width: 50px; height: 50px; font-size: 22px; background: #2563eb;">💬</div>
+                        </div>
+                        <div class="app-icon" onclick="openApp('gallery-app')">
+                            <div class="app-icon-img" style="width: 50px; height: 50px; font-size: 22px; background: #db2777;">🖼️</div>
+                        </div>
+                        <div class="app-icon" onclick="openApp('notes-app')">
+                            <div class="app-icon-img" style="width: 50px; height: 50px; font-size: 22px; background: #d97706;">📝</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. CHAT UYGULAMASI -->
+                <div id="chat-app" class="screen-view">
+                    <div class="app-header">
+                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
+                        <span id="chat-nav-title">Mesajlar</span>
+                    </div>
+                    
+                    <!-- Kişi Seçim Listesi -->
+                    <div id="character-list" class="chat-list">
+                        <div style="color: #94a3b8; font-size: 13px; margin-bottom: 5px;">Sohbet Etmek İstediğin Kişi</div>
+                        
+                        <div class="chat-item" onclick="selectCharacter('barista', 'Deniz (Barista)', '☕', 'Mahallenin samimi kafesinde çalışan, kahve ve müzik tutkunu biri.')">
+                            <div class="char-avatar">☕</div>
+                            <div class="char-info">
+                                <h4>Deniz (Barista)</h4>
+                                <p>Kahve tarifleri ve günlük hayat üzerine sohbet eder.</p>
+                            </div>
+                        </div>
+
+                        <div class="chat-item" onclick="selectCharacter('mechanic', 'Kerem (Usta)', '🔧', 'Arabalarla kafayı bozmuş, esprili ve eli her işe yatan bir tamirci.')">
+                            <div class="char-avatar">🔧</div>
+                            <div class="char-info">
+                                <h4>Kerem (Usta)</h4>
+                                <p>Araçlar ve sokak hikayeleri hakkında konuşur.</p>
+                            </div>
+                        </div>
+
+                        <div class="chat-item" onclick="selectCharacter('artist', 'Elif (Resim Öğrencisi)', '🎨', 'Sanat, tasarım ve sergilerle ilgilenen yaratıcı bir ruh.')">
+                            <div class="char-avatar">🎨</div>
+                            <div class="char-info">
+                                <h4>Elif (Resim Öğrencisi)</h4>
+                                <p>Tasarım, çizim ve ilham kaynaklarından bahseder.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gerçek Sohbet Odası (Başlangıçta gizli) -->
+                    <div id="chat-room" style="display: none; flex: 1; flex-direction: column; height: 100%;">
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Mesajlar buraya gelecek -->
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="user-input" placeholder="Mesaj yaz..." onkeypress="handleKeyPress(event)">
+                            <button onclick="sendMessage()">➤</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. GALERİ UYGULAMASI -->
+                <div id="gallery-app" class="screen-view">
+                    <div class="app-header">
+                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
+                        <span>Galeri</span>
+                    </div>
+                    <div class="gallery-grid">
+                        <div class="gallery-item">
+                            <div class="gallery-img-box">☕</div>
+                            <div class="gallery-caption">Sabah Kahvesi</div>
+                        </div>
+                        <div class="gallery-item">
+                            <div class="gallery-img-box">🚗</div>
+                            <div class="gallery-caption">Haftasonu Gezisi</div>
+                        </div>
+                        <div class="gallery-item">
+                            <div class="gallery-img-box">🌇</div>
+                            <div class="gallery-caption">Akşamüstü Manzarası</div>
+                        </div>
+                        <div class="gallery-item">
+                            <div class="gallery-img-box">🎸</div>
+                            <div class="gallery-caption">Gitar Provası</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. NOTLAR UYGULAMASI -->
+                <div id="notes-app" class="screen-view">
+                    <div class="app-header">
+                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
+                        <span>Notlar</span>
+                    </div>
+                    <div class="generic-app-content">
+                        <h3>Yapılacaklar Listesi</h3>
+                        <p>1. Akşam marketten ekmek ve süt al.</p>
+                        <p>2. Yarınki buluşma için saati netleştir.</p>
+                        <p>3. Yeni proje fikirlerini deftere kaydet.</p>
+                    </div>
+                </div>
+
+                <!-- 4. AYARLAR UYGULAMASI -->
+                <div id="settings-app" class="screen-view">
+                    <div class="app-header">
+                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
+                        <span>Ayarlar</span>
+                    </div>
+                    <div class="generic-app-content">
+                        <h3>Telefon Bilgileri</h3>
+                        <p><strong>Model:</strong> LifeOS Pocket</p>
+                        <p><strong>Batarya Sağlığı:</strong> %94</p>
+                        <p><strong>Depolama:</strong> 42 GB / 128 GB</p>
+                        <p style="margin-top:20px; color:#38bdf8;">Sistem kararlı ve güncel.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Alt Ev Tuşu Çubuğu -->
+            <div class="home-indicator" onclick="closeApp()"></div>
+        </div>
+    </div>
+
+    <script>
+        // Saat Güncelleyici
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }, 1000);
+
+        let activeApp = null;
+        let currentCharacter = null;
+        let characterSystemPrompt = "";
+
+        // Uygulama Açma / Kapama Fonksiyonları
+        function openApp(appId) {
+            activeApp = appId;
+            document.getElementById(appId).classList.add('active');
+            
+            if(appId === 'chat-app') {
+                document.getElementById('character-list').style.display = 'flex';
+                document.getElementById('chat-room').style.display = 'none';
+                document.getElementById('chat-nav-title').innerText = 'Mesajlar';
+            }
+        }
+
+        function closeApp() {
+            if (activeApp) {
+                document.getElementById(activeApp).classList.remove('active');
+                activeApp = null;
+            }
+        }
+
+        // Karakter Seçimi ve Sohbet Odasına Geçiş
+        function selectCharacter(id, name, avatar, desc) {
+            currentCharacter = { id, name, avatar, desc };
+            document.getElementById('character-list').style.display = 'none';
+            document.getElementById('chat-room').style.display = 'flex';
+            document.getElementById('chat-nav-title').innerText = `${avatar} ${name}`;
+
+            // Normal insan karakter kişilikleri (Puter AI altyapısını arkada kullanacak)
+            if (id === 'barista') {
+                characterSystemPrompt = "Sen Deniz adında mahalledeki bir kafede barista olarak çalışan normal, samimi, sıcakkanlı ve kahve/müzik seven bir insansın. Robot veya yapay zeka olduğunu asla belli etme, tamamen doğal, günlük bir tonda Türkçe sohbet et.";
+            } else if (id === 'mechanic') {
+                characterSystemPrompt = "Sen Kerem adında mahallede oto tamirciliği yapan, samimi, esprili, pratik zekalı normal bir Türk gencisin. Arabalar, günlük esnaf hayatı ve sokaklar hakkında doğal bir dille konuş.";
+            } else if (id === 'artist') {
+                characterSystemPrompt = "Sen Elif adında güzel sanatlar fakültesinde okuyan, resim çizmeyi, sergileri ve estetik şeyleri seven normal bir üniversite öğrencisisin. Samimi, neşeli ve ilham verici bir sohbet tarzın var.";
+            }
+
+            const chatMessages = document.getElementById('chat-messages');
+            chatMessages.innerHTML = `
+                <div class="message ai">Selam! ${desc} Naber, nasıl gidiyor?</div>
+            `;
+        }
+
+        // Puter.js AI ile Mesajlaşma
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const text = inputField.value.trim();
+            if (!text) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            
+            chatMessages.innerHTML += `<div class="message user">${escapeHtml(text)}</div>`;
+            inputField.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const loadingId = 'loading-' + Date.now();
+            chatMessages.innerHTML += `<div class="message ai" id="${loadingId}">yazıyor...</div>`;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const promptText = `${characterSystemPrompt}\nKullanıcı: ${text}\nCevabın:`;
+                const response = await puter.ai.chat(promptText);
+                
+                document.getElementById(loadingId).remove();
+                
+                let aiResponseText = "Şu an biraz meşgulüm, sonra yazayım.";
+                if (typeof response === 'string') {
+                    aiResponseText = response;
+                } else if (response && response.message && response.message.content) {
+                    aiResponseText = response.message.content;
+                } else if (response && response.text) {
+                    aiResponseText = response.text;
+                }
+
+                chatMessages.innerHTML += `<div class="message ai">${escapeHtml(aiResponseText)}</div>`;
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                chatMessages.innerHTML += `<div class="message ai">Bağlantıda bir sorun oldu galiba, sonra görüşelim.</div>`;
+            }
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function escapeHtml(string) {
+            return string.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+    </script>
+</body>
+</html>
+
