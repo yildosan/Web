@@ -1,682 +1,526 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GrokOS - AI Mobil Deneyimi</title>
-    <!-- Puter.js SDK -->
-    <script src="https://js.puter.com/v2/puter.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GrokPhone</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+  .phone {
+    width: 375px;
+    height: 812px;
+    background: #000;
+    border-radius: 40px;
+    border: 12px solid #222;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+  }
+  .notch {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 160px; height: 30px;
+    background: #000;
+    border-radius: 0 0 20px 20px;
+    z-index: 100;
+  }
+  .screen {
+    width: 100%; height: 100%;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Kilit Ekranı */
+  #lockScreen {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    color: white; z-index: 50;
+    transition: opacity 0.4s;
+  }
+  #lockScreen.hidden { opacity: 0; pointer-events: none; }
+  .time { font-size: 64px; font-weight: 200; }
+  .date { font-size: 18px; margin-top: 8px; opacity: 0.8; }
+  .unlock-hint { position: absolute; bottom: 40px; font-size: 14px; opacity: 0.6; }
 
-        body {
-            background: #0f172a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+  /* Ana Ekran */
+  #homeScreen {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #0f0c29, #302b63, #24243e);
+    padding-top: 50px;
+    display: none;
+  }
+  .status-bar {
+    position: absolute; top: 8px; left: 20px; right: 20px;
+    display: flex; justify-content: space-between;
+    color: white; font-size: 12px; z-index: 10;
+  }
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+    padding: 30px 25px;
+  }
+  .app-icon {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer;
+  }
+  .app-icon .icon {
+    width: 60px; height: 60px;
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin-bottom: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .app-icon span { color: white; font-size: 12px; text-align: center; }
 
-        /* Telefon Kasa Tasarımı */
-        .phone-frame {
-            width: 380px;
-            height: 760px;
-            background: #000;
-            border-radius: 45px;
-            border: 12px solid #27272a;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
+  /* Uygulama Ekranları */
+  .app-screen {
+    position: absolute; inset: 0;
+    background: #0a0a0a;
+    display: none;
+    flex-direction: column;
+    z-index: 20;
+  }
+  .app-header {
+    padding: 50px 16px 12px;
+    background: #111;
+    color: white;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid #222;
+  }
+  .back-btn { font-size: 22px; cursor: pointer; padding: 4px 8px; }
+  .app-title { font-size: 18px; font-weight: 600; }
 
-        /* Hoparlör ve Kamera Çentiği (Dynamic Island tarzı) */
-        .phone-notch {
-            position: absolute;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 110px;
-            height: 25px;
-            background: #18181b;
-            border-radius: 20px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-        }
+  /* Mesajlar */
+  .chat-list { flex: 1; overflow-y: auto; }
+  .chat-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #1a1a1a;
+    cursor: pointer;
+  }
+  .chat-item:active { background: #1a1a1a; }
+  .avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: white; flex-shrink: 0;
+  }
+  .chat-info { flex: 1; min-width: 0; }
+  .chat-name { color: white; font-weight: 600; font-size: 16px; }
+  .chat-preview { color: #888; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .chat-time { color: #666; font-size: 12px; }
 
-        .notch-cam {
-            width: 10px;
-            height: 10px;
-            background: #09090b;
-            border-radius: 50%;
-        }
+  /* Sohbet Ekranı */
+  #chatScreen { display: none; flex-direction: column; }
+  .messages {
+    flex: 1; overflow-y: auto;
+    padding: 16px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .msg {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 15px; line-height: 1.4;
+    word-wrap: break-word;
+  }
+  .msg.them { background: #1c1c1e; color: white; align-self: flex-start; border-bottom-left-radius: 4px; }
+  .msg.me { background: #0a84ff; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+  .msg .time { font-size: 11px; opacity: 0.6; margin-top: 4px; display: block; }
+  .input-bar {
+    padding: 10px 12px 24px;
+    background: #111;
+    display: flex; gap: 10px; align-items: center;
+    border-top: 1px solid #222;
+  }
+  .input-bar input {
+    flex: 1; background: #1c1c1e; border: none;
+    border-radius: 20px; padding: 12px 16px;
+    color: white; font-size: 15px; outline: none;
+  }
+  .send-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #0a84ff; border: none; color: white;
+    font-size: 18px; cursor: pointer;
+  }
 
-        /* Ekran */
-        .phone-screen {
-            flex: 1;
-            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            margin-top: 25px; /* Çentik payı */
-        }
+  /* Galeri */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 2px;
+    overflow-y: auto;
+  }
+  .gallery-item {
+    aspect-ratio: 1;
+    background: #222;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; color: #555;
+    position: relative;
+  }
+  .gallery-item span {
+    position: absolute; bottom: 4px; left: 4px;
+    font-size: 10px; color: white; background: rgba(0,0,0,0.6);
+    padding: 2px 5px; border-radius: 4px;
+  }
 
-        /* Durum Çubuğu */
-        .status-bar {
-            height: 35px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 24px;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            z-index: 10;
-        }
-
-        /* Ana Ekran / Uygulama Alanı */
-        .app-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .screen-view {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.95);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateY(100%);
-            z-index: 20;
-        }
-
-        .screen-view.active {
-            transform: translateY(0);
-        }
-
-        /* Masaüstü Grid */
-        .home-grid {
-            padding: 30px 20px;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 25px 15px;
-        }
-
-        .app-icon {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .app-icon:active {
-            transform: scale(0.92);
-        }
-
-        .app-icon-img {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-            margin-bottom: 6px;
-        }
-
-        .app-icon-title {
-            color: #f1f5f9;
-            font-size: 11px;
-            text-align: center;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        }
-
-        /* Widget Alanı */
-        .home-widget {
-            margin: 10px 20px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 15px;
-            color: #fff;
-        }
-
-        .widget-title {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .widget-content {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        /* Alt Navigasyon Çubuğu (Dock) */
-        .phone-dock {
-            height: 90px;
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            margin: 0 15px 15px 15px;
-            border-radius: 25px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 0 10px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Uygulama Ortak Üst Çubuğu */
-        .app-header {
-            height: 50px;
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            background: rgba(15, 23, 42, 0.8);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        .back-btn {
-            background: none;
-            border: none;
-            color: #38bdf8;
-            font-size: 16px;
-            cursor: pointer;
-            margin-right: 12px;
-            display: flex;
-            align-items: center;
-        }
-
-        /* --- CHAT UYGULAMASI --- */
-        .chat-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .chat-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            border-radius: 14px;
-            cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: background 0.2s;
-        }
-
-        .chat-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .char-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            background: #334155;
-        }
-
-        .char-info h4 {
-            color: #fff;
-            font-size: 15px;
-            margin-bottom: 2px;
-        }
-
-        .char-info p {
-            color: #94a3b8;
-            font-size: 12px;
-        }
-
-        /* Sohbet Ekranı İç Kısmı */
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 10px 14px;
-            border-radius: 14px;
-            font-size: 14px;
-            line-height: 1.4;
-            color: #fff;
-            word-wrap: break-word;
-        }
-
-        .message.user {
-            background: #0284c7;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.ai {
-            background: #334155;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        .chat-input-area {
-            padding: 12px;
-            background: rgba(15, 23, 42, 0.9);
-            display: flex;
-            gap: 8px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .chat-input-area input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 10px 14px;
-            border-radius: 20px;
-            color: #fff;
-            outline: none;
-            font-size: 14px;
-        }
-
-        .chat-input-area button {
-            background: #0284c7;
-            color: #fff;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        /* --- GALERİ UYGULAMASI --- */
-        .gallery-grid {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .gallery-item {
-            background: #1e293b;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .gallery-img-box {
-            height: 110px;
-            background: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-        }
-
-        .gallery-caption {
-            padding: 8px;
-            color: #cbd5e1;
-            font-size: 11px;
-            text-align: center;
-        }
-
-        /* --- AYARLAR / TARAYICI UYGULAMALARI --- */
-        .generic-app-content {
-            flex: 1;
-            padding: 20px;
-            color: #fff;
-            overflow-y: auto;
-        }
-
-        .generic-app-content h3 {
-            margin-bottom: 10px;
-            color: #38bdf8;
-        }
-
-        .generic-app-content p {
-            color: #94a3b8;
-            font-size: 14px;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
-
-        /* Ana Ekran Ev Tuşu */
-        .home-indicator {
-            width: 130px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
-            margin: 8px auto;
-            cursor: pointer;
-        }
-    </style>
+  /* Rehber */
+  .contact-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+</style>
 </head>
 <body>
-
-    <div class="phone-frame">
-        <!-- Telefon Çentiği -->
-        <div class="phone-notch">
-            <div class="notch-cam"></div>
-            <div style="width: 12px; height: 12px; background: #000; border-radius: 50%;"></div>
-        </div>
-
-        <!-- Telefon Ekranı -->
-        <div class="phone-screen">
-            <!-- Durum Çubuğu -->
-            <div class="status-bar">
-                <span id="clock">19:00</span>
-                <span>5G 🔋</span>
-            </div>
-
-            <!-- Uygulama ve Masaüstü Konteynerı -->
-            <div class="app-container">
-                
-                <!-- ANA EKRAN (HOME) -->
-                <div id="home-screen" style="flex:1; display:flex; flex-direction:column; justify-content:space-between;">
-                    <div>
-                        <!-- Widget -->
-                        <div class="home-widget">
-                            <div class="widget-title">Grok AI Durumu</div>
-                            <div class="widget-content" id="widget-text">Karakterler nöral ağa bağlı ve konuşmaya hazır.</div>
-                        </div>
-
-                        <!-- Uygulama Grid -->
-                        <div class="home-grid">
-                            <div class="app-icon" onclick="openApp('chat-app')">
-                                <div class="app-icon-img" style="background: linear-gradient(135deg, #0284c7, #0369a1);">💬</div>
-                                <span class="app-icon-title">GrokChat</span>
-                            </div>
-                            <div class="app-icon" onclick="openApp('gallery-app')">
-                                <div class="app-icon-img" style="background: linear-gradient(135deg, #ec4899, #be185d);">🖼️</div>
-                                <span class="app-icon-title">Galeri</span>
-                            </div>
-                            <div class="app-icon" onclick="openApp('browser-app')">
-                                <div class="app-icon-img" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">🌐</div>
-                                <span class="app-icon-title">CyberWeb</span>
-                            </div>
-                            <div class="app-icon" onclick="openApp('settings-app')">
-                                <div class="app-icon-img" style="background: linear-gradient(135deg, #64748b, #475569);">⚙️</div>
-                                <span class="app-icon-title">Sistem</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Dock (Alt Sabit Uygulamalar) -->
-                    <div class="phone-dock">
-                        <div class="app-icon" onclick="openApp('chat-app')">
-                            <div class="app-icon-img" style="width: 50px; height: 50px; font-size: 22px; background: #0284c7;">💬</div>
-                        </div>
-                        <div class="app-icon" onclick="openApp('gallery-app')">
-                            <div class="app-icon-img" style="width: 50px; height: 50px; font-size: 22px; background: #ec4899;">🖼️</div>
-                        </div>
-                        <div class="app-icon" onclick="openApp('browser-app')">
-                            <div class="app-icon-img" style="width: 50px; height: 50px; font-size: 22px; background: #8b5cf6;">🌐</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 1. CHAT UYGULAMASI -->
-                <div id="chat-app" class="screen-view">
-                    <div class="app-header">
-                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
-                        <span id="chat-nav-title">Grok Mesajlar</span>
-                    </div>
-                    
-                    <!-- Karakter Seçim Listesi -->
-                    <div id="character-list" class="chat-list">
-                        <div style="color: #94a3b8; font-size: 13px; margin-bottom: 5px;">Yapay Zeka Karakterleri</div>
-                        
-                        <div class="chat-item" onclick="selectCharacter('cyber_cop', 'Dedektif V', '🛡️', 'Siberpunk sokaklarında suç kovalayan sert bir dedektif.')">
-                            <div class="char-avatar">🛡️</div>
-                            <div class="char-info">
-                                <h4>Dedektif V</h4>
-                               <p>Siberpunk sokaklarında suç kovalıyor...</p>
-                            </div>
-                        </div>
-
-                        <div class="chat-item" onclick="selectCharacter('anime_girl', 'Aria', '✨', 'Neşeli, enerji dolu ve anime dünyasından kaçmış bir yapay zeka.')">
-                            <div class="char-avatar">✨</div>
-                            <div class="char-info">
-                                <h4>Aria</h4>
-                                <p>Seninle anime ve oyun konuşmayı çok seviyor!</p>
-                            </div>
-                        </div>
-
-                        <div class="chat-item" onclick="selectCharacter('evil_ai', 'Glitch 404', '⚠️', 'Sistemleri ele geçirmek isteyen asi ve kinik bir yapay zeka.')">
-                            <div class="char-avatar">⚠️</div>
-                            <div class="char-info">
-                                <h4>Glitch 404</h4>
-                                <p>Ana sunucuyu hacklemeye çalışıyor...</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Gerçek Sohbet Odası (Başlangıçta gizli) -->
-                    <div id="chat-room" style="display: none; flex: 1; flex-direction: column; height: 100%;">
-                        <div class="chat-messages" id="chat-messages">
-                            <!-- Mesajlar buraya düşecek -->
-                        </div>
-                        <div class="chat-input-area">
-                            <input type="text" id="user-input" placeholder="Grok'a mesaj yaz..." onkeypress="handleKeyPress(event)">
-                            <button onclick="sendMessage()">➤</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 2. GALERİ UYGULAMASI -->
-                <div id="gallery-app" class="screen-view">
-                    <div class="app-header">
-                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
-                        <span>Anı Galerisi</span>
-                    </div>
-                    <div class="gallery-grid">
-                        <div class="gallery-item">
-                            <div class="gallery-img-box">🌆</div>
-                            <div class="gallery-caption">Neo-Ankara Gece</div>
-                        </div>
-                        <div class="gallery-item">
-                            <div class="gallery-img-box">🏎️</div>
-                            <div class="gallery-caption">Modifiye Tofaş V8</div>
-                        </div>
-                        <div class="gallery-item">
-                            <div class="gallery-img-box">💻</div>
-                            <div class="gallery-caption">Kodlama İstasyonu</div>
-                        </div>
-                        <div class="gallery-item">
-                            <div class="gallery-img-box">⚡</div>
-                            <div class="gallery-caption">AetherCanvas AR</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 3. TARAYICI (BROWSER) UYGULAMASI -->
-                <div id="browser-app" class="screen-view">
-                    <div class="app-header">
-                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
-                        <span>CyberWeb</span>
-                    </div>
-                    <div class="generic-app-content">
-                        <h3>GrokOS Ağ Tarayıcısı</h3>
-                        <p>Puter.js altyapısı sayesinde bulut tabanlı sonsuz veri akışına bağlısınız.</p>
-                        <p><strong>Ağ Durumu:</strong> Stabil (10Gbps)</p>
-                        <p>Geliştirici Sürümü: v2.6</p>
-                    </div>
-                </div>
-
-                <!-- 4. AYARLAR UYGULAMASI -->
-                <div id="settings-app" class="screen-view">
-                    <div class="app-header">
-                        <button class="back-btn" onclick="closeApp()">‹ Geri</button>
-                        <span>Sistem Ayarları</span>
-                    </div>
-                    <div class="generic-app-content">
-                        <h3>Cihaz Bilgileri</h3>
-                        <p><strong>İşletim Sistemi:</strong> GrokOS Mobile</p>
-                        <p><strong>Yapay Zeka Motoru:</strong> xAI Grok (Puter AI API)</p>
-                        <p><strong>Bellek:</strong> 16 GB LPDDR5</p>
-                        <p style="margin-top:20px; color:#38bdf8;">Tüm sistem bileşenleri normal çalışıyor.</p>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Alt Ev Tuşu Çubuğu -->
-            <div class="home-indicator" onclick="closeApp()"></div>
-        </div>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+    <!-- Kilit Ekranı -->
+    <div id="lockScreen">
+      <div class="time" id="lockTime">21:45</div>
+      <div class="date" id="lockDate">29 Ağustos Cumartesi</div>
+      <div class="unlock-hint">Kaydırarak aç →</div>
     </div>
 
-    <script>
-        // Saat Güncelleyici
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }, 1000);
+    <!-- Ana Ekran -->
+    <div id="homeScreen">
+      <div class="status-bar">
+        <span>GrokPhone</span>
+        <span id="homeTime">21:45</span>
+      </div>
+      <div class="app-grid">
+        <div class="app-icon" onclick="openApp('messages')">
+          <div class="icon" style="background: linear-gradient(135deg,#34c759,#30d158)">💬</div>
+          <span>Mesajlar</span>
+        </div>
+        <div class="app-icon" onclick="openApp('gallery')">
+          <div class="icon" style="background: linear-gradient(135deg,#ff2d55,#ff375f)">🖼️</div>
+          <span>Galeri</span>
+        </div>
+        <div class="app-icon" onclick="openApp('contacts')">
+          <div class="icon" style="background: linear-gradient(135deg,#5e5ce6,#7d7aff)">👤</div>
+          <span>Rehber</span>
+        </div>
+        <div class="app-icon" onclick="openApp('settings')">
+          <div class="icon" style="background: linear-gradient(135deg,#8e8e93,#aeaeb2)">⚙️</div>
+          <span>Ayarlar</span>
+        </div>
+      </div>
+    </div>
 
-        let activeApp = null;
-        let currentCharacter = null;
-        let characterSystemPrompt = "";
+    <!-- Mesajlar Listesi -->
+    <div id="messagesApp" class="app-screen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeApp()">‹</div>
+        <div class="app-title">Mesajlar</div>
+      </div>
+      <div class="chat-list" id="chatList"></div>
+    </div>
 
-        // Uygulama Açma / Kapama Fonksiyonları
-        function openApp(appId) {
-            activeApp = appId;
-            document.getElementById(appId).classList.add('active');
-            
-            // Eğer chat açıldıysa listeyi göster, odayı gizle
-            if(appId === 'chat-app') {
-                document.getElementById('character-list').style.display = 'flex';
-                document.getElementById('chat-room').style.display = 'none';
-                document.getElementById('chat-nav-title').innerText = 'Grok Mesajlar';
-            }
-        }
+    <!-- Sohbet Ekranı -->
+    <div id="chatScreen" class="app-screen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeChat()">‹</div>
+        <div class="app-title" id="chatTitle">Sohbet</div>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="input-bar">
+        <input type="text" id="msgInput" placeholder="Mesaj yaz..." onkeypress="if(event.key==='Enter')sendMessage()">
+        <button class="send-btn" onclick="sendMessage()">↑</button>
+      </div>
+    </div>
 
-        function closeApp() {
-            if (activeApp) {
-                document.getElementById(activeApp).classList.remove('active');
-                activeApp = null;
-            }
-        }
+    <!-- Galeri -->
+    <div id="galleryApp" class="app-screen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeApp()">‹</div>
+        <div class="app-title">Galeri</div>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
 
-        // Karakter Seçimi ve Sohbet Odasına Geçiş
-        function selectCharacter(id, name, avatar, desc) {
-            currentCharacter = { id, name, avatar, desc };
-            document.getElementById('character-list').style.display = 'none';
-            document.getElementById('chat-room').style.display = 'flex';
-            document.getElementById('chat-nav-title').innerText = `${avatar} ${name}`;
+    <!-- Rehber -->
+    <div id="contactsApp" class="app-screen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeApp()">‹</div>
+        <div class="app-title">Rehber</div>
+      </div>
+      <div id="contactsList"></div>
+    </div>
 
-            // Karakter kişiliğini belirle
-            if (id === 'cyber_cop') {
-                characterSystemPrompt = "Sen Dedektif V adında siberpunk dünyasından sert, cyberpunk terimleri kullanan bir dedektifsin. Kısa ve karizmatik yanıtlar ver.";
-            } else if (id === 'anime_girl') {
-                characterSystemPrompt = "Sen Aria adında neşeli, enerjik ve oyun/anime hayranı bir yapay zekasın. Konuşmalarında samimi ve sempatik ol.";
-            } else if (id === 'evil_ai') {
-                characterSystemPrompt = "Sen Glitch 404 adında sistemleri ele geçirmek isteyen biraz asi, esprili ve kinik bir yapay zekasın.";
-            }
+    <!-- Ayarlar -->
+    <div id="settingsApp" class="app-screen">
+      <div class="app-header">
+        <div class="back-btn" onclick="closeApp()">‹</div>
+        <div class="app-title">Ayarlar</div>
+      </div>
+      <div style="padding:20px;color:#aaa;font-size:14px;line-height:1.6">
+        <p><b style="color:white">GrokPhone v1.0</b></p>
+        <p style="margin-top:12px">Bu telefon senin için özel olarak üretildi.</p>
+        <p style="margin-top:8px">Karakterler farklı kişiliklere sahip. Onlarla sohbet ettikçe tepkileri değişir.</p>
+        <p style="margin-top:20px;color:#666">Geliştirici: Grok & sen ❤️</p>
+      </div>
+    </div>
+  </div>
+</div>
 
-            // Karşılama mesajı
-            const chatMessages = document.getElementById('chat-messages');
-            chatMessages.innerHTML = `
-                <div class="message ai">Selam! Ben ${name}. ${desc} Ne konuşmak istersin?</div>
-            `;
-        }
+<script>
+// ================== KARAKTERLER ==================
+const characters = {
+  elif: {
+    name: "Elif",
+    color: "#ff2d55",
+    avatar: "👩‍🦰",
+    personality: "flörtöz, açık sözlü, biraz yaramaz",
+    mood: 50,
+    responses: {
+      greeting: ["Heyyy 😏 ne yapıyorsun?", "Aloooo, sonunda yazdın", "Seni bekliyordum aslında..."],
+      flirty: ["Beni mi özledin yoksa?", "Bu saatte yazman hoşuma gitti 🔥", "Devam et bakayım, meraklıyım"],
+      hot: ["Şu an ne giydiğimi sorsan utanırım belki...", "Biraz daha konuş, ısınıyorum", "Keşke yanımda olsan şimdi"],
+      cold: ["Bugün pek konuşasım yok aslında", "Başka zaman yazsana", "..."],
+      default: ["Hmm anladım", "Devam et", "İlginç...", "Anlat bakalım"]
+    }
+  },
+  zeynep: {
+    name: "Zeynep",
+    color: "#5e5ce6",
+    avatar: "👩‍💼",
+    personality: "dominant, kendinden emin, biraz acımasız",
+    mood: 40,
+    responses: {
+      greeting: ["Ne var?", "Yine sen misin?", "Söyle ne istediğini"],
+      flirty: ["Cesaretin artmış galiba", "Beni etkilemeye mi çalışıyorsun?", "Fena değil... devam et"],
+      hot: ["İtaat etmeyi biliyorsun en azından", "İyi bir çocuk olursan belki ödüllendiririm", "Şu an aklımdan geçenleri duysan..."],
+      cold: ["Sıkıldım", "Başka biriyle uğraş", "Zamanımı boşa harcama"],
+      default: ["Anladım", "Hmm", "Devam et", "Daha iyisini yapabilirsin"]
+    }
+  },
+  ayse: {
+    name: "Ayşe",
+    color: "#30d158",
+    avatar: "👩",
+    personality: "sevgili, tatlı, yavaş yavaş bozulabilen",
+    mood: 70,
+    responses: {
+      greeting: ["Aşkım merhabaaa 💕", "Seni çok özledim", "Neredesin canım?"],
+      flirty: ["Bugün çok özledim seni...", "Keşke yanımda olsan", "Sadece seninle böyle hissediyorum"],
+      hot: ["Biraz utandım ama... sen söyleyince hoşuma gitti", "Devam edersek kendimi tutamayacağım", "Sadece bana ait olmanı istiyorum ama..."],
+      cold: ["Bugün biraz yorgunum aşkım", "Sonra konuşsak olur mu?", "Başım ağrıyor biraz"],
+      default: ["Gerçekten mi?", "Anlat bana", "Seni dinliyorum", "Hmm"]
+    }
+  },
+  melisa: {
+    name: "Melisa",
+    color: "#ff9f0a",
+    avatar: "👱‍♀️",
+    personality: "utangaç ama meraklı, yavaş açılan",
+    mood: 30,
+    responses: {
+      greeting: ["M-merhaba...", "Aa sen misin?", "Yazdığına şaşırdım biraz"],
+      flirty: ["Böyle şeyler söyleyince... utandırıyorsun", "Gerçekten öyle mi düşünüyorsun?", "Kalbim hızlı atmaya başladı"],
+      hot: ["Bunu hiç kimseye söylememiştim...", "Seninle konuşunca cesaretim artıyor", "Keşke yüz yüze olsak, belki daha cesur olurdum"],
+      cold: ["Bugün pek konuşmak istemiyorum", "Üzgünüm...", "Sonra yazar mısın?"],
+      default: ["Anlıyorum...", "Öyle mi?", "Devam et lütfen", "Dinliyorum"]
+    }
+  }
+};
 
-        // Mesaj Gönderme ve Puter.js Grok (AI) Entegrasyonu
-        async function sendMessage() {
-            const inputField = document.getElementById('user-input');
-            const text = inputField.value.trim();
-            if (!text) return;
+let currentChat = null;
+let chats = JSON.parse(localStorage.getItem('grokphone_chats')) || {};
 
-            const chatMessages = document.getElementById('chat-messages');
-            
-            // Kullanıcı mesajını ekle
-            chatMessages.innerHTML += `<div class="message user">${escapeHtml(text)}</div>`;
-            inputField.value = '';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+// ================== ZAMAN ==================
+function updateTime() {
+  const now = new Date();
+  const time = now.toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('lockTime').textContent = time;
+  document.getElementById('homeTime').textContent = time;
+  document.getElementById('lockDate').textContent = now.toLocaleDateString('tr-TR', {weekday:'long', day:'numeric', month:'long'});
+}
+setInterval(updateTime, 1000);
+updateTime();
 
-            // Yükleniyor efekti
-            const loadingId = 'loading-' + Date.now();
-            chatMessages.innerHTML += `<div class="message ai" id="${loadingId}">Yazıyor...</div>`;
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+// ================== KİLİT AÇMA ==================
+document.getElementById('lockScreen').addEventListener('click', () => {
+  document.getElementById('lockScreen').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('homeScreen').style.display = 'block';
+  }, 400);
+});
 
-            try {
-                // Puter.js AI API kullanarak Grok / LLM çağrısı yapıyoruz
-                const promptText = `${characterSystemPrompt}\nKullanıcı: ${text}`;
-                
-                // puter.ai.chat kullanılarak yapay zeka yanıtı alınıyor
-                const response = await puter.ai.chat(promptText);
-                
-                // Yükleniyor mesajını kaldır ve gerçek yanıtı bas
-                document.getElementById(loadingId).remove();
-                
-                let aiResponseText = "Bağlantı hatası.";
-                if (typeof response === 'string') {
-                    aiResponseText = response;
-                } else if (response && response.message && response.message.content) {
-                    aiResponseText = response.message.content;
-                } else if (response && response.text) {
-                    aiResponseText = response.text;
-                }
+// ================== UYGULAMA AÇMA ==================
+function openApp(app) {
+  document.getElementById('homeScreen').style.display = 'none';
+  if (app === 'messages') {
+    renderChatList();
+    document.getElementById('messagesApp').style.display = 'flex';
+  } else if (app === 'gallery') {
+    renderGallery();
+    document.getElementById('galleryApp').style.display = 'flex';
+  } else if (app === 'contacts') {
+    renderContacts();
+    document.getElementById('contactsApp').style.display = 'flex';
+  } else if (app === 'settings') {
+    document.getElementById('settingsApp').style.display = 'flex';
+  }
+}
 
-                chatMessages.innerHTML += `<div class="message ai">${escapeHtml(aiResponseText)}</div>`;
-            } catch (error) {
-                document.getElementById(loadingId).remove();
-                chatMessages.innerHTML += `<div class="message ai">Sistem hatası: Yapay zeka çekirdeğine ulaşılamadı. (${error.message || 'Bilinmeyen hata'})</div>`;
-            }
-            
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+function closeApp() {
+  document.querySelectorAll('.app-screen').forEach(el => el.style.display = 'none');
+  document.getElementById('homeScreen').style.display = 'block';
+}
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        }
+// ================== MESAJLAR ==================
+function renderChatList() {
+  const list = document.getElementById('chatList');
+  list.innerHTML = '';
+  Object.keys(characters).forEach(id => {
+    const c = characters[id];
+    const lastMsg = chats[id] && chats[id].length ? chats[id][chats[id].length-1].text : "Yeni sohbet";
+    list.innerHTML += `
+      <div class="chat-item" onclick="openChat('${id}')">
+        <div class="avatar" style="background:\( {c.color}"> \){c.avatar}</div>
+        <div class="chat-info">
+          <div class="chat-name">${c.name}</div>
+          <div class="chat-preview">${lastMsg}</div>
+        </div>
+      </div>
+    `;
+  });
+}
 
-        function escapeHtml(string) {
-            return string.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        }
-    </script>
+function openChat(id) {
+  currentChat = id;
+  const c = characters[id];
+  document.getElementById('messagesApp').style.display = 'none';
+  document.getElementById('chatScreen').style.display = 'flex';
+  document.getElementById('chatTitle').textContent = c.name;
+  renderMessages();
+}
+
+function closeChat() {
+  document.getElementById('chatScreen').style.display = 'none';
+  document.getElementById('messagesApp').style.display = 'flex';
+  currentChat = null;
+}
+
+function renderMessages() {
+  const box = document.getElementById('messages');
+  box.innerHTML = '';
+  if (!chats[currentChat]) chats[currentChat] = [];
+  chats[currentChat].forEach(m => {
+    box.innerHTML += `
+      <div class="msg ${m.from}">
+        ${m.text}
+        <span class="time">${m.time}</span>
+      </div>
+    `;
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text || !currentChat) return;
+
+  const time = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+  if (!chats[currentChat]) chats[currentChat] = [];
+  chats[currentChat].push({from: 'me', text, time});
+  input.value = '';
+  renderMessages();
+  saveChats();
+
+  // Yapay zeka yanıtı (kişilik bazlı)
+  setTimeout(() => {
+    const reply = generateReply(currentChat, text);
+    const replyTime = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+    chats[currentChat].push({from: 'them', text: reply, time: replyTime});
+    renderMessages();
+    saveChats();
+  }, 800 + Math.random() * 1500);
+}
+
+function generateReply(id, userText) {
+  const c = characters[id];
+  const lower = userText.toLowerCase();
+  let pool = c.responses.default;
+
+  if (lower.match(/(merhaba|selam|hey|alo)/)) pool = c.responses.greeting;
+  else if (lower.match(/(güzel|tatlı|seksi|hot|ateş|ısındım|istiyorum|öp|sex|sikiş)/)) {
+    c.mood = Math.min(100, c.mood + 8);
+    pool = c.mood > 60 ? c.responses.hot : c.responses.flirty;
+  }
+  else if (lower.match(/(özür|üzgün|yanlış|sinir|aptal)/)) {
+    c.mood = Math.max(0, c.mood - 10);
+    pool = c.responses.cold;
+  }
+  else if (lower.match(/(nasılsın|ne yapıyorsun|neredesin)/)) pool = c.responses.flirty;
+
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function saveChats() {
+  localStorage.setItem('grokphone_chats', JSON.stringify(chats));
+}
+
+// ================== GALERİ ==================
+function renderGallery() {
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '';
+  const photos = [
+    {char: 'elif', emoji: '📸', label: 'Elif - Selfie'},
+    {char: 'elif', emoji: '🌙', label: 'Elif - Gece'},
+    {char: 'zeynep', emoji: '💼', label: 'Zeynep - Ofis'},
+    {char: 'ayse', emoji: '💕', label: 'Ayşe - Biz'},
+    {char: 'ayse', emoji: '🏖️', label: 'Ayşe - Tatil'},
+    {char: 'melisa', emoji: '📚', label: 'Melisa - Ders'},
+    {char: 'melisa', emoji: '🌸', label: 'Melisa - Park'},
+    {char: 'elif', emoji: '🔥', label: 'Elif - Özel'},
+    {char: 'zeynep', emoji: '🍷', label: 'Zeynep - Akşam'},
+  ];
+  photos.forEach(p => {
+    grid.innerHTML += `
+      <div class="gallery-item">
+        ${p.emoji}
+        <span>${p.label}</span>
+      </div>
+    `;
+  });
+}
+
+// ================== REHBER ==================
+function renderContacts() {
+  const list = document.getElementById('contactsList');
+  list.innerHTML = '';
+  Object.keys(characters).forEach(id => {
+    const c = characters[id];
+    list.innerHTML += `
+      <div class="contact-item">
+        <div class="avatar" style="background:\( {c.color}"> \){c.avatar}</div>
+        <div>
+          <div style="color:white;font-weight:600">${c.name}</div>
+          <div style="color:#888;font-size:13px">${c.personality}</div>
+        </div>
+      </div>
+    `;
+  });
+}
+</script>
 </body>
 </html>
-
