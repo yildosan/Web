@@ -166,7 +166,12 @@ async function loadModels() {
 
 async function startCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: 'user' },
+    video: {
+      facingMode: 'user',
+      width: { ideal: 480 },
+      height: { ideal: 360 },
+      frameRate: { ideal: 30, max: 30 }
+    },
     audio: false
   });
   videoEl.srcObject = stream;
@@ -187,34 +192,27 @@ function drawEmotionBars(expressions) {
   }).join('');
 }
 
-async function detectLoop() {
-  const detection = await faceapi
-    .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
-    .withFaceLandmarks()
-    .withAgeAndGender()
-    .withFaceExpressions();
+// En son alınan tespit sonucu — render döngüsü bunu her karede yeniden
+// kullanır, ağır modeli her karede çalıştırmaz.
+let lastDetection = null;
+const DETECTION_INTERVAL_MS = 250; // saniyede ~4 kez tespit yeterli
 
+// --- 1) RENDER DÖNGÜSÜ: video + son bilinen overlay'i her karede çizer (hafif) ---
+function renderLoop() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-  const vw = videoEl.videoWidth;
-  const vh = videoEl.videoHeight;
+  const vw = videoEl.videoWidth || 480;
+  const vh = videoEl.videoHeight || 360;
   const scale = Math.max(canvasEl.width / vw, canvasEl.height / vh);
   const dw = vw * scale, dh = vh * scale;
   const dx = (canvasEl.width - dw) / 2;
   const dy = (canvasEl.height - dh) / 2;
   ctx.drawImage(videoEl, dx, dy, dw, dh);
 
-  if (detection) {
-    statusEl.textContent = 'Yüz tespit edildi';
-    panelEl.style.display = 'block';
-
-    // Yüz kutusu ve landmark noktalarını video->canvas dönüşümüne göre çiz
-    const box = detection.detection.box;
-    const toCanvas = (x, y) => ({
-      x: x * scale + dx,
-      y: y * scale + dy
-    });
+  if (lastDetection) {
+    const toCanvas = (x, y) => ({ x: x * scale + dx, y: y * scale + dy });
+    const box = lastDetection.detection.box;
 
     ctx.strokeStyle = '#4f7cff';
     ctx.lineWidth = 2;
@@ -222,29 +220,52 @@ async function detectLoop() {
     ctx.strokeRect(tl.x, tl.y, box.width * scale, box.height * scale);
 
     ctx.fillStyle = '#00e0c6';
-    detection.landmarks.positions.forEach(pt => {
+    lastDetection.landmarks.positions.forEach(pt => {
       const p = toCanvas(pt.x, pt.y);
       ctx.beginPath();
       ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
       ctx.fill();
     });
-
-    // Sonuç paneli
-    const smoothedAge = smoothAge(detection.age);
-    ageVal.textContent = `${Math.round(smoothedAge)} (±4)`;
-
-    const genderLabel = detection.gender === 'male' ? 'Erkek' : 'Kadın';
-    genderVal.textContent = `${genderLabel} (%${Math.round(detection.genderProbability * 100)})`;
-
-    const topEmotion = Object.entries(detection.expressions).sort((a, b) => b[1] - a[1])[0];
-    emoVal.textContent = `${EMOTION_LABELS[topEmotion[0]] || topEmotion[0]} (%${Math.round(topEmotion[1] * 100)})`;
-
-    drawEmotionBars(detection.expressions);
-  } else {
-    statusEl.textContent = 'Yüz aranıyor…';
   }
 
-  requestAnimationFrame(detectLoop);
+  requestAnimationFrame(renderLoop);
+}
+
+// --- 2) DETECTION DÖNGÜSÜ: ağır modeli seyrek ve üst üste binmeden çalıştırır ---
+async function detectLoop() {
+  try {
+    const detection = await faceapi
+      .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 }))
+      .withFaceLandmarks()
+      .withAgeAndGender()
+      .withFaceExpressions();
+
+    if (detection) {
+      lastDetection = detection;
+      statusEl.textContent = 'Yüz tespit edildi';
+      panelEl.style.display = 'block';
+
+      const smoothedAge = smoothAge(detection.age);
+      ageVal.textContent = `${Math.round(smoothedAge)} (±4)`;
+
+      const genderLabel = detection.gender === 'male' ? 'Erkek' : 'Kadın';
+      genderVal.textContent = `${genderLabel} (%${Math.round(detection.genderProbability * 100)})`;
+
+      const topEmotion = Object.entries(detection.expressions).sort((a, b) => b[1] - a[1])[0];
+      emoVal.textContent = `${EMOTION_LABELS[topEmotion[0]] || topEmotion[0]} (%${Math.round(topEmotion[1] * 100)})`;
+
+      drawEmotionBars(detection.expressions);
+    } else {
+      lastDetection = null;
+      statusEl.textContent = 'Yüz aranıyor…';
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    // Bir tespit tamamen bitmeden yenisi başlamaz — cihaz ne kadar hızlıysa
+    // o kadar sık çalışır, ama asla üst üste yığılıp donmaya sebep olmaz.
+    setTimeout(detectLoop, DETECTION_INTERVAL_MS);
+  }
 }
 
 (async function main() {
@@ -252,6 +273,7 @@ async function detectLoop() {
     await loadModels();
     await startCamera();
     loadingEl.style.display = 'none';
+    renderLoop();
     detectLoop();
   } catch (err) {
     loadingEl.innerHTML = `<div style="max-width:320px;text-align:center;padding:0 16px;">
