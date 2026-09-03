@@ -2,11 +2,10 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Canlı Yüz Mesh Haritası</title>
+<title>Yaş / Cinsiyet / Duygu Analizi</title>
 <style>
   html, body {
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     background: #0b0b0f;
     color: #eee;
     font-family: -apple-system, Segoe UI, Roboto, sans-serif;
@@ -18,71 +17,65 @@
     width: 100vw;
     height: 100vh;
   }
-  video {
-    display: none;
-  }
+  video { display: none; }
   canvas {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     object-fit: cover;
-    transform: scaleX(-1); /* ayna görüntüsü */
+    transform: scaleX(-1);
   }
-  #ui {
+  #panel {
     position: absolute;
     top: 12px;
     left: 12px;
     right: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    max-width: 340px;
+    background: rgba(15,15,20,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
     z-index: 10;
-    pointer-events: none;
+    font-size: 13px;
+  }
+  #panel h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: #4f7cff;
+  }
+  .row { display: flex; justify-content: space-between; margin: 4px 0; }
+  .row span:first-child { color: #999; }
+  .row span:last-child { font-weight: 600; }
+  .emo-bar-wrap { margin-top: 10px; }
+  .emo-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+  .emo-label { width: 62px; font-size: 11px; color: #bbb; }
+  .emo-track { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; }
+  .emo-fill { height: 100%; background: linear-gradient(90deg,#4f7cff,#00e0c6); border-radius: 5px; transition: width 0.2s; }
+  .emo-pct { width: 34px; text-align: right; font-size: 11px; color: #999; }
+  #note {
+    margin-top: 10px;
+    font-size: 10.5px;
+    color: #777;
+    line-height: 1.4;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding-top: 8px;
   }
   #status {
-    background: rgba(0,0,0,0.55);
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    backdrop-filter: blur(6px);
-  }
-  #controls {
     position: absolute;
-    bottom: 16px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.55);
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
     z-index: 10;
   }
-  button {
-    pointer-events: all;
-    background: rgba(20,20,26,0.75);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 10px 18px;
-    border-radius: 24px;
-    font-size: 14px;
-    cursor: pointer;
-    backdrop-filter: blur(6px);
-    transition: background 0.2s;
-  }
-  button:hover { background: rgba(60,60,80,0.85); }
-  button.active { background: #4f7cff; border-color: #4f7cff; }
   #loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #0b0b0f;
-    z-index: 20;
-    flex-direction: column;
-    gap: 10px;
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #0b0b0f; z-index: 20;
+    flex-direction: column; gap: 10px;
   }
   .spinner {
     width: 36px; height: 36px;
@@ -100,39 +93,60 @@
   <video id="video" playsinline autoplay muted></video>
   <canvas id="canvas"></canvas>
 
-  <div id="ui">
-    <div id="status">Kamera başlatılıyor…</div>
-  </div>
+  <div id="status">Başlatılıyor…</div>
 
-  <div id="controls">
-    <button id="btnMesh" class="active">Mesh</button>
-    <button id="btnDots">Noktalar</button>
-    <button id="btnContours">Konturlar</button>
-    <button id="btnSwitchCam">Kamera Değiştir</button>
+  <div id="panel" style="display:none;">
+    <h3>Analiz Sonucu</h3>
+    <div class="row"><span>Tahmini Yaş</span><span id="ageVal">–</span></div>
+    <div class="row"><span>Cinsiyet (tahmini)</span><span id="genderVal">–</span></div>
+    <div class="row"><span>Baskın Duygu</span><span id="emoVal">–</span></div>
+    <div class="emo-bar-wrap" id="emoBars"></div>
+    <div id="note">
+      Bu değerler görsel özelliklerden istatistiksel tahmin yapan bir yapay zeka
+      modelinin çıkışıdır; kesin doğruluk taşımaz ve bir kişinin gerçek yaşını,
+      cinsiyet kimliğini veya ruh halini belirlemez. Sadece bilgi/eğlence
+      amaçlıdır.
+    </div>
   </div>
 
   <div id="loading">
     <div class="spinner"></div>
-    <div>Yüz modeli yükleniyor…</div>
+    <div>Yüz analiz modelleri yükleniyor…</div>
   </div>
 </div>
 
-<!-- MediaPipe Face Mesh (tarayıcıda çalışan hazır model) -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
+const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
 const videoEl = document.getElementById('video');
 const canvasEl = document.getElementById('canvas');
 const ctx = canvasEl.getContext('2d');
 const statusEl = document.getElementById('status');
 const loadingEl = document.getElementById('loading');
+const panelEl = document.getElementById('panel');
+const ageVal = document.getElementById('ageVal');
+const genderVal = document.getElementById('genderVal');
+const emoVal = document.getElementById('emoVal');
+const emoBars = document.getElementById('emoBars');
 
-let currentFacingMode = 'user';
-let drawMode = 'mesh'; // 'mesh' | 'dots' | 'contours'
-let camera = null;
-let faceMesh = null;
+const EMOTION_LABELS = {
+  neutral: 'Nötr',
+  happy: 'Mutlu',
+  sad: 'Üzgün',
+  angry: 'Kızgın',
+  fearful: 'Endişeli',
+  disgusted: 'Tiksinmiş',
+  surprised: 'Şaşkın'
+};
+
+// Yaş tahminlerini yumuşatmak için son N okumanın ortalamasını al
+const ageHistory = [];
+function smoothAge(newAge) {
+  ageHistory.push(newAge);
+  if (ageHistory.length > 15) ageHistory.shift();
+  return ageHistory.reduce((a, b) => a + b, 0) / ageHistory.length;
+}
 
 function resizeCanvas() {
   canvasEl.width = window.innerWidth;
@@ -141,125 +155,110 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-function setActiveButton(id) {
-  ['btnMesh', 'btnDots', 'btnContours'].forEach(bid => {
-    document.getElementById(bid).classList.toggle('active', bid === id);
-  });
+async function loadModels() {
+  await Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+    faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
+    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+  ]);
 }
 
-document.getElementById('btnMesh').onclick = () => { drawMode = 'mesh'; setActiveButton('btnMesh'); };
-document.getElementById('btnDots').onclick = () => { drawMode = 'dots'; setActiveButton('btnDots'); };
-document.getElementById('btnContours').onclick = () => { drawMode = 'contours'; setActiveButton('btnContours'); };
-document.getElementById('btnSwitchCam').onclick = () => {
-  currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-  startCamera();
-};
+async function startCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'user' },
+    audio: false
+  });
+  videoEl.srcObject = stream;
+  await videoEl.play();
+}
 
-function onResults(results) {
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0); // önceki frame'den kalan transform'u sıfırla
+function drawEmotionBars(expressions) {
+  const sorted = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
+  emoBars.innerHTML = sorted.map(([key, val]) => {
+    const pct = Math.round(val * 100);
+    const label = EMOTION_LABELS[key] || key;
+    return `
+      <div class="emo-row">
+        <div class="emo-label">${label}</div>
+        <div class="emo-track"><div class="emo-fill" style="width:${pct}%"></div></div>
+        <div class="emo-pct">${pct}%</div>
+      </div>`;
+  }).join('');
+}
+
+async function detectLoop() {
+  const detection = await faceapi
+    .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
+    .withFaceLandmarks()
+    .withAgeAndGender()
+    .withFaceExpressions();
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
-  // Video karesini ölçeklenmiş biçimde çiz
-  const vw = results.image.width;
-  const vh = results.image.height;
+  const vw = videoEl.videoWidth;
+  const vh = videoEl.videoHeight;
   const scale = Math.max(canvasEl.width / vw, canvasEl.height / vh);
-  const dw = vw * scale;
-  const dh = vh * scale;
+  const dw = vw * scale, dh = vh * scale;
   const dx = (canvasEl.width - dw) / 2;
   const dy = (canvasEl.height - dh) / 2;
-  ctx.drawImage(results.image, dx, dy, dw, dh);
+  ctx.drawImage(videoEl, dx, dy, dw, dh);
 
-  if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-    statusEl.textContent = `Yüz tespit edildi (${results.multiFaceLandmarks.length})`;
-    for (const landmarks of results.multiFaceLandmarks) {
-      // ÖNEMLİ: drawConnectors/drawLandmarks normalize koordinatları (0-1)
-      // her zaman ctx.canvas.width/height ile çarpar; ctx.scale/translate'i
-      // görmezden gelir. Bu yüzden koordinatları burada elle, canvas'ın
-      // gerçek boyutuna göre normalize ediyoruz — mesh'in video karesiyle
-      // birebir hizalanmasını sağlayan kısım burası.
-      const remapped = landmarks.map(lm => ({
-        x: (lm.x * vw * scale + dx) / canvasEl.width,
-        y: (lm.y * vh * scale + dy) / canvasEl.height,
-        z: lm.z
-      }));
+  if (detection) {
+    statusEl.textContent = 'Yüz tespit edildi';
+    panelEl.style.display = 'block';
 
-      if (drawMode === 'mesh' || drawMode === 'contours') {
-        window.drawConnectors(ctx, remapped, window.FACEMESH_TESSELATION, {
-          color: 'rgba(79,124,255,0.35)',
-          lineWidth: 0.6
-        });
-      }
-      if (drawMode === 'contours' || drawMode === 'mesh') {
-        window.drawConnectors(ctx, remapped, window.FACEMESH_FACE_OVAL, { color: '#4f7cff', lineWidth: 1.5 });
-        window.drawConnectors(ctx, remapped, window.FACEMESH_LEFT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
-        window.drawConnectors(ctx, remapped, window.FACEMESH_RIGHT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
-        window.drawConnectors(ctx, remapped, window.FACEMESH_LEFT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
-        window.drawConnectors(ctx, remapped, window.FACEMESH_RIGHT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
-        window.drawConnectors(ctx, remapped, window.FACEMESH_LIPS, { color: '#ff6f91', lineWidth: 1.5 });
-      }
-      if (drawMode === 'dots') {
-        window.drawLandmarks(ctx, remapped, {
-          color: '#4f7cff',
-          radius: 0.9
-        });
-      }
-    }
+    // Yüz kutusu ve landmark noktalarını video->canvas dönüşümüne göre çiz
+    const box = detection.detection.box;
+    const toCanvas = (x, y) => ({
+      x: x * scale + dx,
+      y: y * scale + dy
+    });
+
+    ctx.strokeStyle = '#4f7cff';
+    ctx.lineWidth = 2;
+    const tl = toCanvas(box.x, box.y);
+    ctx.strokeRect(tl.x, tl.y, box.width * scale, box.height * scale);
+
+    ctx.fillStyle = '#00e0c6';
+    detection.landmarks.positions.forEach(pt => {
+      const p = toCanvas(pt.x, pt.y);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Sonuç paneli
+    const smoothedAge = smoothAge(detection.age);
+    ageVal.textContent = `${Math.round(smoothedAge)} (±4)`;
+
+    const genderLabel = detection.gender === 'male' ? 'Erkek' : 'Kadın';
+    genderVal.textContent = `${genderLabel} (%${Math.round(detection.genderProbability * 100)})`;
+
+    const topEmotion = Object.entries(detection.expressions).sort((a, b) => b[1] - a[1])[0];
+    emoVal.textContent = `${EMOTION_LABELS[topEmotion[0]] || topEmotion[0]} (%${Math.round(topEmotion[1] * 100)})`;
+
+    drawEmotionBars(detection.expressions);
   } else {
     statusEl.textContent = 'Yüz aranıyor…';
   }
 
-  ctx.restore();
-}
-
-async function initFaceMesh() {
-  faceMesh = new FaceMesh({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
-  });
-  faceMesh.setOptions({
-    maxNumFaces: 1,
-    refineLandmarks: true,
-    minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5
-  });
-  faceMesh.onResults(onResults);
-}
-
-async function startCamera() {
-  if (camera) {
-    camera.stop();
-    camera = null;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacingMode },
-      audio: false
-    });
-    videoEl.srcObject = stream;
-    await videoEl.play();
-
-    camera = new Camera(videoEl, {
-      onFrame: async () => {
-        await faceMesh.send({ image: videoEl });
-      },
-      width: 1280,
-      height: 720
-    });
-    camera.start();
-    loadingEl.style.display = 'none';
-  } catch (err) {
-    statusEl.textContent = 'Kamera erişimi reddedildi veya bulunamadı';
-    loadingEl.innerHTML = `<div style="max-width:320px;text-align:center;padding:0 16px;">
-      Kameraya erişilemedi: ${err.message}<br><br>
-      Lütfen tarayıcı izinlerini kontrol edin ve sayfayı https üzerinden (veya localhost) açtığınızdan emin olun.
-    </div>`;
-  }
+  requestAnimationFrame(detectLoop);
 }
 
 (async function main() {
-  await initFaceMesh();
-  await startCamera();
+  try {
+    await loadModels();
+    await startCamera();
+    loadingEl.style.display = 'none';
+    detectLoop();
+  } catch (err) {
+    loadingEl.innerHTML = `<div style="max-width:320px;text-align:center;padding:0 16px;">
+      Başlatılamadı: ${err.message}<br><br>
+      Kamera izinlerini ve https/localhost üzerinden çalıştığını kontrol edin.
+    </div>`;
+  }
 })();
 </script>
 
