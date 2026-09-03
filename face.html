@@ -157,6 +157,7 @@ document.getElementById('btnSwitchCam').onclick = () => {
 
 function onResults(results) {
   ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // önceki frame'den kalan transform'u sıfırla
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
   // Video karesini ölçeklenmiş biçimde çiz
@@ -172,34 +173,37 @@ function onResults(results) {
   if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
     statusEl.textContent = `Yüz tespit edildi (${results.multiFaceLandmarks.length})`;
     for (const landmarks of results.multiFaceLandmarks) {
-      // Koordinatları çizim alanına dönüştür
-      const scaledLandmarks = landmarks; // drawConnectors kendi içinde canvas boyutunu kullanır
-
-      ctx.save();
-      ctx.translate(dx, dy);
-      ctx.scale(scale, scale);
+      // ÖNEMLİ: drawConnectors/drawLandmarks normalize koordinatları (0-1)
+      // her zaman ctx.canvas.width/height ile çarpar; ctx.scale/translate'i
+      // görmezden gelir. Bu yüzden koordinatları burada elle, canvas'ın
+      // gerçek boyutuna göre normalize ediyoruz — mesh'in video karesiyle
+      // birebir hizalanmasını sağlayan kısım burası.
+      const remapped = landmarks.map(lm => ({
+        x: (lm.x * vw * scale + dx) / canvasEl.width,
+        y: (lm.y * vh * scale + dy) / canvasEl.height,
+        z: lm.z
+      }));
 
       if (drawMode === 'mesh' || drawMode === 'contours') {
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_TESSELATION, {
+        window.drawConnectors(ctx, remapped, window.FACEMESH_TESSELATION, {
           color: 'rgba(79,124,255,0.35)',
           lineWidth: 0.6
         });
       }
       if (drawMode === 'contours' || drawMode === 'mesh') {
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_FACE_OVAL, { color: '#4f7cff', lineWidth: 1.5 });
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_LEFT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_RIGHT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_LEFT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_RIGHT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
-        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_LIPS, { color: '#ff6f91', lineWidth: 1.5 });
+        window.drawConnectors(ctx, remapped, window.FACEMESH_FACE_OVAL, { color: '#4f7cff', lineWidth: 1.5 });
+        window.drawConnectors(ctx, remapped, window.FACEMESH_LEFT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
+        window.drawConnectors(ctx, remapped, window.FACEMESH_RIGHT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
+        window.drawConnectors(ctx, remapped, window.FACEMESH_LEFT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
+        window.drawConnectors(ctx, remapped, window.FACEMESH_RIGHT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
+        window.drawConnectors(ctx, remapped, window.FACEMESH_LIPS, { color: '#ff6f91', lineWidth: 1.5 });
       }
       if (drawMode === 'dots') {
-        window.drawLandmarks(ctx, scaledLandmarks, {
+        window.drawLandmarks(ctx, remapped, {
           color: '#4f7cff',
           radius: 0.9
         });
       }
-      ctx.restore();
     }
   } else {
     statusEl.textContent = 'Yüz aranıyor…';
