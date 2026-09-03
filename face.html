@@ -1,114 +1,263 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Otomatik Analiz Terminali</title>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils"></script>
-  <style>
-    body { margin: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; cursor: crosshair; }
-    #output_canvas { width: 100vw; height: 100vh; object-fit: cover; transform: scaleX(-1); }
-    #input_video { display: none; }
-    
-    #hud-display {
-      position: absolute; top: 30px; right: 30px; color: #00FF00;
-      background: rgba(0, 30, 0, 0.7); padding: 15px; border-right: 4px solid #00FF00;
-      font-size: 14px; z-index: 999; pointer-events: none; min-width: 200px;
-    }
-    .alarm-mode { color: #FF0000 !important; border-color: #FF0000 !important; box-shadow: 0 0 20px rgba(255,0,0,0.5); }
-  </style>
+<meta charset="UTF-8">
+<title>Canlı Yüz Mesh Haritası</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0b0b0f;
+    color: #eee;
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+  #container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+  video {
+    display: none;
+  }
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* ayna görüntüsü */
+  }
+  #ui {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #status {
+    background: rgba(0,0,0,0.55);
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    backdrop-filter: blur(6px);
+  }
+  #controls {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 10;
+  }
+  button {
+    pointer-events: all;
+    background: rgba(20,20,26,0.75);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 10px 18px;
+    border-radius: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    transition: background 0.2s;
+  }
+  button:hover { background: rgba(60,60,80,0.85); }
+  button.active { background: #4f7cff; border-color: #4f7cff; }
+  #loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0b0b0f;
+    z-index: 20;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #4f7cff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
-<body onclick="initAudio()"> <div id="hud-display">SİSTEM AKTİF Ediliyor...</div>
-  <video id="input_video" playsinline></video>
-  <canvas id="output_canvas"></canvas>
+<body>
 
-  <script type="module">
-    let audioCtx = null;
+<div id="container">
+  <video id="video" playsinline autoplay muted></video>
+  <canvas id="canvas"></canvas>
 
-    // Ses motorunu aktifleştirme (Kullanıcı ekrana ilk dokunduğunda çalışır)
-    window.initAudio = function() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        console.log("Ses motoru hazır.");
+  <div id="ui">
+    <div id="status">Kamera başlatılıyor…</div>
+  </div>
+
+  <div id="controls">
+    <button id="btnMesh" class="active">Mesh</button>
+    <button id="btnDots">Noktalar</button>
+    <button id="btnContours">Konturlar</button>
+    <button id="btnSwitchCam">Kamera Değiştir</button>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Yüz modeli yükleniyor…</div>
+  </div>
+</div>
+
+<!-- MediaPipe Face Mesh (tarayıcıda çalışan hazır model) -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+<script>
+const videoEl = document.getElementById('video');
+const canvasEl = document.getElementById('canvas');
+const ctx = canvasEl.getContext('2d');
+const statusEl = document.getElementById('status');
+const loadingEl = document.getElementById('loading');
+
+let currentFacingMode = 'user';
+let drawMode = 'mesh'; // 'mesh' | 'dots' | 'contours'
+let camera = null;
+let faceMesh = null;
+
+function resizeCanvas() {
+  canvasEl.width = window.innerWidth;
+  canvasEl.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function setActiveButton(id) {
+  ['btnMesh', 'btnDots', 'btnContours'].forEach(bid => {
+    document.getElementById(bid).classList.toggle('active', bid === id);
+  });
+}
+
+document.getElementById('btnMesh').onclick = () => { drawMode = 'mesh'; setActiveButton('btnMesh'); };
+document.getElementById('btnDots').onclick = () => { drawMode = 'dots'; setActiveButton('btnDots'); };
+document.getElementById('btnContours').onclick = () => { drawMode = 'contours'; setActiveButton('btnContours'); };
+document.getElementById('btnSwitchCam').onclick = () => {
+  currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+  startCamera();
+};
+
+function onResults(results) {
+  ctx.save();
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+  // Video karesini ölçeklenmiş biçimde çiz
+  const vw = results.image.width;
+  const vh = results.image.height;
+  const scale = Math.max(canvasEl.width / vw, canvasEl.height / vh);
+  const dw = vw * scale;
+  const dh = vh * scale;
+  const dx = (canvasEl.width - dw) / 2;
+  const dy = (canvasEl.height - dh) / 2;
+  ctx.drawImage(results.image, dx, dy, dw, dh);
+
+  if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+    statusEl.textContent = `Yüz tespit edildi (${results.multiFaceLandmarks.length})`;
+    for (const landmarks of results.multiFaceLandmarks) {
+      // Koordinatları çizim alanına dönüştür
+      const scaledLandmarks = landmarks; // drawConnectors kendi içinde canvas boyutunu kullanır
+
+      ctx.save();
+      ctx.translate(dx, dy);
+      ctx.scale(scale, scale);
+
+      if (drawMode === 'mesh' || drawMode === 'contours') {
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_TESSELATION, {
+          color: 'rgba(79,124,255,0.35)',
+          lineWidth: 0.6
+        });
       }
-    };
-
-    function playBeep() {
-      if (!audioCtx || audioCtx.state === 'suspended') return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(1200, audioCtx.currentTime); // Tiz sinyal
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-    }
-
-    const videoElement = document.getElementById('input_video');
-    const canvasElement = document.getElementById('output_canvas');
-    const canvasCtx = canvasElement.getContext('2d');
-    const hud = document.getElementById('hud-display');
-
-    function onResults(results) {
-      canvasElement.width = videoElement.videoWidth;
-      canvasElement.height = videoElement.videoHeight;
-      
-      canvasCtx.save();
-      canvasCtx.fillStyle = '#000';
-      canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
-
-      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-        const landmarks = results.multiFaceLandmarks[0];
-
-        // Göz Analizi (EAR)
-        const rEye = Math.hypot(landmarks[159].x - landmarks[145].x, landmarks[159].y - landmarks[145].y);
-        const lEye = Math.hypot(landmarks[386].x - landmarks[374].x, landmarks[386].y - landmarks[374].y);
-        const isClosed = (rEye < 0.012 && lEye < 0.012);
-
-        if (isClosed) {
-          playBeep();
-          hud.classList.add('alarm-mode');
-          hud.innerHTML = "[!!! UYARI !!!]<br>GÖZLER KAPALI<br>ALARM ÇALIYOR";
-        } else {
-          hud.classList.remove('alarm-mode');
-          hud.innerHTML = `SAĞ GÖZ: ${rEye < 0.012 ? "KAPALI" : "AÇIK"}<br>SOL GÖZ: ${lEye < 0.012 ? "KAPALI" : "AÇIK"}<br>SİSTEM : TAKİPTE`;
-        }
-
-        const color = isClosed ? "#FF0000" : "#00FF00";
-        
-        // Çizimler
-        drawConnectors(canvasCtx, landmarks, FACEMESH_LIPS, {color: color, lineWidth: 3});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_RIGHT_EYE, {color: color, lineWidth: 2});
-        drawConnectors(canvasCtx, landmarks, FACEMESH_LEFT_EYE, {color: color, lineWidth: 2});
-        
-        // Mesh (Yarı Yoğunluk)
-        canvasCtx.beginPath();
-        canvasCtx.strokeStyle = color + "40";
-        const tess = FACEMESH_TESSELATION;
-        for (let i = 0; i < tess.length; i += 2) { 
-          const s = landmarks[tess[i][0]];
-          const e = landmarks[tess[i][1]];
-          canvasCtx.moveTo(s.x * canvasElement.width, s.y * canvasElement.height);
-          canvasCtx.lineTo(e.x * canvasElement.width, e.y * canvasElement.height);
-        }
-        canvasCtx.stroke();
+      if (drawMode === 'contours' || drawMode === 'mesh') {
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_FACE_OVAL, { color: '#4f7cff', lineWidth: 1.5 });
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_LEFT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_RIGHT_EYE, { color: '#00e0c6', lineWidth: 1.5 });
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_LEFT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_RIGHT_EYEBROW, { color: '#ffd54f', lineWidth: 1.5 });
+        window.drawConnectors(ctx, scaledLandmarks, window.FACEMESH_LIPS, { color: '#ff6f91', lineWidth: 1.5 });
       }
-      canvasCtx.restore();
+      if (drawMode === 'dots') {
+        window.drawLandmarks(ctx, scaledLandmarks, {
+          color: '#4f7cff',
+          radius: 0.9
+        });
+      }
+      ctx.restore();
     }
+  } else {
+    statusEl.textContent = 'Yüz aranıyor…';
+  }
 
-    const faceMesh = new FaceMesh({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
-    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
-    faceMesh.onResults(onResults);
+  ctx.restore();
+}
 
-    const camera = new Camera(videoElement, {
-      onFrame: async () => await faceMesh.send({image: videoElement}),
-      width: 640, height: 480
+async function initFaceMesh() {
+  faceMesh = new FaceMesh({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+  });
+  faceMesh.setOptions({
+    maxNumFaces: 1,
+    refineLandmarks: true,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+  });
+  faceMesh.onResults(onResults);
+}
+
+async function startCamera() {
+  if (camera) {
+    camera.stop();
+    camera = null;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: currentFacingMode },
+      audio: false
+    });
+    videoEl.srcObject = stream;
+    await videoEl.play();
+
+    camera = new Camera(videoEl, {
+      onFrame: async () => {
+        await faceMesh.send({ image: videoEl });
+      },
+      width: 1280,
+      height: 720
     });
     camera.start();
-  </script>
+    loadingEl.style.display = 'none';
+  } catch (err) {
+    statusEl.textContent = 'Kamera erişimi reddedildi veya bulunamadı';
+    loadingEl.innerHTML = `<div style="max-width:320px;text-align:center;padding:0 16px;">
+      Kameraya erişilemedi: ${err.message}<br><br>
+      Lütfen tarayıcı izinlerini kontrol edin ve sayfayı https üzerinden (veya localhost) açtığınızdan emin olun.
+    </div>`;
+  }
+}
+
+(async function main() {
+  await initFaceMesh();
+  await startCamera();
+})();
+</script>
+
 </body>
 </html>
