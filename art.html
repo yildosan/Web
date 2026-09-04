@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rastgele Generatif Desen Oluşturucu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0d0d11;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        .ui-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+    <div class="ui-container">
+        <button id="btn-generate">Yeni Desen Çiz</button>
+        <button id="btn-save">Görseli İndir</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const btnGenerate = document.getElementById('btn-generate');
+        const btnSave = document.getElementById('btn-save');
+
+        let width, height, centerX, centerY;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            centerX = width / 2;
+            centerY = height / 2;
+        }
+
+        window.addEventListener('resize', () => {
+            resize();
+            generatePattern();
+        });
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function getRandomFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function generatePalette() {
+            const baseHue = getRandomInt(0, 360);
+            return {
+                bg: `hsl(${baseHue}, 40%, 5%)`,
+                stroke1: `hsl(${baseHue}, 80%, 60%)`,
+                stroke2: `hsl(${(baseHue + getRandomInt(60, 180)) % 360}, 85%, 65%)`,
+                accent: `hsl(${(baseHue + getRandomInt(120, 240)) % 360}, 90%, 70%)`
+            };
+        }
+
+        function generatePattern() {
+            ctx.clearRect(0, 0, width, height);
+
+            const palette = generatePalette();
+            document.body.style.backgroundColor = palette.bg;
+
+            // Rastgele algoritma tipi seçimi (0 - 3)
+            const mode = getRandomInt(0, 3);
+
+            switch (mode) {
+                case 0:
+                    drawSymmetricSpiro(palette);
+                    break;
+                case 1:
+                    drawFlowingGrid(palette);
+                    break;
+                case 2:
+                    drawRadiatingLines(palette);
+                    break;
+                case 3:
+                    drawGeometricNodes(palette);
+                    break;
+            }
+        }
+
+        // Mod 0: Simetrik Dairesel Spiral
+        function drawSymmetricSpiro(palette) {
+            const symmetry = getRandomInt(6, 24);
+            const radiusStep = getRandomFloat(2, 6);
+            const maxRadius = Math.min(width, height) * 0.45;
+            const angleStep = (Math.PI * 2) / symmetry;
+            const freq = getRandomFloat(1, 8);
+            const amplitude = getRandomFloat(10, 50);
+
+            ctx.lineWidth = getRandomFloat(0.8, 2.5);
+
+            for (let r = 10; r < maxRadius; r += radiusStep) {
+                const progress = r / maxRadius;
+                ctx.strokeStyle = progress < 0.5 ? palette.stroke1 : palette.stroke2;
+
+                ctx.beginPath();
+                for (let i = 0; i < symmetry; i++) {
+                    const baseAngle = i * angleStep;
+                    const offset = Math.sin(r * 0.05 * freq) * amplitude;
+                    const currentRadius = r + offset;
+
+                    const x = centerX + Math.cos(baseAngle + r * 0.01) * currentRadius;
+                    const y = centerY + Math.sin(baseAngle + r * 0.01) * currentRadius;
+
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
+
+        // Mod 1: Akıcı Trigonometrik Izgara
+        function drawFlowingGrid(palette) {
+            const spacing = getRandomInt(20, 50);
+            const cols = Math.ceil(width / spacing) + 1;
+            const rows = Math.ceil(height / spacing) + 1;
+            const freqX = getRandomFloat(0.005, 0.02);
+            const freqY = getRandomFloat(0.005, 0.02);
+            const mult = getRandomFloat(10, 40);
+
+            ctx.lineWidth = getRandomFloat(1, 2);
+
+            for (let i = 0; i < cols; i++) {
+                ctx.beginPath();
+                ctx.strokeStyle = i % 2 === 0 ? palette.stroke1 : palette.accent;
+                for (let j = 0; j < rows; j++) {
+                    const x = i * spacing + Math.sin(j * spacing * freqY) * mult;
+                    const y = j * spacing + Math.cos(i * spacing * freqX) * mult;
+
+                    if (j === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        // Mod 2: Merkezden Yayılan Yapısal Çizgiler
+        function drawRadiatingLines(palette) {
+            const count = getRandomInt(80, 250);
+            const maxR = Math.hypot(width, height) / 2;
+
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i;
+                const segments = getRandomInt(5, 15);
+                let currentR = getRandomFloat(10, 50);
+
+                ctx.beginPath();
+                ctx.strokeStyle = i % 3 === 0 ? palette.accent : (i % 2 === 0 ? palette.stroke1 : palette.stroke2);
+                ctx.lineWidth = getRandomFloat(0.5, 3);
+
+                let x = centerX + Math.cos(angle) * currentR;
+                let y = centerY + Math.sin(angle) * currentR;
+                ctx.moveTo(x, y);
+
+                for (let s = 0; s < segments; s++) {
+                    currentR += (maxR / segments) * getRandomFloat(0.5, 1.2);
+                    const angleOffset = getRandomFloat(-0.2, 0.2);
+                    x = centerX + Math.cos(angle + angleOffset) * currentR;
+                    y = centerY + Math.sin(angle + angleOffset) * currentR;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+        }
+
+        // Mod 3: Geometrik Düğüm Ağı
+        function drawGeometricNodes(palette) {
+            const nodeCount = getRandomInt(40, 90);
+            const nodes = [];
+            const maxDistance = getRandomFloat(100, 220);
+
+            for (let i = 0; i < nodeCount; i++) {
+                nodes.push({
+                    x: getRandomFloat(width * 0.1, width * 0.9),
+                    y: getRandomFloat(height * 0.1, height * 0.9)
+                });
+            }
+
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    const dx = nodes[i].x - nodes[j].x;
+                    const dy = nodes[i].y - nodes[j].y;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist < maxDistance) {
+                        const alpha = 1 - (dist / maxDistance);
+                        ctx.strokeStyle = palette.stroke1;
+                        ctx.globalAlpha = alpha;
+                        ctx.lineWidth = alpha * 2.5;
+
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Görseli kaydetme işlevi
+        btnSave.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = `desen-${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        btnGenerate.addEventListener('click', generatePattern);
+
+        // Başlangıç kurulumu
+        resize();
+        generatePattern();
+    </script>
+</body>
+</html>
