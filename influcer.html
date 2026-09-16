@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nail Studio AI - Instagram Analiz & Öneri Aracı</title>
+  <!-- PuterJS SDK -->
+  <script src="https://js.puter.com/v2/"></script>
+  <!-- Tailwind CSS (Hızlı Tasarım İçin) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+
+  <div class="max-w-3xl mx-auto bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
+      <h1 class="text-2xl font-bold text-pink-400 flex items-center gap-2">
+        💅 Nail Studio AI Audit
+      </h1>
+      <span class="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full border border-slate-600">
+        Puter.js Powered
+      </span>
+    </div>
+
+    <!-- Form Alanı -->
+    <form id="auditForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Instagram Kullanıcı Adı veya Profil Adı</label>
+        <input type="text" id="username" placeholder="@nailstudio_art" required
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Mevcut Biyografi (Bio) Metni</label>
+        <textarea id="bio" rows="2" placeholder="Örn: 📍 Kızılay / Ankara | Randevu için WhatsApp 👇"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-pink-500"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Görsel / Ekran Görüntüsü Yükle (Profil veya Son Gönderi)</label>
+        <input type="file" id="imageInput" accept="image/*"
+          class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-pink-600 file:text-white file:cursor-pointer hover:file:bg-pink-500">
+      </div>
+
+      <button type="submit" id="submitBtn"
+        class="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition duration-200 shadow-lg">
+        Hesabı Analiz Et & Rapor Oluştur
+      </button>
+    </form>
+
+    <!-- Yükleniyor Durumu -->
+    <div id="loading" class="hidden mt-6 text-center py-8">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent"></div>
+      <p class="mt-2 text-slate-400 text-sm">AI Görsel ve Biyografi Verilerini İncelemekte...</p>
+    </div>
+
+    <!-- Sonuç Alanı -->
+    <div id="resultBox" class="hidden mt-6 bg-slate-900 border border-slate-700 rounded-xl p-5">
+      <h2 class="text-xl font-bold text-pink-300 mb-3 border-b border-slate-800 pb-2">📊 Analiz Raporu</h2>
+      <div id="output" class="prose prose-invert max-w-none text-slate-300 space-y-2 whitespace-pre-wrap leading-relaxed text-sm"></div>
+    </div>
+  </div>
+
+  <script>
+    // Görseli Base64 formatına dönüştürme fonksiyonu
+    const fileToBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+
+    document.getElementById('auditForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const bio = document.getElementById('bio').value;
+      const imageFile = document.getElementById('imageInput').files[0];
+
+      const submitBtn = document.getElementById('submitBtn');
+      const loading = document.getElementById('loading');
+      const resultBox = document.getElementById('resultBox');
+      const output = document.getElementById('output');
+
+      submitBtn.disabled = true;
+      loading.classList.remove('hidden');
+      resultBox.classList.add('hidden');
+      output.innerText = "";
+
+      try {
+        let response;
+        
+        // Sektörel Analiz Promptu
+        const promptText = `Sen uzman bir Instagram Büyüme & Estetik Danışmanısın. Özelleştiğin alan Nail Studio (Tırnak Stüdyoları, Protez Tırnak, Nail Art).
+Analiz Edilen Hesap: ${username}
+Mevcut Bio: ${bio || "Belirtilmedi"}
+
+Lütfen şu başlıklar altında net, yapıcı ve aksiyona dönüştürülebilir öneriler sun:
+1. 🎯 **Biyografi ve Dönüşüm Analizi:** (Randevu CTA'sı var mı, konum, net hizmet bilgisi?)
+2. 📸 **Görsel Kalite ve Estetik (Varsa Görsele Göre):** (Işık, tırnak detayları, arka plan uyumu)
+3. 💡 **İçerik ve Reels Önerileri:** (Nail studio için yüksek etkileşim getirecek 3 fikir)
+4. 🏷️ **Hashtag ve Erişim Taktikleri:** (Güzellik ve tırnak sektörü için öneriler)
+
+Yanıtı markdown formatında düzenli ve maddeler halinde ver.`;
+
+        if (imageFile) {
+          // Görsel yüklendiyse Multimodal GPT-4o / Vision analizi yapıyoruz
+          const base64Image = await fileToBase64(imageFile);
+          
+          response = await puter.ai.chat(
+            [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: promptText },
+                  { type: 'image_url', image_url: { url: base64Image } }
+                ]
+              }
+            ],
+            { model: 'gpt-4o' }
+          );
+        } else {
+          // Sadece metin analizi
+          response = await puter.ai.chat(promptText, { model: 'gpt-4o' });
+        }
+
+        // Puter.js yanıtını ekrana yazdırıyoruz
+        output.innerText = response.toString();
+        resultBox.classList.remove('hidden');
+
+      } catch (err) {
+        alert("Analiz sırasında bir hata oluştu: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        loading.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
