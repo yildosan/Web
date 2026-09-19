@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Oluşturucu (Puter.js)</title>
+    <title>Gelişmiş AI Video Oluşturucu (Puter.js)</title>
     <!-- Puter.js CDN -->
     <script src="https://js.puter.com/v2/"></script>
     <style>
@@ -14,6 +14,8 @@
             --accent-hover: #4f46e5;
             --text-color: #f8fafc;
             --border-color: #334155;
+            --success-color: #10b981;
+            --success-hover: #059669;
         }
 
         body {
@@ -28,17 +30,18 @@
 
         .container {
             width: 100%;
-            max-width: 700px;
+            max-width: 800px;
             background: var(--card-bg);
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
         }
 
         h2 {
             margin-top: 0;
             text-align: center;
             color: #e2e8f0;
+            font-size: 1.6rem;
         }
 
         .form-group {
@@ -65,42 +68,91 @@
 
         textarea {
             resize: vertical;
-            height: 100px;
+            height: 90px;
         }
 
-        .preview-container {
-            margin-top: 10px;
-            text-align: center;
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
         }
 
-        .preview-container img {
-            max-width: 100%;
-            max-height: 200px;
+        .preview-item {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
             border-radius: 8px;
-            display: none;
+            overflow: hidden;
             border: 1px solid var(--border-color);
+            background: #0f172a;
+        }
+
+        .preview-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .preview-item .remove-btn:hover {
+            background: rgb(220, 38, 38);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
         }
 
         button {
-            width: 100%;
+            flex: 1;
             padding: 14px;
-            background-color: var(--accent-color);
-            color: white;
             border: none;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
+            color: white;
         }
 
-        button:hover {
+        .btn-generate {
+            background-color: var(--accent-color);
+        }
+        .btn-generate:hover {
             background-color: var(--accent-hover);
         }
-
-        button:disabled {
+        .btn-generate:disabled {
             background-color: #475569;
             cursor: not-allowed;
+        }
+
+        .btn-download {
+            background-color: var(--success-color);
+            display: none;
+        }
+        .btn-download:hover {
+            background-color: var(--success-hover);
         }
 
         #status {
@@ -124,40 +176,74 @@
             background: #000;
             display: none;
             border: 1px solid var(--border-color);
+            margin-bottom: 15px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>AI Video Generator</h2>
+    <h2>Puter.js AI Video Studio</h2>
 
     <!-- Prompt Girdisi -->
     <div class="form-group">
-        <label for="prompt">Prompt (Açıklama):</label>
-        <textarea id="prompt" placeholder="Örn: Kameraya doğru koşan bir kedi, sinematik ışık, yavaş çekim..."></textarea>
+        <label for="prompt">Prompt (Açıklama / Sahne Tasviri):</label>
+        <textarea id="prompt" placeholder="Örn: Kameranın etrafında yumuşak ışıkla döndüğü, sinematik kalitede büyüleyici bir manzara..."></textarea>
     </div>
 
-    <!-- Referans Görsel Yükleme (Opsiyonel) -->
+    <!-- Çoklu Görsel Yükleme -->
     <div class="form-group">
-        <label for="imageInput">Başlangıç Görseli (Opsiyonel - Image to Video):</label>
-        <input type="file" id="imageInput" accept="image/*">
-        <div class="preview-container">
-            <img id="imagePreview" alt="Önizleme">
-        </div>
+        <label for="imageInput">Referans Görseller (İsteğe bağlı - Çoklu Seçebilirsiniz):</label>
+        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div class="preview-grid" id="previewGrid"></div>
     </div>
 
-    <!-- Model Seçimi -->
+    <!-- Tüm Modellerin Listesi (Optgroup ile Kategorize Edilmiş) -->
     <div class="form-group">
-        <label for="modelSelect">Yapay Zeka Modeli:</label>
+        <label for="modelSelect">Yapay Zeka Video Modeli:</label>
         <select id="modelSelect">
-            <option value="bytedance/seedance-1.0-lite">ByteDance Seedance 1.0 Lite (Hızlı & Stabil)</option>
-            <option value="bytedance/seedance-1.0-pro">ByteDance Seedance 1.0 Pro (Yüksek Kalite)</option>
-            <option value="google/veo-3.1-fast">Google Veo 3.1 Fast</option>
+            <!-- Google Veo -->
+            <optgroup label="Google Veo">
+                <option value="google/veo-3.1-lite-generate-preview" selected>Google Veo 3.1 Lite (Önerilen & Hızlı)</option>
+                <option value="google/veo-3.1-fast-generate-preview">Google Veo 3.1 Fast</option>
+                <option value="google/veo-3.1-generate-preview">Google Veo 3.1 Standard</option>
+                <option value="google/veo-2.0">Google Veo 2.0</option>
+            </optgroup>
+            <!-- ByteDance Seedance -->
+            <optgroup label="ByteDance / BytePlus Seedance">
+                <option value="bytedance/seedance-1.0-lite">Seedance 1.0 Lite</option>
+                <option value="bytedance/seedance-1.0-pro">Seedance 1.0 Pro (Yüksek Kalite)</option>
+                <option value="bytedance/seedance-2.0">Seedance 2.0 (Ses Destekli)</option>
+                <option value="bytedance/seedance-2.5">Seedance 2.5 (Çoklu Referans Desteği)</option>
+            </optgroup>
+            <!-- MiniMax -->
+            <optgroup label="MiniMax">
+                <option value="minimax/video-01-director">MiniMax Video-01 Director</option>
+                <option value="minimax/hailuo-02">MiniMax Hailuo-02</option>
+            </optgroup>
+            <!-- Kling AI -->
+            <optgroup label="KwaiVGI Kling">
+                <option value="kwaivgi/kling-2.1-master">Kling 2.1 Master</option>
+                <option value="kwaivgi/kling-2.1-standard">Kling 2.1 Standard</option>
+                <option value="kwaivgi/kling-2.1-pro">Kling 2.1 Pro</option>
+            </optgroup>
+            <!-- Wan-AI -->
+            <optgroup label="Wan-AI">
+                <option value="wan-ai/wan2.7-t2v">Wan 2.7 (Text-to-Video)</option>
+                <option value="wan-ai/wan2.7-i2v">Wan 2.7 (Image-to-Video)</option>
+            </optgroup>
+            <!-- PixVerse -->
+            <optgroup label="PixVerse">
+                <option value="pixverse/pixverse-v5">PixVerse v5</option>
+            </optgroup>
         </select>
     </div>
 
-    <button id="generateBtn" onclick="generateVideo()">Video Oluştur</button>
+    <!-- Butonlar -->
+    <div class="btn-group">
+        <button class="btn-generate" id="generateBtn" onclick="generateVideo()">Video Oluştur</button>
+        <button class="btn-download" id="downloadBtn" onclick="downloadVideo()">Videoyu İndir (MP4)</button>
+    </div>
 
     <div id="status"></div>
 
@@ -167,81 +253,121 @@
 </div>
 
 <script>
-    let base64Image = null;
+    let imageList = [];
+    let generatedVideoUrl = null;
 
-    // Görsel yüklendiğinde Base64 formatına çevirme işlemi
+    // Çoklu dosya seçimi ve önizleme ekleme
     document.getElementById('imageInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files);
+        
+        files.forEach(file => {
             const reader = new FileReader();
             reader.onload = function(event) {
-                base64Image = event.target.result;
-                const preview = document.getElementById('imagePreview');
-                preview.src = base64Image;
-                preview.style.display = 'inline-block';
+                imageList.push(event.target.result);
+                renderPreviews();
             };
             reader.readAsDataURL(file);
-        }
+        });
+
+        e.target.value = ''; // Aynı dosyanın tekrar seçilebilmesi için sıfırlama
     });
+
+    function renderPreviews() {
+        const grid = document.getElementById('previewGrid');
+        grid.innerHTML = '';
+
+        imageList.forEach((src, index) => {
+            const item = document.createElement('div');
+            item.className = 'preview-item';
+
+            const img = document.createElement('img');
+            img.src = src;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '✕';
+            removeBtn.onclick = () => {
+                imageList.splice(index, 1);
+                renderPreviews();
+            };
+
+            item.appendChild(img);
+            item.appendChild(removeBtn);
+            grid.appendChild(item);
+        });
+    }
 
     async function generateVideo() {
         const promptText = document.getElementById('prompt').value.trim();
         const selectedModel = document.getElementById('modelSelect').value;
         const btn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
         const status = document.getElementById('status');
         const videoElement = document.getElementById('outputVideo');
 
         if (!promptText) {
-            alert("Lütfen bir prompt yazın.");
+            alert("Lütfen bir prompt (açıklama) yazın.");
             return;
         }
 
-        // Arayüzü kilitleyip yükleniyor durumunu başlatma
         btn.disabled = true;
+        downloadBtn.style.display = 'none';
         videoElement.style.display = 'none';
         
         let seconds = 0;
         status.textContent = "Sıraya alınıyor ve video işleniyor... (0sn)";
         const timer = setInterval(() => {
             seconds++;
-            status.textContent = `Video oluşturuluyor, lütfen bekleyin... (${seconds}sn)`;
+            status.textContent = `Seçilen model (${selectedModel.split('/')[1]}) ile video oluşturuluyor... (${seconds}sn)`;
         }, 1000);
 
         try {
-            // Puter.js video üretme seçenekleri
             const options = {
                 model: selectedModel
             };
 
-            // Eğer kullanıcı görsel yüklediyse image-to-video parametresi eklenir
-            if (base64Image) {
-                options.input_reference = base64Image;
+            // Görsel yönetimi: 1 görsel varsa input_reference, çoklu ise reference_images veya input_references
+            if (imageList.length === 1) {
+                options.input_reference = imageList[0];
+            } else if (imageList.length > 1) {
+                options.reference_images = imageList;
             }
 
-            // Puter.js txt2vid API çağrısı
+            // Puter.js txt2vid API çağrısı (API anahtarı gerektirmez)
             const resultVideo = await puter.ai.txt2vid(promptText, options);
 
             clearInterval(timer);
             status.textContent = "Video başarıyla tamamlandı!";
 
-            // Video kaynağını ayarlama
             if (typeof resultVideo === 'string') {
-                videoElement.src = resultVideo;
-            } else if (resultVideo.src) {
-                videoElement.src = resultVideo.src;
+                generatedVideoUrl = resultVideo;
+            } else if (resultVideo && resultVideo.src) {
+                generatedVideoUrl = resultVideo.src;
             } else if (resultVideo instanceof HTMLVideoElement) {
-                videoElement.src = resultVideo.src;
+                generatedVideoUrl = resultVideo.src;
             }
 
+            videoElement.src = generatedVideoUrl;
             videoElement.style.display = 'block';
+            downloadBtn.style.display = 'block';
 
         } catch (error) {
             clearInterval(timer);
             console.error("Hata Detayı:", error);
-            status.textContent = "Hata oluştu: " + (error.message || "Video oluşturulamadı.");
+            status.textContent = "Hata oluştu: " + (error.message || "Video oluşturulamadı. Lütfen tekrar deneyin.");
         } finally {
             btn.disabled = false;
         }
+    }
+
+    function downloadVideo() {
+        if (!generatedVideoUrl) return;
+        const a = document.createElement('a');
+        a.href = generatedVideoUrl;
+        a.download = `puter-ai-video-${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 </script>
 
