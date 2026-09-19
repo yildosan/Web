@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Oluşturucu (Puter.js)</title>
+    <!-- Puter.js CDN -->
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        textarea, select, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: white;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .preview-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #94a3b8;
+            min-height: 20px;
+        }
+
+        .output-container {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        video {
+            width: 100%;
+            border-radius: 8px;
+            background: #000;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>AI Video Generator</h2>
+
+    <!-- Prompt Girdisi -->
+    <div class="form-group">
+        <label for="prompt">Prompt (Açıklama):</label>
+        <textarea id="prompt" placeholder="Örn: Kameraya doğru koşan bir kedi, sinematik ışık, yavaş çekim..."></textarea>
+    </div>
+
+    <!-- Referans Görsel Yükleme (Opsiyonel) -->
+    <div class="form-group">
+        <label for="imageInput">Başlangıç Görseli (Opsiyonel - Image to Video):</label>
+        <input type="file" id="imageInput" accept="image/*">
+        <div class="preview-container">
+            <img id="imagePreview" alt="Önizleme">
+        </div>
+    </div>
+
+    <!-- Model Seçimi -->
+    <div class="form-group">
+        <label for="modelSelect">Yapay Zeka Modeli:</label>
+        <select id="modelSelect">
+            <option value="bytedance/seedance-1.0-lite">ByteDance Seedance 1.0 Lite (Hızlı & Stabil)</option>
+            <option value="bytedance/seedance-1.0-pro">ByteDance Seedance 1.0 Pro (Yüksek Kalite)</option>
+            <option value="google/veo-3.1-fast">Google Veo 3.1 Fast</option>
+        </select>
+    </div>
+
+    <button id="generateBtn" onclick="generateVideo()">Video Oluştur</button>
+
+    <div id="status"></div>
+
+    <div class="output-container" id="videoWrapper">
+        <video id="outputVideo" controls autoplay loop></video>
+    </div>
+</div>
+
+<script>
+    let base64Image = null;
+
+    // Görsel yüklendiğinde Base64 formatına çevirme işlemi
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                base64Image = event.target.result;
+                const preview = document.getElementById('imagePreview');
+                preview.src = base64Image;
+                preview.style.display = 'inline-block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    async function generateVideo() {
+        const promptText = document.getElementById('prompt').value.trim();
+        const selectedModel = document.getElementById('modelSelect').value;
+        const btn = document.getElementById('generateBtn');
+        const status = document.getElementById('status');
+        const videoElement = document.getElementById('outputVideo');
+
+        if (!promptText) {
+            alert("Lütfen bir prompt yazın.");
+            return;
+        }
+
+        // Arayüzü kilitleyip yükleniyor durumunu başlatma
+        btn.disabled = true;
+        videoElement.style.display = 'none';
+        
+        let seconds = 0;
+        status.textContent = "Sıraya alınıyor ve video işleniyor... (0sn)";
+        const timer = setInterval(() => {
+            seconds++;
+            status.textContent = `Video oluşturuluyor, lütfen bekleyin... (${seconds}sn)`;
+        }, 1000);
+
+        try {
+            // Puter.js video üretme seçenekleri
+            const options = {
+                model: selectedModel
+            };
+
+            // Eğer kullanıcı görsel yüklediyse image-to-video parametresi eklenir
+            if (base64Image) {
+                options.input_reference = base64Image;
+            }
+
+            // Puter.js txt2vid API çağrısı
+            const resultVideo = await puter.ai.txt2vid(promptText, options);
+
+            clearInterval(timer);
+            status.textContent = "Video başarıyla tamamlandı!";
+
+            // Video kaynağını ayarlama
+            if (typeof resultVideo === 'string') {
+                videoElement.src = resultVideo;
+            } else if (resultVideo.src) {
+                videoElement.src = resultVideo.src;
+            } else if (resultVideo instanceof HTMLVideoElement) {
+                videoElement.src = resultVideo.src;
+            }
+
+            videoElement.style.display = 'block';
+
+        } catch (error) {
+            clearInterval(timer);
+            console.error("Hata Detayı:", error);
+            status.textContent = "Hata oluştu: " + (error.message || "Video oluşturulamadı.");
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
