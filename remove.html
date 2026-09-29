@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yapay Zeka Arka Plan Temizleyici</title>
+    <!-- Tailwind CSS ile şık tasarım -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tarayıcı içi Yapay Zeka Kütüphanesi (Transformers.js) -->
+    <script type="module">
+        import { AutoModel, AutoProcessor, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
+        
+        // Tarayıcı hızlandırması için ayarlar
+        env.allowLocalModels = false;
+
+        let model = null;
+        let processor = null;
+
+        async function loadModel() {
+            const statusText = document.getElementById('status');
+            statusText.innerText = "Yapay zeka modeli yükleniyor (İlk açılışta biraz sürebilir)...";
+            
+            try {
+                // Hafif ve hızlı bir arka plan silme modeli yüklüyoruz
+                model = await AutoModel.from_pretrained('briaai/RMBG-1.4', { device: 'webgpu' }).catch(async () => {
+                    // WebGPU desteklemiyorsa CPU (WASM) kullan
+                    return await AutoModel.from_pretrained('briaai/RMBG-1.4');
+                });
+                processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
+                
+                statusText.innerText = "Yapay zeka hazır! Görsellerinizi seçebilirsiniz.";
+                document.getElementById('fileInput').disabled = false;
+                document.getElementById('selectBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+            } catch (err) {
+                statusText.innerText = "Model yüklenirken hata oluştu: " + err.message;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadModel);
+
+        window.processImages = async function(event) {
+            const files = event.target.files;
+            if (!files.length) return;
+
+            const resultsDiv = document.getElementById('results');
+            const statusText = document.getElementById('status');
+            resultsDiv.innerHTML = '';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                statusText.innerText = `İşleniyor (${i+1}/${files.length}): ${file.name}`;
+
+                try {
+                    // Resmi yükle
+                    const imageUrl = URL.createObjectURL(file);
+                    const image = await loadImage(imageUrl);
+
+                    // AI İşlemi
+                    const { pixel_values } = await processor(image);
+                    const { output } = await model({ input: pixel_values });
+
+                    // Sonucu canvas üzerinden şeffaf PNG'ye çevir
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    const ctx = canvas.getContext('2d');
+
+                    // Maskeyi uygula
+                    const mask = await tensorToCanvas(output, image.width, image.height);
+                    
+                    ctx.drawImage(image, 0, 0);
+                    ctx.globalCompositeOperation = 'destination-in';
+                    ctx.drawImage(mask, 0, 0);
+
+                    // Ekranda göster ve indirme butonu koy
+                    const finalDataUrl = canvas.toDataURL('image/png');
+                    appendResult(file.name, finalDataUrl);
+
+                } catch (err) {
+                    console.error("Hata:", err);
+                }
+            }
+
+            statusText.innerText = "Tüm görseller başarıyla temizlendi!";
+        };
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function tensorToCanvas(tensor, width, height) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            const data = tensor.data;
+            const imgData = ctx.createImageData(width, height);
+            for (let i = 0; i < data.length; i++) {
+                const val = Math.floor(data[i] * 255);
+                imgData.data[i * 4] = val;     // R
+                imgData.data[i * 4 + 1] = val; // G
+                imgData.data[i * 4 + 2] = val; // B
+                imgData.data[i * 4 + 3] = val; // A (Maske)
+            }
+            ctx.putImageData(imgData, 0, 0);
+            return canvas;
+        }
+
+        function appendResult(name, dataUrl) {
+            const resultsDiv = document.getElementById('results');
+            const card = document.createElement('div');
+            card.className = 'bg-slate-800 p-4 rounded-xl flex flex-col items-center border border-slate-700 shadow-lg';
+            
+            card.innerHTML = `
+                <div class="w-32 h-32 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px] rounded-lg flex items-center justify-center p-2 mb-3 overflow-hidden">
+                    <img src="${dataUrl}" class="max-h-full max-w-full object-contain">
+                </div>
+                <span class="text-xs text-slate-300 truncate w-full text-center mb-3">${name}</span>
+                <a href="${dataUrl}" download="temiz_${name.replace(/\.[^/.]+$/, "")}.png" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 rounded-lg text-center font-medium transition-colors">
+                    İndir (PNG)
+                </a>
+            `;
+            resultsDiv.appendChild(card);
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-6">
+
+    <div class="max-w-3xl w-full bg-slate-800/50 border border-slate-700/60 p-8 rounded-2xl shadow-2xl backdrop-blur-md text-center">
+        <h1 class="text-2xl font-bold mb-2 text-indigo-400">Yapay Zeka Arka Plan Temizleyici</h1>
+        <p id="status" class="text-sm text-slate-400 mb-6">Model yükleniyor...</p>
+
+        <!-- Dosya Yükleme Alanı -->
+        <label id="selectBtn" class="opacity-50 cursor-not-allowed inline-block bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-3 rounded-xl transition-all cursor-pointer shadow-lg shadow-indigo-600/30">
+            Görsel / Kare Seç (Çoklu Seçim)
+            <input type="file" id="fileInput" class="hidden" accept="image/*" multiple onchange="processImages(event)" disabled>
+        </label>
+
+        <!-- Sonuçlar -->
+        <div id="results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-8 max-h-[500px] overflow-y-auto p-2">
+            <!-- Temizlenen görseller buraya gelecek -->
+        </div>
+    </div>
+
+</body>
+</html>
