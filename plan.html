@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Siber Güvenlik Test Cihazı - V1 Proje Rehberi</title>
+    <title>ESP32 Siber Güvenlik Test Cihazı - Gelişmiş V1 Rehberi</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #38bdf8;
-            --accent-hover: #0ea5e9;
-            --border-color: #334155;
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --text-color: #f1f5f9;
+            --accent-color: #0ea5e9;
+            --accent-hover: #38bdf8;
+            --border-color: #1e293b;
+            --code-bg: #050811;
         }
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
@@ -25,53 +24,96 @@
             line-height: 1.6;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 10px;
         }
         header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
         }
         header h1 {
             color: var(--accent-color);
-            font-size: 1.5rem;
-            margin-bottom: 5px;
+            font-size: 1.6rem;
+            margin-bottom: 8px;
         }
         header p {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #94a3b8;
         }
         section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
         }
         h2 {
             border-bottom: 2px solid var(--accent-color);
             padding-bottom: 8px;
             margin-top: 0;
             color: var(--accent-color);
-            font-size: 1.2rem;
+            font-size: 1.25rem;
         }
         h3 {
-            font-size: 1rem;
+            font-size: 1.05rem;
             color: var(--accent-color);
+            margin-top: 20px;
         }
-        /* Mobil Uyumlu Tablo Tasarımı */
+        /* Grid ve Kart Tasarımı */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .part-card {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .part-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: #fff;
+        }
+        .part-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1rem;
+            color: #f8fafc;
+        }
+        .part-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .price {
+            color: #34d399;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        /* Tablo Tasarımı */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
             margin-top: 15px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 500px;
+            min-width: 600px;
         }
         th, td {
             border: 1px solid var(--border-color);
@@ -79,69 +121,41 @@
             text-align: left;
             font-size: 0.85rem;
         }
-        th {
-            background-color: #0f172a;
-        }
+        th { background-color: #090d16; }
         a {
             color: var(--accent-color);
             text-decoration: none;
-            word-break: break-all;
         }
         a:hover {
             text-decoration: underline;
             color: var(--accent-hover);
         }
+        /* Kod Kutusu */
         .code-box {
-            background-color: #090d16;
+            background-color: var(--code-bg);
             border: 1px solid var(--border-color);
-            padding: 12px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 10px;
             font-family: 'Courier New', Courier, monospace;
             overflow-x: auto;
             color: #34d399;
             font-size: 0.8rem;
+            line-height: 1.5;
         }
         ul, ol {
             padding-left: 20px;
             font-size: 0.9rem;
         }
-        li {
-            margin-bottom: 8px;
-        }
-        p {
-            font-size: 0.9rem;
-        }
-
-        /* Tablet ve Bilgisayar Ekranları İçin Boyut Ayarları */
+        li { margin-bottom: 8px; }
+        
         @media (min-width: 768px) {
-            body {
-                padding: 20px;
-            }
-            .container {
-                padding: 20px;
-            }
-            header h1 {
-                font-size: 2rem;
-            }
-            header p {
-                font-size: 1rem;
-            }
-            section {
-                padding: 25px;
-            }
-            h2 {
-                font-size: 1.4rem;
-            }
-            th, td {
-                padding: 12px;
-                font-size: 0.95rem;
-            }
-            .code-box {
-                font-size: 0.9rem;
-            }
-            ul, ol, p {
-                font-size: 1rem;
-            }
+            body { padding: 20px; }
+            .container { padding: 20px; }
+            header h1 { font-size: 2.2rem; }
+            section { padding: 25px; }
+            h2 { font-size: 1.5rem; }
+            .grid-cards { grid-template-columns: repeat(2, 1fr); }
+            .code-box { font-size: 0.9rem; }
         }
     </style>
 </head>
@@ -150,12 +164,51 @@
 <div class="container">
     <header>
         <h1>ESP32 Taşınabilir Siber Güvenlik Cihazı</h1>
-        <p>Geliştirilmiş V1 Projesi: Malzemeler, Bağlantı Şemaları ve Kurulum Rehberi</p>
+        <p>Gelişmiş V1 Projesi: Görsel Parça Kataloğu, Şemalar ve Komple Yazılım Altyapısı</p>
     </header>
 
-    <!-- Malzeme Listesi -->
+    <!-- Parça Görselleri ve Bilgileri -->
     <section>
-        <h2>1. Malzeme ve Fiyat Listesi</h2>
+        <h2>1. Parça Kataloğu ve Görseller</h2>
+        <div class="grid-cards">
+            <div class="part-card">
+                <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=200" alt="ESP32">
+                <div class="part-info">
+                    <h4>ESP32-38 Pin</h4>
+                    <p>Ana İşlemci (WiFi/BLE)</p>
+                    <span class="price">~350 - 450 TL</span>
+                </div>
+            </div>
+            <div class="part-card">
+                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=200" alt="OLED">
+                <div class="part-info">
+                    <h4>0.96" OLED Ekran</h4>
+                    <p>SSD1306 Grafik Ekran</p>
+                    <span class="price">~100 - 150 TL</span>
+                </div>
+            </div>
+            <div class="part-card">
+                <img src="https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=200" alt="SD Kart">
+                <div class="part-info">
+                    <h4>MicroSD Modülü</h4>
+                    <p>Log ve Paket Kayıt Birimi</p>
+                    <span class="price">~40 - 70 TL</span>
+                </div>
+            </div>
+            <div class="part-card">
+                <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=200" alt="Joystick">
+                <div class="part-info">
+                    <h4>5 Yönlü Joystick</h4>
+                    <p>Menü Kontrol Birimi</p>
+                    <span class="price">~50 - 90 TL</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Maliyet Tablosu ve Linkler -->
+    <section>
+        <h2>2. Malzeme ve Fiyat Tablosu</h2>
         <div class="table-responsive">
             <table>
                 <thead>
@@ -198,12 +251,6 @@
                         <td>~80 - 120 TL</td>
                     </tr>
                     <tr>
-                        <td><strong>Buzzer & RGB LED</strong></td>
-                        <td>Sesli ve ışıklı uyarılar</td>
-                        <td><a href="https://www.robotistan.com/aktif-buzzer-modulu" target="_blank">Robotistan</a></td>
-                        <td>~20 - 40 TL</td>
-                    </tr>
-                    <tr>
                         <td><strong>Güç Kaynağı</strong></td>
                         <td>Powerbank (USB 5V)</td>
                         <td>Mevcut (Evdeki Powerbank)</td>
@@ -214,47 +261,75 @@
         </div>
     </section>
 
-    <!-- Donanım Şeması -->
+    <!-- Bağlantı Şeması -->
     <section>
-        <h2>2. Donanım Bağlantı Şeması (Pinout)</h2>
-        <p>Tüm modüller doğrudan ESP32 kartının <strong>3.3V</strong> ve <strong>GND</strong> hatlarından beslenmelidir.</p>
+        <h2>3. Donanım Bağlantı Şeması (Pinout)</h2>
+        <p>Tüm modüller doğrudan ESP32 kartının <strong>3.3V</strong> ve <strong>GND</strong> hatlarından beslenmelidir (5V bağlamayınız).</p>
         <ul>
-            <li><strong>OLED Ekran (I2C):</strong> SDA -> GPIO 21, SCL -> GPIO 22</li>
-            <li><strong>MicroSD & RFID (SPI Ortak):</strong> MOSI -> GPIO 23, MISO -> GPIO 19, SCK -> GPIO 18</li>
-            <li><strong>SD Kart CS:</strong> GPIO 13 | <strong>RFID SS:</strong> GPIO 5</li>
-            <li><strong>Joystick:</strong> VRX -> GPIO 34, VRY -> GPIO 35, SW -> GPIO 32</li>
+            <li><strong>OLED Ekran (I2C):</strong> SDA -> GPIO 21 | SCL -> GPIO 22</li>
+            <li><strong>MicroSD Kart (SPI):</strong> MOSI -> GPIO 23 | MISO -> GPIO 19 | SCK -> GPIO 18 | CS -> GPIO 13</li>
+            <li><strong>RC522 RFID (SPI):</strong> MOSI -> GPIO 23 | MISO -> GPIO 19 | SCK -> GPIO 18 | SS -> GPIO 5</li>
+            <li><strong>Joystick:</strong> VRX -> GPIO 34 | VRY -> GPIO 35 | SW -> GPIO 32</li>
         </ul>
     </section>
 
-    <!-- Yazılım ve Kod -->
+    <!-- Kodlar -->
     <section>
-        <h2>3. Yazılım Kurulumu ve Firmware</h2>
-        <p>Cihazı aktif bir siber güvenlik aracına dönüştürmek için açık kaynaklı <strong>ESP32 Marauder</strong> yazılımını kullanabilirsiniz.</p>
-        <ol>
-            <li>Tarayıcınız üzerinden <a href="https://dangerousthings.github.io/esp32_marauder/" target="_blank">ESP32 Marauder Web Flasher</a> sayfasına gidin.</li>
-            <li>ESP32 kartınızı USB kablosuyla bilgisayara bağlayın.</li>
-            <li><strong>Connect</strong> butonuna basarak doğru portu seçin ve güncel yazılımı karta yükleyin.</li>
-        </ol>
+        <h2>4. Yazılım ve Kod Altyapısı</h2>
+        <p>Cihazı test etmek ve modüllerin düzgün çalışıp çalışmadığını doğrulamak için aşağıdaki entegre testi kullanabilirsiniz:</p>
         
-        <h3>Örnek Test Kodu (Joystick Okuma Mantığı)</h3>
+        <h3>Tümleşik Test Kodu (Joystick + SD Kart + OLED Kontrol)</h3>
         <div class="code-box">
+#include &lt;Wire.h&gt;<br>
+#include &lt;Adafruit_GFX.h&gt;<br>
+#include &lt;Adafruit_SSD1306.h&gt;<br>
+#include &lt;SPI.h&gt;<br>
+#include &lt;SD.h&gt;<br>
+<br>
+#define SCREEN_WIDTH 128<br>
+#define SCREEN_HEIGHT 64<br>
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);<br>
+<br>
 const int joyX = 34;<br>
 const int joyY = 35;<br>
 const int joySW = 32;<br>
+const int sdCS = 13;<br>
 <br>
 void setup() {<br>
 &nbsp;&nbsp;Serial.begin(115200);<br>
 &nbsp;&nbsp;pinMode(joySW, INPUT_PULLUP);<br>
+<br>
+&nbsp;&nbsp;// OLED Başlatma<br>
+&nbsp;&nbsp;if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Serial.println(F("OLED baslatilamadi!"));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for(;;);<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;display.clearDisplay();<br>
+&nbsp;&nbsp;display.setTextSize(1);<br>
+&nbsp;&nbsp;display.setTextColor(SSD1306_WHITE);<br>
+<br>
+&nbsp;&nbsp;// SD Kart Başlatma<br>
+&nbsp;&nbsp;if (!SD.begin(sdCS)) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Serial.println("SD Kart basarisiz!");<br>
+&nbsp;&nbsp;} else {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Serial.println("SD Kart hazir.");<br>
+&nbsp;&nbsp;}<br>
 }<br>
 <br>
 void loop() {<br>
-&nbsp;&nbsp;int xVal = analogRead(joyX);<br>
-&nbsp;&nbsp;int yVal = analogRead(joyY);<br>
-&nbsp;&nbsp;int swVal = digitalRead(joySW);<br>
-&nbsp;&nbsp;Serial.print("X: "); Serial.print(xVal);<br>
-&nbsp;&nbsp;Serial.print(" | Y: "); Serial.print(yVal);<br>
-&nbsp;&nbsp;Serial.print(" | Buton: "); Serial.println(swVal);<br>
-&nbsp;&nbsp;delay(200);<br>
+&nbsp;&nbsp;int x = analogRead(joyX);<br>
+&nbsp;&nbsp;int y = analogRead(joyY);<br>
+&nbsp;&nbsp;int btn = digitalRead(joySW);<br>
+<br>
+&nbsp;&nbsp;display.clearDisplay();<br>
+&nbsp;&nbsp;display.setCursor(0,0);<br>
+&nbsp;&nbsp;display.println("ESP32 Test Cihazi");<br>
+&nbsp;&nbsp;display.print("Joy X: "); display.println(x);<br>
+&nbsp;&nbsp;display.print("Joy Y: "); display.println(y);<br>
+&nbsp;&nbsp;display.print("Buton: "); display.println(btn == LOW ? "BASILI" : "SERBEST");<br>
+&nbsp;&nbsp;display.display();<br>
+<br>
+&nbsp;&nbsp;delay(150);<br>
 }
         </div>
     </section>
