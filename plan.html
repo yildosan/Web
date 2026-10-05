@@ -13,32 +13,41 @@
             --accent-hover: #0ea5e9;
             --border-color: #334155;
         }
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             line-height: 1.6;
         }
         .container {
             max-width: 900px;
             margin: 0 auto;
+            padding: 10px;
         }
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
         header h1 {
             color: var(--accent-color);
-            margin-bottom: 10px;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        header p {
+            font-size: 0.9rem;
+            color: #94a3b8;
         }
         section {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
+            padding: 15px;
+            margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
         h2 {
@@ -46,16 +55,29 @@
             padding-bottom: 8px;
             margin-top: 0;
             color: var(--accent-color);
+            font-size: 1.2rem;
+        }
+        h3 {
+            font-size: 1rem;
+            color: var(--accent-color);
+        }
+        /* Mobil Uyumlu Tablo Tasarımı */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 15px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            min-width: 500px;
         }
         th, td {
             border: 1px solid var(--border-color);
-            padding: 12px;
+            padding: 10px;
             text-align: left;
+            font-size: 0.85rem;
         }
         th {
             background-color: #0f172a;
@@ -63,6 +85,7 @@
         a {
             color: var(--accent-color);
             text-decoration: none;
+            word-break: break-all;
         }
         a:hover {
             text-decoration: underline;
@@ -71,17 +94,54 @@
         .code-box {
             background-color: #090d16;
             border: 1px solid var(--border-color);
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             font-family: 'Courier New', Courier, monospace;
             overflow-x: auto;
             color: #34d399;
+            font-size: 0.8rem;
         }
-        ul {
+        ul, ol {
             padding-left: 20px;
+            font-size: 0.9rem;
         }
         li {
             margin-bottom: 8px;
+        }
+        p {
+            font-size: 0.9rem;
+        }
+
+        /* Tablet ve Bilgisayar Ekranları İçin Boyut Ayarları */
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            .container {
+                padding: 20px;
+            }
+            header h1 {
+                font-size: 2rem;
+            }
+            header p {
+                font-size: 1rem;
+            }
+            section {
+                padding: 25px;
+            }
+            h2 {
+                font-size: 1.4rem;
+            }
+            th, td {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+            .code-box {
+                font-size: 0.9rem;
+            }
+            ul, ol, p {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -96,60 +156,62 @@
     <!-- Malzeme Listesi -->
     <section>
         <h2>1. Malzeme ve Fiyat Listesi</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Ürün Adı</th>
-                    <th>İşlevi / Açıklama</th>
-                    <th>Mağaza Linki</th>
-                    <th>Tahmini Fiyat</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>ESP32-38 Pin</strong></td>
-                    <td>Ana işlemci (Wi-Fi & Bluetooth)</td>
-                    <td><a href="https://www.robotistan.com/esp32-wifi-bluetooth-gelistirme-karti-38-pin" target="_blank">Robotistan</a></td>
-                    <td>~350 - 450 TL</td>
-                </tr>
-                <tr>
-                    <td><strong>0.96" OLED Ekran</strong></td>
-                    <td>SSD1306 Arayüz ekranı</td>
-                    <td><a href="https://www.robotistan.com/0-96-inc-128x64-oled-i2c-mavi-sari" target="_blank">Robotistan</a></td>
-                    <td>~100 - 150 TL</td>
-                </tr>
-                <tr>
-                    <td><strong>MicroSD Modülü</strong></td>
-                    <td>Log ve veri kayıt birimi</td>
-                    <td><a href="https://www.robotistan.com/microsd-kart-modulu-tf-kart-modulu" target="_blank">Robotistan</a></td>
-                    <td>~40 - 70 TL</td>
-                </tr>
-                <tr>
-                    <td><strong>5 Yönlü Joystick</strong></td>
-                    <td>Menü kontrol modülü</td>
-                    <td><a href="https://www.direnc.net" target="_blank">Direnc.net / Robotistan</a></td>
-                    <td>~50 - 90 TL</td>
-                </tr>
-                <tr>
-                    <td><strong>RC522 RFID Kiti</strong></td>
-                    <td>13.56 MHz kart okuyucu</td>
-                    <td><a href="https://www.robotistan.com/rc522-rfid-kiti-rc522-rfid-nfc-modulu-kart-ve-anahtarlik-kiti-1356" target="_blank">Robotistan</a></td>
-                    <td>~80 - 120 TL</td>
-                </tr>
-                <tr>
-                    <td><strong>Buzzer & RGB LED</strong></td>
-                    <td>Sesli ve ışıklı uyarılar</td>
-                    <td><a href="https://www.robotistan.com/aktif-buzzer-modulu" target="_blank">Robotistan</a></td>
-                    <td>~20 - 40 TL</td>
-                </tr>
-                <tr>
-                    <td><strong>Güç Kaynağı</strong></td>
-                    <td>Powerbank (USB 5V)</td>
-                    <td>Mevcut (Evdeki Powerbank)</td>
-                    <td>0 TL</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ürün Adı</th>
+                        <th>İşlevi / Açıklama</th>
+                        <th>Mağaza Linki</th>
+                        <th>Tahmini Fiyat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>ESP32-38 Pin</strong></td>
+                        <td>Ana işlemci (Wi-Fi & Bluetooth)</td>
+                        <td><a href="https://www.robotistan.com/esp32-wifi-bluetooth-gelistirme-karti-38-pin" target="_blank">Robotistan</a></td>
+                        <td>~350 - 450 TL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>0.96" OLED Ekran</strong></td>
+                        <td>SSD1306 Arayüz ekranı</td>
+                        <td><a href="https://www.robotistan.com/0-96-inc-128x64-oled-i2c-mavi-sari" target="_blank">Robotistan</a></td>
+                        <td>~100 - 150 TL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>MicroSD Modülü</strong></td>
+                        <td>Log ve veri kayıt birimi</td>
+                        <td><a href="https://www.robotistan.com/microsd-kart-modulu-tf-kart-modulu" target="_blank">Robotistan</a></td>
+                        <td>~40 - 70 TL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>5 Yönlü Joystick</strong></td>
+                        <td>Menü kontrol modülü</td>
+                        <td><a href="https://www.direnc.net" target="_blank">Direnc.net / Robotistan</a></td>
+                        <td>~50 - 90 TL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RC522 RFID Kiti</strong></td>
+                        <td>13.56 MHz kart okuyucu</td>
+                        <td><a href="https://www.robotistan.com/rc522-rfid-kiti-rc522-rfid-nfc-modulu-kart-ve-anahtarlik-kiti-1356" target="_blank">Robotistan</a></td>
+                        <td>~80 - 120 TL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Buzzer & RGB LED</strong></td>
+                        <td>Sesli ve ışıklı uyarılar</td>
+                        <td><a href="https://www.robotistan.com/aktif-buzzer-modulu" target="_blank">Robotistan</a></td>
+                        <td>~20 - 40 TL</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Güç Kaynağı</strong></td>
+                        <td>Powerbank (USB 5V)</td>
+                        <td>Mevcut (Evdeki Powerbank)</td>
+                        <td>0 TL</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <!-- Donanım Şeması -->
