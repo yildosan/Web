@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Siber Güvenlik Test Cihazı - V1 Proje Rehberi</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --border-color: #334155;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        header h1 {
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+        section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        h2 {
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            margin-top: 0;
+            color: var(--accent-color);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #0f172a;
+        }
+        a {
+            color: var(--accent-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+            color: var(--accent-hover);
+        }
+        .code-box {
+            background-color: #090d16;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            color: #34d399;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>ESP32 Taşınabilir Siber Güvenlik Cihazı</h1>
+        <p>Geliştirilmiş V1 Projesi: Malzemeler, Bağlantı Şemaları ve Kurulum Rehberi</p>
+    </header>
+
+    <!-- Malzeme Listesi -->
+    <section>
+        <h2>1. Malzeme ve Fiyat Listesi</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ürün Adı</th>
+                    <th>İşlevi / Açıklama</th>
+                    <th>Mağaza Linki</th>
+                    <th>Tahmini Fiyat</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>ESP32-38 Pin</strong></td>
+                    <td>Ana işlemci (Wi-Fi & Bluetooth)</td>
+                    <td><a href="https://www.robotistan.com/esp32-wifi-bluetooth-gelistirme-karti-38-pin" target="_blank">Robotistan</a></td>
+                    <td>~350 - 450 TL</td>
+                </tr>
+                <tr>
+                    <td><strong>0.96" OLED Ekran</strong></td>
+                    <td>SSD1306 Arayüz ekranı</td>
+                    <td><a href="https://www.robotistan.com/0-96-inc-128x64-oled-i2c-mavi-sari" target="_blank">Robotistan</a></td>
+                    <td>~100 - 150 TL</td>
+                </tr>
+                <tr>
+                    <td><strong>MicroSD Modülü</strong></td>
+                    <td>Log ve veri kayıt birimi</td>
+                    <td><a href="https://www.robotistan.com/microsd-kart-modulu-tf-kart-modulu" target="_blank">Robotistan</a></td>
+                    <td>~40 - 70 TL</td>
+                </tr>
+                <tr>
+                    <td><strong>5 Yönlü Joystick</strong></td>
+                    <td>Menü kontrol modülü</td>
+                    <td><a href="https://www.direnc.net" target="_blank">Direnc.net / Robotistan</a></td>
+                    <td>~50 - 90 TL</td>
+                </tr>
+                <tr>
+                    <td><strong>RC522 RFID Kiti</strong></td>
+                    <td>13.56 MHz kart okuyucu</td>
+                    <td><a href="https://www.robotistan.com/rc522-rfid-kiti-rc522-rfid-nfc-modulu-kart-ve-anahtarlik-kiti-1356" target="_blank">Robotistan</a></td>
+                    <td>~80 - 120 TL</td>
+                </tr>
+                <tr>
+                    <td><strong>Buzzer & RGB LED</strong></td>
+                    <td>Sesli ve ışıklı uyarılar</td>
+                    <td><a href="https://www.robotistan.com/aktif-buzzer-modulu" target="_blank">Robotistan</a></td>
+                    <td>~20 - 40 TL</td>
+                </tr>
+                <tr>
+                    <td><strong>Güç Kaynağı</strong></td>
+                    <td>Powerbank (USB 5V)</td>
+                    <td>Mevcut (Evdeki Powerbank)</td>
+                    <td>0 TL</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Donanım Şeması -->
+    <section>
+        <h2>2. Donanım Bağlantı Şeması (Pinout)</h2>
+        <p>Tüm modüller doğrudan ESP32 kartının <strong>3.3V</strong> ve <strong>GND</strong> hatlarından beslenmelidir.</p>
+        <ul>
+            <li><strong>OLED Ekran (I2C):</strong> SDA -> GPIO 21, SCL -> GPIO 22</li>
+            <li><strong>MicroSD & RFID (SPI Ortak):</strong> MOSI -> GPIO 23, MISO -> GPIO 19, SCK -> GPIO 18</li>
+            <li><strong>SD Kart CS:</strong> GPIO 13 | <strong>RFID SS:</strong> GPIO 5</li>
+            <li><strong>Joystick:</strong> VRX -> GPIO 34, VRY -> GPIO 35, SW -> GPIO 32</li>
+        </ul>
+    </section>
+
+    <!-- Yazılım ve Kod -->
+    <section>
+        <h2>3. Yazılım Kurulumu ve Firmware</h2>
+        <p>Cihazı aktif bir siber güvenlik aracına dönüştürmek için açık kaynaklı <strong>ESP32 Marauder</strong> yazılımını kullanabilirsiniz.</p>
+        <ol>
+            <li>Tarayıcınız üzerinden <a href="https://dangerousthings.github.io/esp32_marauder/" target="_blank">ESP32 Marauder Web Flasher</a> sayfasına gidin.</li>
+            <li>ESP32 kartınızı USB kablosuyla bilgisayara bağlayın.</li>
+            <li><strong>Connect</strong> butonuna basarak doğru portu seçin ve güncel yazılımı karta yükleyin.</li>
+        </ol>
+        
+        <h3>Örnek Test Kodu (Joystick Okuma Mantığı)</h3>
+        <div class="code-box">
+const int joyX = 34;<br>
+const int joyY = 35;<br>
+const int joySW = 32;<br>
+<br>
+void setup() {<br>
+&nbsp;&nbsp;Serial.begin(115200);<br>
+&nbsp;&nbsp;pinMode(joySW, INPUT_PULLUP);<br>
+}<br>
+<br>
+void loop() {<br>
+&nbsp;&nbsp;int xVal = analogRead(joyX);<br>
+&nbsp;&nbsp;int yVal = analogRead(joyY);<br>
+&nbsp;&nbsp;int swVal = digitalRead(joySW);<br>
+&nbsp;&nbsp;Serial.print("X: "); Serial.print(xVal);<br>
+&nbsp;&nbsp;Serial.print(" | Y: "); Serial.print(yVal);<br>
+&nbsp;&nbsp;Serial.print(" | Buton: "); Serial.println(swVal);<br>
+&nbsp;&nbsp;delay(200);<br>
+}
+        </div>
+    </section>
+
+</div>
+
+</body>
+</html>
