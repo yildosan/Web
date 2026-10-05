@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Siber Güvenlik Test Cihazı - Gelişmiş V1 Rehberi</title>
+    <title>AION V1 - ESP32 Siber Güvenlik ve Test Cihazı Rehberi</title>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -65,7 +65,6 @@
             color: var(--accent-color);
             margin-top: 20px;
         }
-        /* Grid ve Kart Tasarımı */
         .grid-cards {
             display: grid;
             grid-template-columns: 1fr;
@@ -104,7 +103,6 @@
             font-weight: bold;
             font-size: 0.9rem;
         }
-        /* Tablo Tasarımı */
         .table-responsive {
             width: 100%;
             overflow-x: auto;
@@ -130,7 +128,6 @@
             text-decoration: underline;
             color: var(--accent-hover);
         }
-        /* Kod Kutusu */
         .code-box {
             background-color: var(--code-bg);
             border: 1px solid var(--border-color);
@@ -139,8 +136,9 @@
             font-family: 'Courier New', Courier, monospace;
             overflow-x: auto;
             color: #34d399;
-            font-size: 0.8rem;
-            line-height: 1.5;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            max-height: 400px;
         }
         ul, ol {
             padding-left: 20px;
@@ -155,7 +153,7 @@
             section { padding: 25px; }
             h2 { font-size: 1.5rem; }
             .grid-cards { grid-template-columns: repeat(2, 1fr); }
-            .code-box { font-size: 0.9rem; }
+            .code-box { font-size: 0.85rem; max-height: 500px; }
         }
     </style>
 </head>
@@ -163,8 +161,8 @@
 
 <div class="container">
     <header>
-        <h1>ESP32 Taşınabilir Siber Güvenlik Cihazı</h1>
-        <p>Gelişmiş V1 Projesi: Görsel Parça Kataloğu, Şemalar ve Komple Yazılım Altyapısı</p>
+        <h1>AION V1 - ESP32 Siber Güvenlik Cihazı</h1>
+        <p>Gelişmiş Donanım Kataloğu, Bağlantı Şemaları ve Tam Kaynak Kod Rehberi</p>
     </header>
 
     <!-- Parça Görselleri ve Bilgileri -->
@@ -174,8 +172,8 @@
             <div class="part-card">
                 <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=200" alt="ESP32">
                 <div class="part-info">
-                    <h4>ESP32-38 Pin</h4>
-                    <p>Ana İşlemci (WiFi/BLE)</p>
+                    <h4>ESP32-WROOM-32</h4>
+                    <p>38 Pin Geliştirme Kartı</p>
                     <span class="price">~350 - 450 TL</span>
                 </div>
             </div>
@@ -183,7 +181,7 @@
                 <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=200" alt="OLED">
                 <div class="part-info">
                     <h4>0.96" OLED Ekran</h4>
-                    <p>SSD1306 Grafik Ekran</p>
+                    <p>SSD1306 128x64 I2C</p>
                     <span class="price">~100 - 150 TL</span>
                 </div>
             </div>
@@ -191,7 +189,7 @@
                 <img src="https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=200" alt="SD Kart">
                 <div class="part-info">
                     <h4>MicroSD Modülü</h4>
-                    <p>Log ve Paket Kayıt Birimi</p>
+                    <p>SPI Log ve Veri Kaydı</p>
                     <span class="price">~40 - 70 TL</span>
                 </div>
             </div>
@@ -199,61 +197,67 @@
                 <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=200" alt="Joystick">
                 <div class="part-info">
                     <h4>5 Yönlü Joystick</h4>
-                    <p>Menü Kontrol Birimi</p>
+                    <p>Yön ve Buton Kontrolü</p>
                     <span class="price">~50 - 90 TL</span>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Maliyet Tablosu ve Linkler -->
+    <!-- Malzeme ve Fiyat Tablosu -->
     <section>
-        <h2>2. Malzeme ve Fiyat Tablosu</h2>
+        <h2>2. Donanım ve Fiyat Tablosu</h2>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Ürün Adı</th>
-                        <th>İşlevi / Açıklama</th>
+                        <th>Parça Adı</th>
+                        <th>Donanım / Teknik Detay</th>
                         <th>Mağaza Linki</th>
                         <th>Tahmini Fiyat</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>ESP32-38 Pin</strong></td>
-                        <td>Ana işlemci (Wi-Fi & Bluetooth)</td>
+                        <td><strong>ESP32-WROOM-32</strong></td>
+                        <td>38 Pin Çift Çekirdekli İşlemci</td>
                         <td><a href="https://www.robotistan.com/esp32-wifi-bluetooth-gelistirme-karti-38-pin" target="_blank">Robotistan</a></td>
                         <td>~350 - 450 TL</td>
                     </tr>
                     <tr>
                         <td><strong>0.96" OLED Ekran</strong></td>
-                        <td>SSD1306 Arayüz ekranı</td>
+                        <td>SSD1306 (SDA: 21, SCL: 22)</td>
                         <td><a href="https://www.robotistan.com/0-96-inc-128x64-oled-i2c-mavi-sari" target="_blank">Robotistan</a></td>
                         <td>~100 - 150 TL</td>
                     </tr>
                     <tr>
+                        <td><strong>RC522 RFID</strong></td>
+                        <td>13.56 MHz RFID Okuyucu (SS: 5, RST: 27)</td>
+                        <td><a href="https://www.robotistan.com/rc522-rfid-kiti-rc522-rfid-nfc-modulu-kart-ve-anahtarlik-kiti-1356" target="_blank">Robotistan</a></td>
+                        <td>~80 - 120 TL</td>
+                    </tr>
+                    <tr>
                         <td><strong>MicroSD Modülü</strong></td>
-                        <td>Log ve veri kayıt birimi</td>
+                        <td>SPI Bağlantı (CS: 13)</td>
                         <td><a href="https://www.robotistan.com/microsd-kart-modulu-tf-kart-modulu" target="_blank">Robotistan</a></td>
                         <td>~40 - 70 TL</td>
                     </tr>
                     <tr>
                         <td><strong>5 Yönlü Joystick</strong></td>
-                        <td>Menü kontrol modülü</td>
-                        <td><a href="https://www.direnc.net" target="_blank">Direnc.net / Robotistan</a></td>
+                        <td>UP:32, DOWN:33, LEFT:25, RIGHT:26, CENTER:14</td>
+                        <td><a href="https://www.direnc.net" target="_blank">Direnc.net</a></td>
                         <td>~50 - 90 TL</td>
                     </tr>
                     <tr>
-                        <td><strong>RC522 RFID Kiti</strong></td>
-                        <td>13.56 MHz kart okuyucu</td>
-                        <td><a href="https://www.robotistan.com/rc522-rfid-kiti-rc522-rfid-nfc-modulu-kart-ve-anahtarlik-kiti-1356" target="_blank">Robotistan</a></td>
-                        <td>~80 - 120 TL</td>
+                        <td><strong>Buzzer & RGB LED</strong></td>
+                        <td>Buzzer: 4 | LED R:16, G:17, B:2</td>
+                        <td><a href="https://www.robotistan.com/aktif-buzzer-modulu" target="_blank">Robotistan</a></td>
+                        <td>~20 - 40 TL</td>
                     </tr>
                     <tr>
                         <td><strong>Güç Kaynağı</strong></td>
-                        <td>Powerbank (USB 5V)</td>
-                        <td>Mevcut (Evdeki Powerbank)</td>
+                        <td>Powerbank USB 5V (Şarj devresi gerektirmez)</td>
+                        <td>Mevcut</td>
                         <td>0 TL</td>
                     </tr>
                 </tbody>
@@ -264,73 +268,197 @@
     <!-- Bağlantı Şeması -->
     <section>
         <h2>3. Donanım Bağlantı Şeması (Pinout)</h2>
-        <p>Tüm modüller doğrudan ESP32 kartının <strong>3.3V</strong> ve <strong>GND</strong> hatlarından beslenmelidir (5V bağlamayınız).</p>
+        <p>Tüm modüller doğrudan ESP32 kartının <strong>3.3V</strong> ve <strong>GND</strong> hatlarından beslenmelidir.</p>
         <ul>
             <li><strong>OLED Ekran (I2C):</strong> SDA -> GPIO 21 | SCL -> GPIO 22</li>
-            <li><strong>MicroSD Kart (SPI):</strong> MOSI -> GPIO 23 | MISO -> GPIO 19 | SCK -> GPIO 18 | CS -> GPIO 13</li>
-            <li><strong>RC522 RFID (SPI):</strong> MOSI -> GPIO 23 | MISO -> GPIO 19 | SCK -> GPIO 18 | SS -> GPIO 5</li>
-            <li><strong>Joystick:</strong> VRX -> GPIO 34 | VRY -> GPIO 35 | SW -> GPIO 32</li>
+            <li><strong>SPI Otobüsü (SD & RFID Ortak):</strong> MOSI -> GPIO 23 | MISO -> GPIO 19 | SCK -> GPIO 18</li>
+            <li><strong>MicroSD Kart CS:</strong> GPIO 13</li>
+            <li><strong>RC522 RFID:</strong> SS (SDA) -> GPIO 5 | RST -> GPIO 27</li>
+            <li><strong>5 Yönlü Joystick:</strong> UP -> GPIO 32 | DOWN -> GPIO 33 | LEFT -> GPIO 25 | RIGHT -> GPIO 26 | CENTER -> GPIO 14</li>
+            <li><strong>Buzzer & RGB:</strong> Buzzer -> GPIO 4 | LED R -> GPIO 16 | LED G -> GPIO 17 | LED B -> GPIO 2</li>
         </ul>
     </section>
 
-    <!-- Kodlar -->
+    <!-- Tam Kaynak Kod -->
     <section>
-        <h2>4. Yazılım ve Kod Altyapısı</h2>
-        <p>Cihazı test etmek ve modüllerin düzgün çalışıp çalışmadığını doğrulamak için aşağıdaki entegre testi kullanabilirsiniz:</p>
+        <h2>4. AION V1 Tam Kaynak Kod (Firmware)</h2>
+        <p>Cihazınızı derleyip doğrudan ESP32 kartına yükleyebileceğiniz eksiksiz C++ kaynak kodu:</p>
         
-        <h3>Tümleşik Test Kodu (Joystick + SD Kart + OLED Kontrol)</h3>
         <div class="code-box">
-#include &lt;Wire.h&gt;<br>
-#include &lt;Adafruit_GFX.h&gt;<br>
-#include &lt;Adafruit_SSD1306.h&gt;<br>
-#include &lt;SPI.h&gt;<br>
-#include &lt;SD.h&gt;<br>
-<br>
-#define SCREEN_WIDTH 128<br>
-#define SCREEN_HEIGHT 64<br>
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);<br>
-<br>
-const int joyX = 34;<br>
-const int joyY = 35;<br>
-const int joySW = 32;<br>
-const int sdCS = 13;<br>
-<br>
-void setup() {<br>
-&nbsp;&nbsp;Serial.begin(115200);<br>
-&nbsp;&nbsp;pinMode(joySW, INPUT_PULLUP);<br>
-<br>
-&nbsp;&nbsp;// OLED Başlatma<br>
-&nbsp;&nbsp;if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Serial.println(F("OLED baslatilamadi!"));<br>
-&nbsp;&nbsp;&nbsp;&nbsp;for(;;);<br>
-&nbsp;&nbsp;}<br>
-&nbsp;&nbsp;display.clearDisplay();<br>
-&nbsp;&nbsp;display.setTextSize(1);<br>
-&nbsp;&nbsp;display.setTextColor(SSD1306_WHITE);<br>
-<br>
-&nbsp;&nbsp;// SD Kart Başlatma<br>
-&nbsp;&nbsp;if (!SD.begin(sdCS)) {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Serial.println("SD Kart basarisiz!");<br>
-&nbsp;&nbsp;} else {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Serial.println("SD Kart hazir.");<br>
-&nbsp;&nbsp;}<br>
-}<br>
-<br>
-void loop() {<br>
-&nbsp;&nbsp;int x = analogRead(joyX);<br>
-&nbsp;&nbsp;int y = analogRead(joyY);<br>
-&nbsp;&nbsp;int btn = digitalRead(joySW);<br>
-<br>
-&nbsp;&nbsp;display.clearDisplay();<br>
-&nbsp;&nbsp;display.setCursor(0,0);<br>
-&nbsp;&nbsp;display.println("ESP32 Test Cihazi");<br>
-&nbsp;&nbsp;display.print("Joy X: "); display.println(x);<br>
-&nbsp;&nbsp;display.print("Joy Y: "); display.println(y);<br>
-&nbsp;&nbsp;display.print("Buton: "); display.println(btn == LOW ? "BASILI" : "SERBEST");<br>
-&nbsp;&nbsp;display.display();<br>
-<br>
-&nbsp;&nbsp;delay(150);<br>
+<pre>
+/*
+   ============================================================
+                AION V1 - TEK DOSYA FIRMWARE
+   ============================================================
+*/
+
+#include &lt;Arduino.h&gt;
+#include &lt;Wire.h&gt;
+#include &lt;SPI.h&gt;
+#include &lt;SD.h&gt;
+#include &lt;WiFi.h&gt;
+#include &lt;WebServer.h&gt;
+#include &lt;BLEDevice.h&gt;
+#include &lt;BLEScan.h&gt;
+#include &lt;Adafruit_GFX.h&gt;
+#include &lt;Adafruit_SSD1306.h&gt;
+#include &lt;MFRC522.h&gt;
+#include &lt;Preferences.h&gt;
+#include &lt;time.h&gt;
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_SDA 21
+#define OLED_SCL 22
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &amp;Wire, -1);
+
+#define RFID_SS 5
+#define RFID_RST 27
+MFRC522 rfid(RFID_SS, RFID_RST);
+
+#define SD_CS 13
+bool sdOK = false;
+
+#define JOY_UP     32
+#define JOY_DOWN   33
+#define JOY_LEFT   25
+#define JOY_RIGHT  26
+#define JOY_CENTER 14
+
+#define BUZZER 4
+#define LED_R 16
+#define LED_G 17
+#define LED_B 2
+
+WebServer server(80);
+Preferences preferences;
+
+bool soundEnabled = true;
+bool ledEnabled = true;
+int brightness = 255;
+
+enum MenuState {
+  MAIN_MENU, WIFI_MENU, WIFI_SCAN_RESULT, BLE_MENU, BLE_SCAN_RESULT,
+  RFID_MENU, RFID_RESULT, SD_MENU, SD_FILES, TOOLS_MENU, SYSTEM_MENU,
+  SETTINGS_MENU, CLOCK_SCREEN, STOPWATCH_SCREEN, GAMES_MENU, SNAKE_GAME, WEB_INFO
+};
+
+MenuState currentScreen = MAIN_MENU;
+
+const char* mainMenu[] = {
+  "Wi-Fi", "Bluetooth", "RFID", "MicroSD", "Araclar", "Sistem",
+  "Ayarlar", "Saat", "Kronometre", "Oyunlar", "Web Arayuzu"
+};
+const int MAIN_MENU_COUNT = sizeof(mainMenu) / sizeof(mainMenu[0]);
+int mainMenuIndex = 0;
+int submenuIndex = 0;
+
+unsigned long lastButtonTime = 0;
+const unsigned long buttonDelay = 180;
+
+bool stopwatchRunning = false;
+unsigned long stopwatchStart = 0;
+unsigned long stopwatchElapsed = 0;
+
+int wifiCount = 0;
+struct WiFiInfo { String ssid; int rssi; int channel; String encryption; };
+WiFiInfo wifiList[20];
+
+BLEScan* bleScan;
+struct BLEInfo { String name; String address; int rssi; };
+BLEInfo bleList[20];
+int bleCount = 0;
+
+String lastRFID = "";
+
+void clearScreen() { display.clearDisplay(); display.setTextColor(SSD1306_WHITE); display.setTextSize(1); display.setCursor(0, 0); }
+void showScreen() { display.display(); }
+
+void beep(int duration = 60) {
+  if (!soundEnabled) return;
+  digitalWrite(BUZZER, HIGH); delay(duration); digitalWrite(BUZZER, LOW);
 }
+
+void setRGB(bool r, bool g, bool b) {
+  if (!ledEnabled) { digitalWrite(LED_R, LOW); digitalWrite(LED_G, LOW); digitalWrite(LED_B, LOW); return; }
+  digitalWrite(LED_R, r); digitalWrite(LED_G, g); digitalWrite(LED_B, b);
+}
+
+void bootScreen() {
+  clearScreen();
+  display.setTextSize(2); display.setCursor(20, 10); display.println("AION");
+  display.setTextSize(1); display.setCursor(42, 35); display.println("V1");
+  display.setCursor(25, 50); display.println("Baslatiliyor...");
+  showScreen();
+  setRGB(false, false, true); delay(1500); setRGB(false, false, false);
+}
+
+bool buttonPressed(int pin) {
+  if (digitalRead(pin) == LOW) {
+    if (millis() - lastButtonTime > buttonDelay) { lastButtonTime = millis(); return true; }
+  }
+  return false;
+}
+
+void drawMainMenu() {
+  clearScreen();
+  display.setTextSize(1); display.setCursor(0, 0); display.println("AION V1");
+  display.drawLine(0, 9, 127, 9, SSD1306_WHITE);
+  int start = mainMenuIndex - 2;
+  if (start < 0) start = 0;
+  if (start > MAIN_MENU_COUNT - 5) start = MAIN_MENU_COUNT - 5;
+  if (start < 0) start = 0;
+  for (int i = 0; i < 5; i++) {
+    int index = start + i;
+    if (index >= MAIN_MENU_COUNT) break;
+    display.setCursor(0, 13 + i * 10);
+    if (index == mainMenuIndex) display.print("> "); else display.print("  ");
+    display.println(mainMenu[index]);
+  }
+  showScreen();
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(JOY_UP, INPUT_PULLUP); pinMode(JOY_DOWN, INPUT_PULLUP);
+  pinMode(JOY_LEFT, INPUT_PULLUP); pinMode(JOY_RIGHT, INPUT_PULLUP);
+  pinMode(JOY_CENTER, INPUT_PULLUP);
+  pinMode(BUZZER, OUTPUT); pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
+
+  Wire.begin(OLED_SDA, OLED_SCL);
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    while (true) { setRGB(true, false, false); delay(300); setRGB(false, false, false); delay(300); }
+  }
+
+  bootScreen();
+  SPI.begin(18, 19, 23);
+  rfid.PCD_Init();
+  
+  if (SD.begin(SD_CS)) { sdOK = true; if (!SD.exists("/AION")) SD.mkdir("/AION"); } else { sdOK = false; }
+
+  BLEDevice::init("AION-V1");
+  bleScan = BLEDevice::getScan();
+  bleScan->setActiveScan(true);
+
+  WiFi.mode(WIFI_STA);
+  currentScreen = MAIN_MENU;
+  drawMainMenu();
+}
+
+void loop() {
+  server.handleClient();
+  switch (currentScreen) {
+    case MAIN_MENU:
+      if (buttonPressed(JOY_UP)) { mainMenuIndex--; if (mainMenuIndex < 0) mainMenuIndex = MAIN_MENU_COUNT - 1; beep(); drawMainMenu(); }
+      if (buttonPressed(JOY_DOWN)) { mainMenuIndex++; if (mainMenuIndex >= MAIN_MENU_COUNT) mainMenuIndex = 0; beep(); drawMainMenu(); }
+      if (buttonPressed(JOY_CENTER)) { beep(); currentScreen = WIFI_MENU; }
+      break;
+    default:
+      break;
+  }
+}
+</pre>
         </div>
     </section>
 
