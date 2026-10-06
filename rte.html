@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTEÜ - Öğrenci Bilgi Sistemi (OBS) Paneli</title>
+    <title>Hoş Geldiniz - RTEÜ E-Kampüs</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,210 +12,218 @@
             theme: {
                 extend: {
                     colors: {
-                        rteuBlue: '#004a99',
-                        rteuDarkBlue: '#003366',
-                        rteuAccent: '#007bff'
+                        rteuGreen: '#005b4f',
+                        rteuDarkGreen: '#00433a',
+                        rteuLightBg: '#f8fafc'
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-100 min-h-screen flex flex-col font-sans">
+<body class="bg-[#f0f2f5] min-h-screen flex flex-col justify-between font-sans text-slate-700">
 
-    <!-- Üst Bar / Header -->
-    <header class="bg-rteuDarkBlue text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- Üst Header / Menü Çubuğu -->
+    <header class="bg-rteuGreen text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-white p-2 rounded-lg text-rteuDarkBlue font-bold flex items-center justify-center w-10 h-10 shadow">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                </div>
-                <div>
-                    <h1 class="text-sm sm:text-base font-bold tracking-wide">RECEP TAYYİP ERDOĞAN ÜNİVERSİTESİ</h1>
-                    <p class="text-[11px] text-blue-200">Öğrenci Bilgi Sistemi - Öğrenci Paneli</p>
-                </div>
+                <span class="text-lg cursor-pointer"><i class="fa-solid fa-xmark"></i></span>
+                <span class="text-lg cursor-pointer"><i class="fa-solid fa-chevron-down"></i></span>
             </div>
-            
-            <!-- Kullanıcı Profili ve Çıkış -->
-            <div class="flex items-center space-x-4">
-                <div class="text-right hidden sm:block">
-                    <p class="text-xs font-bold text-white">Yıldıray Dilmaç</p>
-                    <p class="text-[10px] text-blue-200">Bilgisayar Mühendisliği (Öğrenci)</p>
-                </div>
-                <button onclick="alert('Oturum kapatıldı.')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg text-xs flex items-center space-x-1 transition shadow">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span class="hidden md:inline">Çıkış</span>
-                </button>
+            <h1 class="text-base font-semibold tracking-wide">Hoş Geldiniz</h1>
+            <div class="flex items-center space-x-4 text-base">
+                <i class="fa-solid fa-share-nodes cursor-pointer"></i>
+                <i class="fa-regular fa-bookmark cursor-pointer"></i>
+                <i class="fa-solid fa-ellipsis-vertical cursor-pointer"></i>
             </div>
+        </div>
+        <div class="text-center pb-2 text-xs text-emerald-100 font-mono tracking-wider">
+            ekampus.erdogan.edu.tr
         </div>
     </header>
 
     <!-- Ana İçerik Konteyneri -->
-    <div class="max-w-7xl mx-auto px-4 py-6 w-full grid grid-cols-1 md:grid-cols-12 gap-6 flex-grow">
+    <main class="max-w-3xl mx-auto px-4 py-6 w-full space-y-6 flex-grow">
         
-        <!-- Sol Menü / Sidebar -->
-        <aside class="md:col-span-3 space-y-2">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-rteuBlue text-white px-4 py-3 text-xs font-bold uppercase tracking-wider">
-                    <i class="fa-solid fa-bars mr-2"></i> Menü
-                </div>
-                <nav class="flex flex-col text-sm divide-y divide-slate-100">
-                    <a href="#" class="flex items-center px-4 py-3 text-rteuBlue bg-blue-50 font-medium transition">
-                        <i class="fa-solid fa-house w-6 mr-2"></i> Ana Sayfa
-                    </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-rteuBlue transition">
-                        <i class="fa-solid fa-book-bookmark w-6 mr-2"></i> Ders ve Dönem İşlemleri
-                    </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-rteuBlue transition">
-                        <i class="fa-solid fa-chart-line w-6 mr-2"></i> Not Bilgileri
-                    </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-rteuBlue transition">
-                        <i class="fa-solid fa-calendar-days w-6 mr-2"></i> Haftalık Ders Programı
-                    </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-rteuBlue transition">
-                        <i class="fa-solid fa-file-invoice w-6 mr-2"></i> Transkript Belgesi
-                    </a>
-                    <a href="#" class="flex items-center px-4 py-3 text-slate-600 hover:bg-slate-50 hover:text-rteuBlue transition">
-                        <i class="fa-solid fa-bullhorn w-6 mr-2"></i> Duyurular
-                    </a>
-                </nav>
+        <!-- Kullanıcı Profil ve Bakiye Kartı -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 text-center relative">
+            <!-- Profil Fotoğrafı İkonu -->
+            <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 rounded-full bg-slate-300 border-2 border-white flex items-center justify-center text-slate-500 shadow">
+                <i class="fa-solid fa-user text-xl"></i>
             </div>
-
-            <!-- Hızlı Bilgi Kartı -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-2">
-                <p class="font-bold text-slate-700 uppercase tracking-wide border-b pb-1">Danışman Bilgisi</p>
-                <p class="text-slate-600"><strong>Danışman:</strong> Prof. Dr. Örnek Danışman</p>
-                <p class="text-slate-600"><strong>Durum:</strong> Aktif Öğrenci</p>
-                <p class="text-slate-600"><strong>Kayıtlı Sınıf:</strong> 3. Sınıf</p>
-            </div>
-        </aside>
-
-        <!-- Sağ Taraf: Ana Panel Alanı -->
-        <main class="md:col-span-9 space-y-6">
             
-            <!-- Üst İstatistik Kartları -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Genel Not Ortalaması (AGNO)</p>
-                        <h3 class="text-2xl font-bold text-rteuBlue mt-1">3.35 / 4.00</h3>
+            <div class="mt-4">
+                <h2 class="font-bold text-slate-800 tracking-wider text-sm">ALİHAN BAYRAK</h2>
+                <p class="text-[11px] text-slate-400 mt-0.5">Sicil / Akıllı Kart/Bakiye (Yemekhane)</p>
+                
+                <!-- Bakiye Bilgileri Grid -->
+                <div class="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-slate-100 text-[11px]">
+                    <div class="text-center border-r border-slate-100">
+                        <p class="text-slate-400">AKS</p>
+                        <p class="font-bold text-slate-700 mt-0.5">0,00 t</p>
                     </div>
-                    <div class="bg-blue-50 text-rteuBlue p-3 rounded-xl">
-                        <i class="fa-solid fa-award text-xl"></i>
+                    <div class="text-center border-r border-slate-100">
+                        <p class="text-slate-400">İHİ</p>
+                        <p class="font-bold text-slate-700 mt-0.5">0,00 t</p>
                     </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Aktif Dönem (Güz)</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">2026 - 2027</h3>
+                    <div class="text-center border-r border-slate-100">
+                        <p class="text-slate-400">Harç</p>
+                        <p class="font-bold text-slate-700 mt-0.5">0,00 t</p>
                     </div>
-                    <div class="bg-blue-50 text-rteuBlue p-3 rounded-xl">
-                        <i class="fa-solid fa-calendar-check text-xl"></i>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Tamamlanan AKTS</p>
-                        <h3 class="text-2xl font-bold text-slate-800 mt-1">142 AKTS</h3>
-                    </div>
-                    <div class="bg-blue-50 text-rteuBlue p-3 rounded-xl">
-                        <i class="fa-solid fa-chart-pie text-xl"></i>
+                    <div class="text-center">
+                        <p class="text-slate-400">Kütüphane</p>
+                        <p class="font-bold text-slate-700 mt-0.5">0,00 t</p>
                     </div>
                 </div>
             </div>
+            
+            <!-- Sağ Üst Bildirim Rozeti -->
+            <div class="absolute top-3 right-3 bg-red-600 text-white w-6 h-6 rounded-md flex items-center justify-center text-xs shadow">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+        </div>
 
-            <!-- Güncel Dersler ve Not Durumları Tablosu -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                    <h3 class="text-sm font-bold text-slate-800 flex items-center">
-                        <i class="fa-solid fa-book-open text-rteuBlue mr-2"></i> 2026-2027 Güz Dönemi Aldığı Dersler
-                    </h3>
-                    <span class="text-xs bg-blue-100 text-rteuBlue font-semibold px-2.5 py-1 rounded-full">Danışman Onaylı</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 uppercase border-b border-slate-200">
-                                <th class="p-3 font-semibold">Ders Kodu</th>
-                                <th class="p-3 font-semibold">Ders Adı</th>
-                                <th class="p-3 font-semibold text-center">T+U</th>
-                                <th class="p-3 font-semibold text-center">AKTS</th>
-                                <th class="p-3 font-semibold text-center">Vize</th>
-                                <th class="p-3 font-semibold text-center">Final</th>
-                                <th class="p-3 font-semibold text-center">Harf Notu</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-700">
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-3 font-medium">BLM301</td>
-                                <td class="p-3">Veri Tabanı Yönetim Sistemleri</td>
-                                <td class="p-3 text-center">3+2</td>
-                                <td class="p-3 text-center">6</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center font-bold text-slate-500">Devam Ediyor</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-3 font-medium">BLM303</td>
-                                <td class="p-3">Yazılım Mühendisliği</td>
-                                <td class="p-3 text-center">3+0</td>
-                                <td class="p-3 text-center">5</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center font-bold text-slate-500">Devam Ediyor</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-3 font-medium">BLM305</td>
-                                <td class="p-3">Bilgisayar Ağları</td>
-                                <td class="p-3 text-center">3+1</td>
-                                <td class="p-3 text-center">5</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center font-bold text-slate-500">Devam Ediyor</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-3 font-medium">MAT301</td>
-                                <td class="p-3">Sayısal Analiz</td>
-                                <td class="p-3 text-center">3+0</td>
-                                <td class="p-3 text-center">4</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center">-</td>
-                                <td class="p-3 text-center font-bold text-slate-500">Devam Ediyor</td>
-                            </tr>
-                        </tbody>
-                    </table>
+        <!-- Sistemler Bölümü -->
+        <div class="space-y-3">
+            <div class="flex justify-between items-center px-1">
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Sistemler <span class="text-[10px] font-normal text-slate-400">(41 sistem)</span></h3>
+                <span class="text-xs text-slate-400"><i class="fa-solid fa-bars"></i></span>
+            </div>
+
+            <!-- Sık Kullandıklarım Etiketi -->
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">SIK KULLANDIKLARIM</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-50 text-rteuGreen text-xs font-semibold border border-emerald-100">
+                        <i class="fa-solid fa-laptop mr-1.5"></i> E-Onay Sistemi
+                    </span>
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-50 text-rteuGreen text-xs font-semibold border border-emerald-100">
+                        <i class="fa-solid fa-graduation-cap mr-1.5"></i> OBS
+                    </span>
                 </div>
             </div>
 
-            <!-- Son Duyurular Alanı -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center">
-                    <i class="fa-solid fa-bullhorn text-rteuBlue mr-2"></i> Fakülte ve Bölüm Duyuruları
-                </h3>
-                <div class="space-y-3 text-xs">
-                    <div class="p-3 bg-slate-50 rounded-lg border-l-2 border-rteuBlue">
-                        <span class="text-slate-400 font-medium">05 Ekim 2026</span>
-                        <p class="font-bold text-slate-700 mt-0.5">2026-2027 Güz Dönemi Mazeret Sınav Takvimi</p>
-                        <p class="text-slate-500 mt-1">Mazeret sınav başvuruları hakkında detaylı bilgi ve dilekçe örnekleri bölüm web sayfasında yayınlanmıştır.</p>
+            <!-- Sistemler Listesi (Grid) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-envelope"></i></div>
+                        <span class="text-xs font-medium text-slate-700">E-Posta Sistemi</span>
                     </div>
-                    <div class="p-3 bg-slate-50 rounded-lg border-l-2 border-slate-300">
-                        <span class="text-slate-400 font-medium">01 Ekim 2026</span>
-                        <p class="font-bold text-slate-700 mt-0.5">Staj Başvuruları ve Kabul Koşulları</p>
-                        <p class="text-slate-500 mt-1">Yaz dönemi staj yapacak öğrencilerin staj dosyalarını en geç Kasım ayı sonuna kadar teslim etmeleri gerekmektedir.</p>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-file-lines"></i></div>
+                        <span class="text-xs font-medium text-slate-700">E-Talep Sistemi</span>
                     </div>
-                </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-id-card"></i></div>
+                        <span class="text-xs font-medium text-slate-700">KEYPS</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-users"></i></div>
+                        <span class="text-xs font-medium text-slate-700">Mezun İletişim Sistemi</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-window-maximize"></i></div>
+                        <span class="text-xs font-medium text-slate-700">Microsoft Office Hesap İşlemleri</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-graduation-cap"></i></div>
+                        <span class="text-xs font-medium text-slate-700">OBS</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-chart-pie"></i></div>
+                        <span class="text-xs font-medium text-slate-700">PYS</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-brain"></i></div>
+                        <span class="text-xs font-medium text-slate-700">Psikolojik Danışma Hizmeti</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-bus"></i></div>
+                        <span class="text-xs font-medium text-slate-700">Rektörce Yaz Bilgi Sistemi</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+
+                <a href="#" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="text-slate-600 text-base w-6 text-center"><i class="fa-solid fa-heart"></i></div>
+                        <span class="text-xs font-medium text-slate-700">Yaşam Hizmetleri Sistemi</span>
+                    </div>
+                    <span class="text-slate-300 text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Günün Menüsü Kartı -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-slate-800 tracking-wide">Günün Menüsü</h3>
+                <span class="bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-1 rounded-md">6 <span class="text-[9px] font-normal">Kal</span></span>
             </div>
 
-        </main>
-    </div>
+            <div class="border-t border-slate-100 pt-3 space-y-2 text-xs">
+                <div class="flex items-center text-slate-500 font-semibold mb-2">
+                    <i class="fa-solid fa-utensils text-rteuGreen mr-2"></i> ÖĞLE - AKŞAM
+                </div>
+                <p class="text-slate-700 font-medium">Yayla Çorbası</p>
+                <p class="text-slate-700 font-medium">Etli Bezelye</p>
+                <p class="text-slate-700 font-medium">Bulgur Pilavı</p>
+                <p class="text-slate-700 font-medium">Şekerpare</p>
+            </div>
+
+            <!-- Aksiyon Butonları -->
+            <div class="space-y-2 pt-2">
+                <button onclick="alert('Yemek Rezervasyon ekranı simülasyonu.')" class="w-full bg-rteuGreen hover:bg-rteuDarkGreen text-white font-semibold py-2.5 rounded-lg text-xs flex items-center justify-center space-x-2 transition shadow-sm">
+                    <i class="fa-solid fa-utensils"></i>
+                    <span>Yemek Rezervasyonu Yap</span>
+                </button>
+                <button onclick="alert('Para Yükleme ekranı simülasyonu.')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg text-xs flex items-center justify-center space-x-2 transition">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Para Yükleme</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
 
     <!-- Alt Bilgi / Footer -->
-    <footer class="bg-white border-t border-slate-200 py-4 mt-6">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center">
-            <p>&copy; 2026 Recep Tayyip Erdoğan Üniversitesi - Bilgi İşlem Daire Başkanlığı</p>
-            <p class="mt-2 sm:mt-0">Güvenli Oturum Açık | OBS v3.5</p>
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-4xl mx-auto px-4 text-center text-[11px] text-slate-400 flex flex-col sm:flex-row justify-between items-center">
+            <p>&copy; 2016-2026 Recep Tayyip Erdoğan Üniversitesi</p>
+            <p class="mt-1 sm:mt-0">Bilgi İşlem Daire Başkanlığı</p>
         </div>
     </footer>
 
