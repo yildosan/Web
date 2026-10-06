@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTEÜ - Öğrenci Bilgi Sistemi (OBS)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rteuBlue: '#004a99',
+                        rteuDarkBlue: '#003366',
+                        rteuAccent: '#007bff'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between font-sans">
+
+    <!-- Üst Bilgi / Header -->
+    <header class="bg-rteuDarkBlue text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3 mb-3 sm:mb-0">
+                <!-- Üniversite Logosu veya İkonu -->
+                <div class="bg-white p-2 rounded-lg text-rteuDarkBlue font-bold text-xl flex items-center justify-center w-12 h-12 shadow">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">RECEP TAYYİP ERDOĞAN ÜNİVERSİTESİ</h1>
+                    <p class="text-xs text-blue-200">Öğrenci Bilgi Sistemi (OBS)</p>
+                </div>
+            </div>
+            <div class="text-xs text-blue-100 flex items-center space-x-4">
+                <span><i class="fa-regular fa-calendar-alt mr-1"></i> Akademik Takvim</span>
+                <span><i class="fa-solid fa-headset mr-1"></i> Destek / Yardım</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="max-w-7xl mx-auto px-4 py-8 w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center flex-grow">
+        
+        <!-- Sol Taraf: Duyurular ve Bilgilendirme -->
+        <div class="lg:col-span-7 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-bullhorn text-rteuBlue mr-2"></i> Sistem Duyuruları
+                </h2>
+                <div class="space-y-4">
+                    <div class="border-l-4 border-rteuBlue pl-4 py-1">
+                        <span class="text-xs text-slate-400 font-semibold">06 Ekim 2026</span>
+                        <h3 class="text-sm font-bold text-slate-700">2026-2027 Eğitim-Öğretim Yılı Güz Dönemi</h3>
+                        <p class="text-xs text-slate-600 mt-1">Ders kayıt yenileme ve danışman onay süreçleri akademik takvimde belirtilen tarihler arasında gerçekleştirilecektir.</p>
+                    </div>
+                    <div class="border-l-4 border-slate-300 pl-4 py-1">
+                        <span class="text-xs text-slate-400 font-semibold">Önemli Uyarı</span>
+                        <h3 class="text-sm font-bold text-slate-700">Şifre Güvenliği Hakkında</h3>
+                        <p class="text-xs text-slate-600 mt-1">OBS şifrenizi kimseyle paylaşmayınız ve dönemsel olarak güncellemeyi unutmayınız.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center space-x-4">
+                    <div class="bg-rteuBlue text-white p-3 rounded-lg">
+                        <i class="fa-solid fa-book-open text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800">Ders Kataloğu</h4>
+                        <p class="text-xs text-slate-500">Tüm bölüm müfredatlarını inceleyin.</p>
+                    </div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center space-x-4">
+                    <div class="bg-rteuBlue text-white p-3 rounded-lg">
+                        <i class="fa-solid fa-file-arrow-down text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-800">Formlar & Belgeler</h4>
+                        <p class="text-xs text-slate-500">Öğrenci belgesi ve dilekçeler.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Taraf: Giriş Kartı -->
+        <div class="lg:col-span-5">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <!-- Sekmeler -->
+                <div class="flex border-b border-slate-200 bg-slate-50">
+                    <button class="flex-1 py-3 text-center text-sm font-bold text-rteuBlue border-b-2 border-rteuBlue bg-white focus:outline-none">
+                        Öğrenci / Personel
+                    </button>
+                    <button class="flex-1 py-3 text-center text-sm font-medium text-slate-500 hover:text-slate-700 focus:outline-none">
+                        E-Devlet ile Giriş
+                    </button>
+                </div>
+
+                <!-- Form İçeriği -->
+                <div class="p-8">
+                    <form onsubmit="event.preventDefault(); alert('Bu bir arayüz prototipidir.');" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Öğrenci / Sicil Numarası</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                    <i class="fa-solid fa-user"></i>
+                                </span>
+                                <input type="text" required placeholder="Numaranızı giriniz" class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-rteuBlue focus:border-rteuBlue outline-none transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Şifre</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
+                                <input type="password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-rteuBlue focus:border-rteuBlue outline-none transition">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs">
+                            <label class="flex items-center text-slate-600 cursor-pointer">
+                                <input type="checkbox" class="rounded border-slate-300 text-rteuBlue focus:ring-rteuBlue mr-2">
+                                Beni Hatırla
+                            </label>
+                            <a href="#" class="text-rteuBlue hover:underline font-medium">Şifremi Unuttum?</a>
+                        </div>
+
+                        <button type="submit" class="w-full bg-rteuBlue hover:bg-rteuDarkBlue text-white font-bold py-2.5 rounded-lg transition duration-200 shadow-md text-sm">
+                            Sisteme Giriş Yap
+                        </button>
+                    </form>
+
+                    <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+                        <button class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2 px-4 rounded-lg text-xs flex items-center justify-center space-x-2 transition">
+                            <i class="fa-solid fa-id-card"></i>
+                            <span>E-Devlet Kapısı ile Giriş Yap</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Alt Bilgi / Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center">
+            <p>&copy; 2026 Recep Tayyip Erdoğan Üniversitesi - Bilgi İşlem Daire Başkanlığı</p>
+            <p class="mt-2 sm:mt-0">OBS v3.5 - Tüm Hakları Saklıdır.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
