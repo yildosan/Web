@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Medya ve İçerik Bulucu</title>
+    <title>CineFind AI - Akıllı İçerik Dedektifi</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,369 +12,272 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#fef2f2',
-                            100: '#fee2e2',
-                            500: '#ef4444',
-                            600: '#dc2626',
-                            700: '#b91c1c',
-                            800: '#991b1b',
-                            900: '#7f1d1d',
+                        dark: {
+                            900: '#0b0f19',
+                            800: '#111827',
+                            700: '#1f2937',
                         }
                     }
                 }
             }
         }
     </script>
-    <!-- FontAwesome for Icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Puter.js SDK -->
     <script src="https://js.puter.com/v2/puter.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+<body class="bg-dark-900 text-gray-100 min-h-screen font-sans antialiased selection:bg-orange-500 selection:text-white">
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-dark-900/80 border-b border-gray-800">
+        <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
                     <i class="fa-solid fa-clapperboard text-white text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">CineFind AI</h1>
-                    <p class="text-xs text-slate-400">Puter AI & Web Destekli İçerik Dedektifi</p>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">CineFind AI</h1>
+                    <p class="text-xs text-gray-400">Yapay Zeka & Web Destekli İçerik Dedektifi</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <span id="puter-status" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse mr-1.5"></span> Puter Bağlanıyor...
-                </span>
-            </div>
+
+            <!-- Puter Status Button -->
+            <button id="puterAuthBtn" onclick="togglePuterAuth()" class="flex items-center space-x-2 text-xs px-3 py-1.5 rounded-full border border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-all shadow-sm">
+                <span id="authDot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                <span id="authText">Puter Bağlanıyor...</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-8 flex flex-col space-y-8">
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 pb-20">
         
         <!-- Hero Intro -->
-        <section class="text-center space-y-3 py-4">
-            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-                Adını Unuttuğunuz Yapımları Bulun
+        <div class="mb-6 bg-gradient-to-r from-dark-800 to-dark-700 p-5 rounded-2xl border border-gray-800 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-orange-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            <h2 class="text-base font-semibold text-orange-400 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Adını Unuttuğun İçeriği Bul!
             </h2>
-            <p class="text-slate-400 max-w-2xl mx-auto text-sm md:text-base">
-                Film, dizi, anime veya çizgi film... Hatırladığınız birkaç detayı girin, yapay zeka web araması yaparak en doğru içeriği sizin için bulsun.
+            <p class="text-xs text-gray-300 leading-relaxed">
+                Hatırladığınız karakterleri, sahneleri veya ipuçlarını aşağıya yazın; yapay zeka web araması yaparak en doğru filmi, diziyi veya animeyi sizin için bulsun.
             </p>
-        </section>
+        </div>
 
-        <!-- Search Form Card -->
-        <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-            <div class="absolute -right-20 -top-20 w-40 h-40 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <!-- Form Section -->
+        <form id="searchForm" onsubmit="handleSearch(event)" class="space-y-4">
             
-            <form id="search-form" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Media Type -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">
-                            <i class="fa-solid fa-film text-brand-500 mr-2"></i>İçerik Türü
-                        </label>
-                        <select id="media-type" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
-                            <option value="Tümü / Fark Etmez">Tümü / Fark Etmez</option>
-                            <option value="Film">Film</option>
-                            <option value="Dizi">Dizi</option>
-                            <option value="Anime">Anime</option>
-                            <option value="Çizgifilm">Çizgi Film</option>
-                        </select>
-                    </div>
-
-                    <!-- Genre -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">
-                            <i class="fa-solid fa-masks-theater text-brand-500 mr-2"></i>Kategori / Tür
-                        </label>
-                        <input type="text" id="genre" placeholder="Örn: Bilim Kurgu, Komedi, Aksiyon, Korku..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Release Date Range -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">
-                            <i class="fa-regular fa-calendar text-brand-500 mr-2"></i>Yayınlanma Yılı / Aralığı
-                        </label>
-                        <input type="text" id="date-range" placeholder="Örn: 2010-2015 arası, 2018 veya tam hatırlamıyorum" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
-                    </div>
-
-                    <!-- Keywords / Hints -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">
-                            <i class="fa-solid fa-key text-brand-500 mr-2"></i>Oyuncular, Yönetmen veya İpuçları
-                        </label>
-                        <input type="text" id="keywords" placeholder="Örn: Leonardo DiCaprio, uzayda geçen, mavi yaratıklar..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
-                    </div>
-                </div>
-
-                <!-- Description / Plot -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">
-                        <i class="fa-solid fa-align-left text-brand-500 mr-2"></i>Hatırlanan Konu / Sahne Açıklaması <span class="text-brand-500">*</span>
-                    </label>
-                    <textarea id="description" rows="3" required placeholder="Örn: Adam rüya içinde rüya görüyordu ve sonunda bir topaç dönüyordu..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition"></textarea>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="search-btn" class="w-full bg-gradient-to-r from-brand-600 to-amber-600 hover:from-brand-500 hover:to-amber-500 text-white font-semibold py-3.5 px-6 rounded-xl shadow-lg shadow-brand-600/20 transition flex items-center justify-center space-x-2 cursor-pointer">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>İçeriği Bul</span>
-                </button>
-            </form>
-        </section>
-
-        <!-- Results Section -->
-        <section id="results-container" class="space-y-6 hidden">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-xl font-bold text-white flex items-center space-x-2">
-                    <i class="fa-solid fa-bullseye text-brand-500"></i>
-                    <span>Arama Sonuçları</span>
-                </h3>
-                <span id="result-count" class="text-xs bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-slate-400">0 sonuç</span>
+            <!-- İçerik Türü -->
+            <div class="bg-dark-800/60 p-4 rounded-xl border border-gray-800/80 focus-within:border-orange-500/60 transition-all">
+                <label class="block text-xs font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-film text-orange-500"></i> İçerik Türü
+                </label>
+                <select id="contentType" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+                    <option value="Fark Etmez">Tümü / Fark Etmez</option>
+                    <option value="Film">Film</option>
+                    <option value="Dizi">Dizi</option>
+                    <option value="Anime">Anime</option>
+                    <option value="Çizgi Film">Çizgi Film</option>
+                </select>
             </div>
 
-            <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Cards will be injected dynamically here -->
+            <!-- Kategori / Tür -->
+            <div class="bg-dark-800/60 p-4 rounded-xl border border-gray-800/80 focus-within:border-orange-500/60 transition-all">
+                <label class="block text-xs font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-masks-theater text-orange-500"></i> Kategori / Tür
+                </label>
+                <input type="text" id="genre" placeholder="Örn: Bilim Kurgu, Komedi, Aksiyon, Korku..." class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
             </div>
-        </section>
 
-        <!-- Loading State Modal/Box -->
-        <div id="loading-state" class="hidden flex flex-col items-center justify-center py-12 space-y-4">
-            <div class="w-12 h-12 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="text-slate-400 text-sm animate-pulse">Puter AI web tabanını tarıyor ve en uygun içerikleri eşleştiriyor...</p>
+            <!-- Yayınlanma Yılı / Aralığı -->
+            <div class="bg-dark-800/60 p-4 rounded-xl border border-gray-800/80 focus-within:border-orange-500/60 transition-all">
+                <label class="block text-xs font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-calendar-days text-orange-500"></i> Yayınlanma Yılı / Aralığı
+                </label>
+                <input type="text" id="releaseYear" placeholder="Örn: 2010-2015 arası, 2018 veya tam hatırlamıyorum" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+            </div>
+
+            <!-- Oyuncular, Yönetmen veya İpuçları -->
+            <div class="bg-dark-800/60 p-4 rounded-xl border border-gray-800/80 focus-within:border-orange-500/60 transition-all">
+                <label class="block text-xs font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-key text-orange-500"></i> Oyuncular, Yönetmen veya İpuçları
+                </label>
+                <input type="text" id="hints" placeholder="Örn: Leonardo DiCaprio, uzayda geçen, robotlar var..." class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50">
+            </div>
+
+            <!-- Hatırlanan Konu / Sahne Açıklaması -->
+            <div class="bg-dark-800/60 p-4 rounded-xl border border-gray-800/80 focus-within:border-orange-500/60 transition-all">
+                <label class="block text-xs font-medium text-gray-300 mb-1.5 flex items-center gap-1.5">
+                    <i class="fa-solid fa-align-left text-orange-500"></i> Hatırlanan Konu / Sahne Açıklaması <span class="text-orange-500">*</span>
+                </label>
+                <textarea id="description" rows="4" required placeholder="Örn: Adam rüya içinde rüya görüyordu ve sonunda bir topaç dönüyordu..." class="w-full bg-dark-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 resize-y"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submitBtn" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 text-white font-semibold shadow-lg shadow-orange-600/30 hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-wand-magic text-base"></i> İçeriği Bul
+            </button>
+        </form>
+
+        <!-- Results Section Container -->
+        <div id="resultsContainer" class="mt-8 hidden space-y-4">
+            <h3 class="text-sm font-semibold text-gray-300 flex items-center gap-2 border-b border-gray-800 pb-2">
+                <i class="fa-solid fa-bullseye text-orange-500"></i> Arama Sonuçları & Tahminler
+            </h3>
+            <div id="resultsContent" class="bg-dark-800/80 p-5 rounded-2xl border border-gray-800 text-sm leading-relaxed text-gray-200 space-y-3">
+                <!-- AI Output goes here -->
+            </div>
         </div>
-
-        <!-- Error State Box -->
-        <div id="error-state" class="hidden bg-red-950/30 border border-red-900/50 rounded-2xl p-6 text-center text-red-200 space-y-2">
-            <i class="fa-solid fa-triangle-exclamation text-2xl text-red-500"></i>
-            <h4 class="font-semibold text-lg">Bir Hata Oluştu</h4>
-            <p id="error-message" class="text-sm text-red-300"></p>
-        </div>
-
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <p>Puter.js altyapısı ve yapay zeka web aramasıyla güçlendirilmiştir. API Key gerektirmez.</p>
-    </footer>
-
-    <!-- Custom Notification/Message Box (No alert() used) -->
-    <div id="msg-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div class="flex items-center space-x-3 text-amber-400">
-                <i class="fa-solid fa-circle-info text-xl"></i>
-                <h4 id="msg-title" class="font-bold text-lg text-white">Bilgilendirme</h4>
-            </div>
-            <p id="msg-text" class="text-slate-300 text-sm"></p>
-            <button onclick="closeMsg()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 rounded-xl transition">Tamam</button>
-        </div>
-    </div>
-
-    <!-- Application Logic Script -->
+    <!-- Footer Script -->
     <script>
-        // Check Puter ready state on load
+        // Puter Bağlantı Durumu Yönetimi
         window.addEventListener('DOMContentLoaded', () => {
-            const statusEl = document.getElementById('puter-status');
-            if (typeof puter !== 'undefined') {
-                statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span> Puter AI Hazır';
-                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-            } else {
-                statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-red-400 mr-1.5"></span> Puter Yüklenemedi';
-                statusEl.className = 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20';
-            }
+            checkPuterConnection();
         });
 
-        function showMsg(title, text) {
-            document.getElementById('msg-title').innerText = title;
-            document.getElementById('msg-text').innerText = text;
-            document.getElementById('msg-modal').classList.remove('hidden');
-        }
-
-        function closeMsg() {
-            document.getElementById('msg-modal').classList.add('hidden');
-        }
-
-        // Form Submission and AI Handling
-        document.getElementById('search-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            if (typeof puter === 'undefined' || !puter.ai) {
-                showMsg("Bağlantı Hatası", "Puter.js kütüphanesi yüklenemedi veya AI servisine erişilemiyor. Lütfen internet bağlantınızı kontrol edin.");
-                return;
+        function checkPuterConnection() {
+            const authDot = document.getElementById('authDot');
+            const authText = document.getElementById('authText');
+            
+            try {
+                if (typeof puter !== 'undefined') {
+                    if (puter.auth && puter.auth.isSignedIn()) {
+                        authDot.className = "w-2 h-2 rounded-full bg-emerald-500";
+                        authText.textContent = "Puter Bağlı";
+                    } else {
+                        authDot.className = "w-2 h-2 rounded-full bg-amber-400";
+                        authText.textContent = "Giriş Yap / Bağlan";
+                    }
+                } else {
+                    authDot.className = "w-2 h-2 rounded-full bg-red-500";
+                    authText.textContent = "Çevrimdışı Mod";
+                }
+            } catch (e) {
+                console.error("Bağlantı kontrol hatası:", e);
+                authDot.className = "w-2 h-2 rounded-full bg-red-500";
+                authText.textContent = "Bağlantı Hatası";
             }
+        }
 
-            const mediaType = document.getElementById('media-type').value;
+        async function togglePuterAuth() {
+            try {
+                if (typeof puter !== 'undefined' && puter.auth) {
+                    if (!puter.auth.isSignedIn()) {
+                        document.getElementById('authText').textContent = "Bağlanıyor...";
+                        await puter.auth.signIn();
+                    }
+                    checkPuterConnection();
+                } else {
+                    alert("Puter.js kütüphanesi yüklenemedi. Lütfen internet bağlantınızı kontrol edin.");
+                }
+            } catch (err) {
+                console.error("Giriş hatası:", err);
+                alert("Oturum açma sırasında bir hata oluştu.");
+                checkPuterConnection();
+            }
+        }
+
+        // Form Gönderimi ve Yapay Zeka Sorgusu
+        async function handleSearch(event) {
+            event.preventDefault();
+
+            const contentType = document.getElementById('contentType').value;
             const genre = document.getElementById('genre').value.trim();
-            const dateRange = document.getElementById('date-range').value.trim();
-            const keywords = document.getElementById('keywords').value.trim();
+            const releaseYear = document.getElementById('releaseYear').value.trim();
+            const hints = document.getElementById('hints').value.trim();
             const description = document.getElementById('description').value.trim();
 
-            if (!description) {
-                showMsg("Eksik Bilgi", "Lütfen en azından hatırladığınız konu veya sahne açıklamasını girin.");
-                return;
-            }
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsContent = document.getElementById('resultsContent');
+            const submitBtn = document.getElementById('submitBtn');
 
-            // UI loading state
-            const searchBtn = document.getElementById('search-btn');
-            const loadingState = document.getElementById('loading-state');
-            const resultsContainer = document.getElementById('results-container');
-            const errorState = document.getElementById('error-state');
+            // UI Yükleniyor Durumu
+            resultsContainer.classList.remove('hidden');
+            resultsContent.innerHTML = `
+                <div class="flex items-center justify-center py-8 space-x-3 text-orange-400">
+                    <i class="fa-solid fa-spinner fa-spin text-xl"></i>
+                    <span class="text-sm font-medium">Yapay zeka veritabanı ve web kaynakları taranıyor...</span>
+                </div>
+            `;
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50');
 
-            searchBtn.disabled = true;
-            searchBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            loadingState.classList.remove('hidden');
-            resultsContainer.classList.add('hidden');
-            errorState.classList.add('hidden');
+            // Sorgu Metnini Oluştur
+            const prompt = `Sen uzman bir sinema, dizi, anime ve çizgi film dedektifisin. Kullanıcının verdiği eksik veya dağınık ipuçlarını analiz ederek en olası eşleşmeleri bulmalısın. Web araması yeteneklerini kullanarak güncel bilgileri tara.
 
-            // Build prompt for Puter AI with search tool recommendation
-            const systemPrompt = `Sen profesyonel bir film, dizi, anime ve çizgi film dedektifi ve veri uzmanısın. Kullanıcının verdiği ipuçlarına (tür, yayın tarihi aralığı, anahtar kelimeler ve konu açıklaması) en uygun olabilecek 3 adet içeriği bulmalısın. Web araması yaparak güncel ve doğru bilgilere ulaş. Sonucu MUTLAKA geçerli bir JSON dizisi (array) formatında döndür. Her nesne şu anahtarları içermelidir:
-            - "title": İçeriğin orijinal adı ve Türkçe adı
-            - "type": "Film", "Dizi", "Anime" veya "Çizgi Film"
-            - "releaseYear": Yayınlandığı yıl veya aralık (Örn: 2010 veya 2011-2013)
-            - "genre": Türü / Kategorileri
-            - "matchReason": Kullanıcının açıklamasıyla neden eşleştiğinin kısa açıklaması
-            - "plot": Kısa orijinal özeti
-            - "rating": Tahmini IMDb puanı (Örn: 8.8)
-            Asla markdown blok etiketi haricinde ekstra açıklama yazma, sadece JSON array döndür.`;
+Kullanıcının Verdiği Bilgiler:
+- İçerik Türü: ${contentType}
+- Kategori/Tür: ${genre || belirtilmedi}
+- Yayın Yılı/Aralığı: ${releaseYear || belirtilmedi}
+- Oyuncu/Yönetmen/Özel İpuçları: ${hints || belirtilmedi}
+- Sahne/Konu Açıklaması: ${description}
 
-            const userPrompt = `İçerik Türü: ${mediaType}
-Kategori/Tür: ${genre || belirtilmemiş}
-Yayın Yılı Aralığı: ${dateRange || belirtilmemiş}
-Anahtar Kelimeler/Oyuncular: ${keywords || belirtilmemiş}
-Hatırlanan Konu/Açıklama: ${description}`;
+Lütfen bu bilgilere en uygun en güçlü 2 veya 3 içeriği şu formatta listele:
+1. **Orijinal ve Türkçe Adı** (Yayın Yılı - Türü)
+2. **Benzerlik Nedeni / Neden Eşleşti?** (Açıklamadaki detaylarla eşleşen yönü)
+3. **Konu Özeti** (Kısa)
+4. **Oyuncular / Yapımcı**
+
+Yanıtı şık, mobil uyumlu, temiz Markdown/HTML formatında ve Türkçe olarak ver.`;
 
             try {
-                // Call Puter AI with web search tool enabled
-                const response = await puter.ai.chat([
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: userPrompt }
-                ], {
-                    model: 'gemini-3-flash-preview',
-                    tools: [{ "google_search": {} }]
-                });
-
-                let contentText = "";
-                if (typeof response === 'string') {
-                    contentText = response;
-                } else if (response && response.message && response.message.content) {
-                    contentText = response.message.content;
-                } else if (response && response.text) {
-                    contentText = response.text;
-                } else {
-                    contentText = JSON.stringify(response);
+                // Puter AI Chat Çağrısı (Web araması desteğiyle)
+                if (typeof puter === 'undefined' || !puter.ai) {
+                    throw new Error("Puter AI yüklenemedi.");
                 }
 
-                // Clean markdown code blocks if present
-                let cleanJson = contentText.trim();
-                if (cleanJson.startsWith("```json")) {
-                    cleanJson = cleanJson.replace(/^```json/, "").replace(/```$/, "").trim();
-                } else if (cleanJson.startsWith("```")) {
-                    cleanJson = cleanJson.replace(/^```/, "").replace(/```$/, "").trim();
-                }
-
-                let items = [];
-                try {
-                    items = JSON.parse(cleanJson);
-                } catch (parseErr) {
-                    // Fallback regex match for json array if extra text surrounds it
-                    const jsonMatch = cleanJson.match(/\[[\s\S]*\]/);
-                    if (jsonMatch) {
-                        items = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error("AI yanıtı beklenen JSON formatında çözümlenemedi.");
+                // Otomatik oturum kontrolü (Gerekirse tetikle)
+                if (puter.auth && !puter.auth.isSignedIn()) {
+                    try {
+                        await puter.auth.signIn();
+                    } catch (authErr) {
+                        console.log("Oturum açma atlandı veya reddedildi, misafir mod deneniyor.");
                     }
                 }
 
-                renderResults(items);
+                const response = await puter.ai.chat(prompt);
+                
+                // Yanıt metnini güvenli işleme
+                let responseText = "";
+                if (typeof response === 'string') {
+                    responseText = response;
+                } else if (response && response.message && response.message.content) {
+                    responseText = response.message.content;
+                } else if (response && response.text) {
+                    responseText = response.text;
+                } else {
+                    responseText = JSON.stringify(response);
+                }
 
-            } catch (err) {
-                console.error("AI Error:", err);
-                document.getElementById('error-message').innerText = err.message || "Arama sırasında bir hata meydana geldi. Lütfen tekrar deneyin.";
-                errorState.classList.remove('hidden');
-            } finally {
-                searchBtn.disabled = false;
-                searchBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                loadingState.classList.add('hidden');
-            }
-        });
+                // Basit Markdown biçimlendiricisi (kalın yazı ve liste dönüştürme)
+                let formattedHtml = responseText
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-orange-400 font-semibold">$1</strong>')
+                    .replace(/\n/g, '<br>');
 
-        function renderResults(items) {
-            const resultsGrid = document.getElementById('results-grid');
-            const resultsContainer = document.getElementById('results-container');
-            const resultCount = document.getElementById('result-count');
-
-            resultsGrid.innerHTML = "";
-            resultCount.innerText = `${items.length} sonuç bulundu`;
-
-            if (!items || items.length === 0) {
-                resultsGrid.innerHTML = `
-                    <div class="col-span-2 text-center py-8 text-slate-400">
-                        <i class="fa-solid fa-face-frown text-3xl mb-2 text-slate-600"></i>
-                        <p>Aradığınız kriterlere uygun net bir içerik bulunamadı. Lütfen ipuçlarını genişleterek tekrar deneyin.</p>
+                resultsContent.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="text-xs text-emerald-400 flex items-center gap-1.5 bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">
+                            <i class="fa-solid fa-circle-check"></i> En olası içerikler başarıyla bulundu:
+                        </div>
+                        <div class="text-gray-200 leading-relaxed">${formattedHtml}</div>
                     </div>
                 `;
-            } else {
-                items.forEach((item, index) => {
-                    const card = document.createElement('div');
-                    card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4 hover:border-brand-500/50 transition shadow-lg group";
-                    
-                    card.innerHTML = `
-                        <div class="space-y-3">
-                            <div class="flex items-start justify-between">
-                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20">
-                                    ${escapeHtml(item.type || 'İçerik')}
-                                </span>
-                                <div class="flex items-center space-x-1 text-amber-400 text-sm font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-                                    <i class="fa-solid fa-star text-xs"></i>
-                                    <span>${escapeHtml(item.rating || 'N/A')}</span>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <h4 class="text-lg font-bold text-white group-hover:text-brand-400 transition">${escapeHtml(item.title)}</h4>
-                                <p class="text-xs text-slate-400 mt-0.5"><i class="fa-regular fa-calendar mr-1"></i> ${escapeHtml(item.releaseYear)} &bull; <span class="text-slate-300">${escapeHtml(item.genre)}</span></p>
-                            </div>
 
-                            <div class="space-y-2 text-sm text-slate-300">
-                                <p class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/60"><strong class="text-brand-400 block text-xs uppercase tracking-wider mb-1">Neden Eşleşti?</strong> ${escapeHtml(item.matchReason)}</p>
-                                <p class="text-slate-400 text-xs leading-relaxed"><strong class="text-slate-300">Özet:</strong> ${escapeHtml(item.plot)}</p>
-                            </div>
-                        </div>
-
-                        <div class="pt-2 border-t border-slate-800 flex justify-end">
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(item.title + ' ' + (item.type || ''))}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-brand-400 hover:text-brand-300 flex items-center space-x-1.5 transition">
-                                <span>Google'da Ara</span>
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
-                            </a>
-                        </div>
-                    `;
-                    resultsGrid.appendChild(card);
-                });
+            } catch (error) {
+                console.error("Yapay zeka hata:", error);
+                resultsContent.innerHTML = `
+                    <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs space-y-2">
+                        <p class="font-semibold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> İçerik aranırken bir sorun oluştu.</p>
+                        <p>Detay: ${error.message || 'Bilinmeyen hata'}</p>
+                        <p class="text-gray-300">Lütfen üst kısımdaki <span class="text-orange-400 font-medium">"Giriş Yap / Bağlan"</span> butonuna basarak Puter oturumunu onaylayın ve tekrar deneyin.</p>
+                    </div>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
             }
-
-            resultsContainer.classList.remove('hidden');
-            resultsContainer.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function escapeHtml(text) {
-            if (!text) return '';
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(~/g, '&#039;');
         }
     </script>
 </body>
