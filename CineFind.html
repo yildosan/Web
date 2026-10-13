@@ -132,9 +132,9 @@
 
     <!-- Footer Script -->
     <script>
-        // Puter Bağlantı Durumu Yönetimi
+        // Puter SDK'nın yüklenmesi için küçük bir gecikmeli kontrol (1 saniye)
         window.addEventListener('DOMContentLoaded', () => {
-            checkPuterConnection();
+            setTimeout(checkPuterConnection, 1000);
         });
 
         function checkPuterConnection() {
@@ -142,8 +142,8 @@
             const authText = document.getElementById('authText');
             
             try {
-                if (typeof puter !== 'undefined') {
-                    if (puter.auth && puter.auth.isSignedIn()) {
+                if (typeof puter !== 'undefined' && puter.auth) {
+                    if (puter.auth.isSignedIn()) {
                         authDot.className = "w-2 h-2 rounded-full bg-emerald-500";
                         authText.textContent = "Puter Bağlı";
                     } else {
@@ -151,30 +151,27 @@
                         authText.textContent = "Giriş Yap / Bağlan";
                     }
                 } else {
-                    authDot.className = "w-2 h-2 rounded-full bg-red-500";
-                    authText.textContent = "Çevrimdışı Mod";
+                    // Eğer script hala yüklenmediyse 1 saniye sonra tekrar dene
+                    setTimeout(checkPuterConnection, 1500);
                 }
             } catch (e) {
                 console.error("Bağlantı kontrol hatası:", e);
                 authDot.className = "w-2 h-2 rounded-full bg-red-500";
-                authText.textContent = "Bağlantı Hatası";
+                authText.textContent = "Çevrimdışı Mod";
             }
         }
 
         async function togglePuterAuth() {
             try {
                 if (typeof puter !== 'undefined' && puter.auth) {
-                    if (!puter.auth.isSignedIn()) {
-                        document.getElementById('authText').textContent = "Bağlanıyor...";
-                        await puter.auth.signIn();
-                    }
+                    document.getElementById('authText').textContent = "Bağlanıyor...";
+                    await puter.auth.signIn();
                     checkPuterConnection();
                 } else {
-                    alert("Puter.js kütüphanesi yüklenemedi. Lütfen internet bağlantınızı kontrol edin.");
+                    alert("Puter.js kütüphanesi yüklenemedi. Lütfen sayfayı yenileyin.");
                 }
             } catch (err) {
                 console.error("Giriş hatası:", err);
-                alert("Oturum açma sırasında bir hata oluştu.");
                 checkPuterConnection();
             }
         }
@@ -193,7 +190,6 @@
             const resultsContent = document.getElementById('resultsContent');
             const submitBtn = document.getElementById('submitBtn');
 
-            // UI Yükleniyor Durumu
             resultsContainer.classList.remove('hidden');
             resultsContent.innerHTML = `
                 <div class="flex items-center justify-center py-8 space-x-3 text-orange-400">
@@ -204,42 +200,39 @@
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-50');
 
-            // Sorgu Metnini Oluştur
             const prompt = `Sen uzman bir sinema, dizi, anime ve çizgi film dedektifisin. Kullanıcının verdiği eksik veya dağınık ipuçlarını analiz ederek en olası eşleşmeleri bulmalısın. Web araması yeteneklerini kullanarak güncel bilgileri tara.
 
 Kullanıcının Verdiği Bilgiler:
 - İçerik Türü: ${contentType}
-- Kategori/Tür: ${genre || belirtilmedi}
-- Yayın Yılı/Aralığı: ${releaseYear || belirtilmedi}
-- Oyuncu/Yönetmen/Özel İpuçları: ${hints || belirtilmedi}
+- Kategori/Tür: ${genre || 'Belirtilmedi'}
+- Yayın Yılı/Aralığı: ${releaseYear || 'Belirtilmedi'}
+- Oyuncu/Yönetmen/Özel İpuçları: ${hints || 'Belirtilmedi'}
 - Sahne/Konu Açıklaması: ${description}
 
 Lütfen bu bilgilere en uygun en güçlü 2 veya 3 içeriği şu formatta listele:
 1. **Orijinal ve Türkçe Adı** (Yayın Yılı - Türü)
-2. **Benzerlik Nedeni / Neden Eşleşti?** (Açıklamadaki detaylarla eşleşen yönü)
+2. **Benzerlik Nedeni / Neden Eşleşti?**
 3. **Konu Özeti** (Kısa)
 4. **Oyuncular / Yapımcı**
 
 Yanıtı şık, mobil uyumlu, temiz Markdown/HTML formatında ve Türkçe olarak ver.`;
 
             try {
-                // Puter AI Chat Çağrısı (Web araması desteğiyle)
                 if (typeof puter === 'undefined' || !puter.ai) {
-                    throw new Error("Puter AI yüklenemedi.");
+                    throw new Error("Puter AI kütüphanesi aktif değil.");
                 }
 
-                // Otomatik oturum kontrolü (Gerekirse tetikle)
+                // Oturum açık değilse otomatik giriş tetiklemeyi dene
                 if (puter.auth && !puter.auth.isSignedIn()) {
                     try {
                         await puter.auth.signIn();
-                    } catch (authErr) {
-                        console.log("Oturum açma atlandı veya reddedildi, misafir mod deneniyor.");
+                    } catch (e) {
+                        console.log("Oturum açma atlandı.");
                     }
                 }
 
                 const response = await puter.ai.chat(prompt);
                 
-                // Yanıt metnini güvenli işleme
                 let responseText = "";
                 if (typeof response === 'string') {
                     responseText = response;
@@ -251,7 +244,6 @@ Yanıtı şık, mobil uyumlu, temiz Markdown/HTML formatında ve Türkçe olarak
                     responseText = JSON.stringify(response);
                 }
 
-                // Basit Markdown biçimlendiricisi (kalın yazı ve liste dönüştürme)
                 let formattedHtml = responseText
                     .replace(/\*\*(.*?)\*\*/g, '<strong class="text-orange-400 font-semibold">$1</strong>')
                     .replace(/\n/g, '<br>');
@@ -271,7 +263,7 @@ Yanıtı şık, mobil uyumlu, temiz Markdown/HTML formatında ve Türkçe olarak
                     <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs space-y-2">
                         <p class="font-semibold flex items-center gap-1.5"><i class="fa-solid fa-triangle-exclamation"></i> İçerik aranırken bir sorun oluştu.</p>
                         <p>Detay: ${error.message || 'Bilinmeyen hata'}</p>
-                        <p class="text-gray-300">Lütfen üst kısımdaki <span class="text-orange-400 font-medium">"Giriş Yap / Bağlan"</span> butonuna basarak Puter oturumunu onaylayın ve tekrar deneyin.</p>
+                        <p class="text-gray-300">Lütfen üst kısımdaki <span class="text-orange-400 font-medium">"Giriş Yap / Bağlan"</span> butonuna dokunarak Puter oturumunu onaylayın ve tekrar deneyin.</p>
                     </div>
                 `;
             } finally {
