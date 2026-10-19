@@ -2,8 +2,8 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>cubeCode - 3D Multi-QR Prototipi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>cubeCode - Kabartmalı Mobil Prototip</title>
     <!-- QR Kod Üretici Kütüphane -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -11,6 +11,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
             background-color: #0d1117;
@@ -22,27 +23,31 @@
             justify-content: center;
             min-height: 100vh;
             overflow: hidden;
+            touch-action: none; /* Mobilde sayfanın kaymasını engeller */
         }
 
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             margin-bottom: 5px;
             color: #58a6ff;
             letter-spacing: 1px;
+            text-align: center;
         }
         p {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #8b949e;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            text-align: center;
+            padding: 0 15px;
         }
 
         /* 3D Sahne Alanı */
         .scene {
-            width: 250px;
-            height: 250px;
+            width: 240px;
+            height: 240px;
             perspective: 1000px;
             cursor: grab;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
         .scene:active {
             cursor: grabbing;
@@ -54,57 +59,78 @@
             height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transform: translateZ(-125px);
-            transition: transform 0.1s ease-out;
+            transform: translateZ(-120px);
+            transition: transform 0.05s ease-out;
         }
 
-        /* Küp Yüzeyleri */
+        /* Kabartmalı Ana Yüzey */
         .cube-face {
             position: absolute;
-            width: 250px;
-            height: 250px;
-            background: white;
-            border: 3px solid #30363d;
-            border-radius: 12px;
+            width: 240px;
+            height: 240px;
+            background: linear-gradient(135deg, #21262d, #161b22);
+            border: 4px solid #30363d;
+            border-radius: 16px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            /* Kabartma ve Derinlik Efekti (Box-shadow ile dışarı taşma hissi) */
+            box-shadow: 
+                inset 0 4px 8px rgba(255,255,255,0.08), 
+                inset 0 -6px 12px rgba(0,0,0,0.6),
+                0 15px 35px rgba(0,0,0,0.7);
             backface-visibility: hidden;
-            padding: 15px;
+            padding: 12px;
         }
 
         .cube-face h3 {
-            font-size: 0.85rem;
-            color: #161b22;
-            margin-bottom: 10px;
-            font-weight: 700;
+            font-size: 0.8rem;
+            color: #58a6ff;
+            margin-bottom: 8px;
+            font-weight: 600;
             text-align: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* QR Kodun Yerleştiği Kabartmalı Panel (Çukurdan dışarı kabaran plaka hissi) */
+        .qr-wrapper {
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 10px;
+            /* QR kodun kendi kabartma efekti */
+            box-shadow: 
+                0 8px 16px rgba(0,0,0,0.5),
+                inset 0 2px 4px rgba(255,255,255,0.8),
+                0 0 0 3px #1f6feb; /* cubeCode imza rengi çerçeve */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(10px); /* QR alanı yüzeyden dışarı doğru kabarık durur */
         }
 
         .qr-container {
-            width: 160px;
-            height: 160px;
+            width: 130px;
+            height: 130px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* Yüzey Konumlandırmaları (TranslateZ küp boyutunun yarısı olan 125px'tir) */
-        .front  { transform: rotateY(0deg) translateZ(125px); }
-        .back   { transform: rotateY(180deg) translateZ(125px); }
-        .right  { transform: rotateY(90deg) translateZ(125px); }
-        .left   { transform: rotateY(-90deg) translateZ(125px); }
-        .top    { transform: rotateX(90deg) translateZ(125px); }
-        .bottom { transform: rotateX(-90deg) translateZ(125px); }
+        /* Küp Yüzey Konumlandırmaları (Yarım boyut 120px) */
+        .front  { transform: rotateY(0deg) translateZ(120px); }
+        .back   { transform: rotateY(180deg) translateZ(120px); }
+        .right  { transform: rotateY(90deg) translateZ(120px); }
+        .left   { transform: rotateY(-90deg) translateZ(120px); }
+        .top    { transform: rotateX(90deg) translateZ(120px); }
+        .bottom { transform: rotateX(-90deg) translateZ(120px); }
 
         .info-panel {
             background: #161b22;
             border: 1px solid #30363d;
-            padding: 12px 25px;
+            padding: 10px 20px;
             border-radius: 8px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #8b949e;
         }
         span { color: #58a6ff; font-weight: 600; }
@@ -113,62 +139,80 @@
 <body>
 
     <h1>cubeCode Prototipi</h1>
-    <p>Fare ile tıklayıp sürükleyerek küpü 360 derece çevirebilirsin.</p>
+    <p>Ekranı parmağınla (veya mouse ile) sürükleyerek 3D küpü çevirebilirsin.</p>
 
     <div class="scene" id="scene">
         <div class="cube" id="cube">
-            <!-- 6 Yüzey -->
+            <!-- 1. Yüzey -->
             <div class="cube-face front">
                 <h3>Yüzey 1: Ürün Bilgisi</h3>
-                <div class="qr-container" id="qr-front"></div>
+                <div class="qr-wrapper">
+                    <div class="qr-container" id="qr-front"></div>
+                </div>
             </div>
+            <!-- 2. Yüzey -->
             <div class="cube-face back">
                 <h3>Yüzey 2: Garanti Belgesi</h3>
-                <div class="qr-container" id="qr-back"></div>
+                <div class="qr-wrapper">
+                    <div class="qr-container" id="qr-back"></div>
+                </div>
             </div>
+            <!-- 3. Yüzey -->
             <div class="cube-face right">
                 <h3>Yüzey 3: Kullanım Kılavuzu</h3>
-                <div class="qr-container" id="qr-right"></div>
+                <div class="qr-wrapper">
+                    <div class="qr-container" id="qr-right"></div>
+                </div>
             </div>
+            <!-- 4. Yüzey -->
             <div class="cube-face left">
                 <h3>Yüzey 4: Sosyal Medya</h3>
-                <div class="qr-container" id="qr-left"></div>
+                <div class="qr-wrapper">
+                    <div class="qr-container" id="qr-left"></div>
+                </div>
             </div>
+            <!-- 5. Yüzey -->
             <div class="cube-face top">
-                <h3>Yüzey 5: Kampanya / İndirim</h3>
-                <div class="qr-container" id="qr-top"></div>
+                <h3>Yüzey 5: Kampanya</h3>
+                <div class="qr-wrapper">
+                    <div class="qr-container" id="qr-top"></div>
+                </div>
             </div>
+            <!-- 6. Yüzey -->
             <div class="cube-face bottom">
                 <h3>Yüzey 6: Teknik Destek</h3>
-                <div class="qr-container" id="qr-bottom"></div>
+                <div class="qr-wrapper">
+                    <div class="qr-container" id="qr-bottom"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="info-panel">
-        Durum: <span>Aktif (6 QR Kod Yüklendi)</span>
+        Durum: <span>Mobil & Kabartma Modu Aktif</span>
     </div>
 
     <script>
-        // 1. Her yüzey için farklı veriler tanımlayalım
+        // Her yüzey için veriler
         const qrData = {
-            front: "https://github.com/cubecode-urun-bilgisi",
-            back: "https://github.com/cubecode-garanti",
-            right: "https://github.com/cubecode-kilavuz",
-            left: "https://github.com/cubecode-sosyal",
-            top: "https://github.com/cubecode-kampanya",
-            bottom: "https://github.com/cubecode-destek"
+            front: "https://cubecode.io/urun",
+            back: "https://cubecode.io/garanti",
+            right: "https://cubecode.io/kilavuz",
+            left: "https://cubecode.io/sosyal",
+            top: "https://cubecode.io/kampanya",
+            bottom: "https://cubecode.io/destek"
         };
 
-        // 2. QR kodları ilgili alanlara otomatik olarak basalım
-        new QRCode(document.getElementById("qr-front"), { text: qrData.front, width: 150, height: 150 });
-        new QRCode(document.getElementById("qr-back"), { text: qrData.back, width: 150, height: 150 });
-        new QRCode(document.getElementById("qr-right"), { text: qrData.right, width: 150, height: 150 });
-        new QRCode(document.getElementById("qr-left"), { text: qrData.left, width: 150, height: 150 });
-        new QRCode(document.getElementById("qr-top"), { text: qrData.top, width: 150, height: 150 });
-        new QRCode(document.getElementById("qr-bottom"), { text: qrData.bottom, width: 150, height: 150 });
+        // QR Kodları üretme
+        const qrSize = 130;
+        new QRCode(document.getElementById("qr-front"), { text: qrData.front, width: qrSize, height: qrSize });
+        new QRCode(document.getElementById("qr-back"), { text: qrData.back, width: qrSize, height: qrSize });
+        new QRCode(document.getElementById("qr-right"), { text: qrData.right, width: qrSize, height: qrSize });
+        new QRCode(document.getElementById("qr-left"), { text: qrData.left, width: qrSize, height: qrSize });
+        new QRCode(document.getElementById("qr-top"), { text: qrData.top, width: qrSize, height: qrSize });
+        new QRCode(document.getElementById("qr-bottom"), { text: qrData.bottom, width: qrSize, height: qrSize });
 
-        // 3. Mouse ile 3D döndürme etkileşimi
+        // Döndürme mantığı (Mouse + Dokunmatik / Touch desteği)
         const scene = document.getElementById('scene');
         const cube = document.getElementById('cube');
 
@@ -176,34 +220,60 @@
         let startX, startY;
         let rotX = -20;
         let rotY = -30;
+        const translateZVal = -120;
 
-        // Başlangıç açısı
-        cube.style.transform = `translateZ(-125px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+        function updateCubeTransform() {
+            cube.style.transform = `translateZ(${translateZVal}px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+        }
 
-        scene.addEventListener('mousedown', (e) => {
+        updateCubeTransform();
+
+        // Başlangıç (Mouse & Touch)
+        function startDrag(clientX, clientY) {
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-        });
+            startX = clientX;
+            startY = clientY;
+        }
 
-        window.addEventListener('mousemove', (e) => {
+        // Hareket (Mouse & Touch)
+        function moveDrag(clientX, clientY) {
             if (!isDragging) return;
 
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+            const deltaX = clientX - startX;
+            const deltaY = clientY - startY;
 
-            rotY += deltaX * 0.5;
-            rotX -= deltaY * 0.5;
+            rotY += deltaX * 0.6;
+            rotX -= deltaY * 0.6;
 
-            cube.style.transform = `translateZ(-125px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+            updateCubeTransform();
 
-            startX = e.clientX;
-            startY = e.clientY;
-        });
+            startX = clientX;
+            startY = clientY;
+        }
 
-        window.addEventListener('mouseup', () => {
+        function endDrag() {
             isDragging = false;
-        });
+        }
+
+        // Event Listeners (Fare)
+        scene.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+        window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+        window.addEventListener('mouseup', endDrag);
+
+        // Event Listeners (Mobil Dokunmatik)
+        scene.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                startDrag(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                moveDrag(e.touches.clientX, e.touches.clientY);
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', endDrag);
     </script>
 </body>
 </html>
