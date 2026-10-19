@@ -2,564 +2,200 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forma AI — 3D Model Studio</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Forma AI — Advanced 3D Studio</title>
 <script src="https://js.puter.com/v2/"></script>
-
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    "three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+    "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
   }
 }
 </script>
-
 <style>
 :root {
-  color-scheme: dark;
-  --bg: #080a0f;
-  --panel: #10141d;
-  --line: #242c3b;
-  --text: #f2f5fa;
-  --muted: #8995a9;
-  --accent: #a5f35a;
-  --blue: #6c8cff;
+  color-scheme:dark;
+  --bg:#080a0f;--panel:#10141d;--line:#252e3e;
+  --text:#f2f5fa;--muted:#8995a9;--accent:#a5f35a;
 }
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Inter, "Segoe UI", Arial, sans-serif;
-}
-
-button, textarea, select { font: inherit; }
-button { cursor: pointer; }
-
-header {
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 25px;
-  border-bottom: 1px solid var(--line);
-  background: #0b0e14;
-}
-
-.brand {
-  font-size: 21px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.brand span { color: var(--accent); }
-
-.header-right {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.status-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: var(--accent);
-  border-radius: 50%;
-  margin-right: 6px;
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
-  min-height: calc(100vh - 70px);
-}
-
-.sidebar {
-  padding: 24px;
-  border-right: 1px solid var(--line);
-  background: #0c1017;
-}
-
-.eyebrow {
-  font-size: 10px;
-  color: var(--accent);
-  letter-spacing: 2px;
-  font-weight: 800;
-  margin-bottom: 12px;
-}
-
-h1 {
-  font-size: 25px;
-  line-height: 1.2;
-  margin: 0 0 10px;
-  letter-spacing: -1px;
-}
-
-.description {
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
-  margin-bottom: 26px;
-}
-
-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-textarea {
-  width: 100%;
-  min-height: 145px;
-  resize: vertical;
-  padding: 14px;
-  color: white;
-  background: #080b11;
-  border: 1px solid #293247;
-  border-radius: 10px;
-  outline: none;
-  line-height: 1.6;
-  font-size: 13px;
-}
-
-textarea:focus { border-color: var(--accent); }
-
-.field { margin-bottom: 20px; }
-
-select {
-  width: 100%;
-  background: #080b11;
-  color: white;
-  border: 1px solid #293247;
-  padding: 12px;
-  border-radius: 8px;
-  outline: none;
-}
-
-.primary {
-  background: var(--accent);
-  color: #10160b;
-  border: 0;
-  padding: 14px;
-  width: 100%;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 800;
-  transition: .2s;
-}
-
-.primary:hover { background: #c0ff85; transform: translateY(-1px); }
-.primary:disabled { opacity: .5; cursor: wait; transform: none; }
-
-.secondary {
-  background: #171d29;
-  color: white;
-  border: 1px solid #30394b;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 12px;
-}
-
-.secondary:hover { border-color: var(--accent); }
-
-.examples {
-  margin-top: 28px;
-  padding-top: 22px;
-  border-top: 1px solid var(--line);
-}
-
-.example {
-  width: 100%;
-  text-align: left;
-  padding: 12px;
-  margin-top: 8px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  color: #d6deeb;
-  background: #10151f;
-  font-size: 12px;
-}
-
-.example:hover { border-color: var(--blue); }
-
-.workspace {
-  min-width: 0;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.workspace-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.workspace-top h2 {
-  font-size: 17px;
-  margin: 0 0 6px;
-}
-
-.subtext { color: var(--muted); font-size: 11px; }
-
-.preview {
-  position: relative;
-  height: min(64vh, 620px);
-  min-height: 350px;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 45%, #182435 0%, #0c111b 52%, #080a0f 100%);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-}
-
-#viewport {
-  position: absolute;
-  inset: 0;
-}
-
-#viewport canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.preview-badge {
-  position: absolute;
-  z-index: 2;
-  top: 16px;
-  left: 16px;
-  padding: 8px 11px;
-  border-radius: 6px;
-  background: #111925dd;
-  border: 1px solid #303c50;
-  font-size: 10px;
-  color: #d5e2f6;
-  pointer-events: none;
-}
-
-.preview-tools {
-  position: absolute;
-  right: 14px;
-  top: 14px;
-  z-index: 3;
-  display: flex;
-  gap: 6px;
-}
-
-.preview-tools button {
-  background: #121925dd;
-  color: white;
-  border: 1px solid #344056;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-}
-
-.preview-tools button:hover { border-color: var(--accent); }
-
-.preview-hint {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #8995a9;
-  font-size: 11px;
-  background: #090c12b8;
-  padding: 8px 12px;
-  border-radius: 7px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  background: #080b11e8;
-  text-align: center;
-  padding: 20px;
-}
-
-.loading-overlay.visible { display: flex; }
-
-.spinner {
-  width: 37px;
-  height: 37px;
-  border: 3px solid #293247;
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-#loadingText { font-size: 13px; font-weight: 700; }
-#loadingDetail { font-size: 11px; color: var(--muted); }
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.info-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  padding: 15px;
-  border-radius: 10px;
-  min-width: 0;
-}
-
-.info-label {
-  color: var(--muted);
-  font-size: 10px;
-  margin-bottom: 9px;
-}
-
-.info-value {
-  font-size: 18px;
-  font-weight: 800;
-  overflow-wrap: anywhere;
-}
-
-.info-small {
-  color: var(--muted);
-  font-size: 10px;
-  margin-top: 5px;
-}
-
-.download-panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  padding: 18px;
-  border-radius: 12px;
-}
-
-.panel-title {
-  font-size: 14px;
-  font-weight: 800;
-  margin-bottom: 5px;
-}
-
-.panel-description {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.download-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 9px;
-}
-
-.download-btn {
-  border: 1px solid #30394b;
-  border-radius: 8px;
-  padding: 12px 8px;
-  background: #141a25;
-  color: white;
-  text-align: left;
-  min-width: 0;
-}
-
-.download-btn:hover { border-color: var(--accent); }
-
-.download-btn strong {
-  display: block;
-  font-size: 12px;
-  margin-bottom: 5px;
-}
-
-.download-btn span {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-#message {
-  display: none;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  padding: 12px;
-  border-radius: 8px;
-  background: #151b27;
-  border: 1px solid #344056;
-  color: #dce5f5;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-#message.visible { display: block; }
-#message.error { border-color: #a64d5c; color: #ffb7c1; }
-
-@media (max-width: 850px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
-  .workspace { padding: 14px; }
-  .preview { min-height: 330px; height: 52vh; }
-  .download-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 420px) {
-  header { padding: 0 14px; }
-  .header-right { font-size: 10px; }
-  .info-grid { gap: 7px; }
-  .info-card { padding: 10px; }
-  .info-value { font-size: 15px; }
-  .preview-tools { flex-wrap: wrap; justify-content: flex-end; max-width: 65%; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font-family:Inter,"Segoe UI",Arial,sans-serif}
+button,textarea,select{font:inherit}
+button{cursor:pointer}
+header{height:68px;padding:0 24px;display:flex;align-items:center;
+justify-content:space-between;border-bottom:1px solid var(--line);
+background:#0b0e14}
+.brand{font-size:21px;font-weight:850;letter-spacing:-1px}
+.brand span{color:var(--accent)}
+.small{font-size:11px;color:var(--muted)}
+.layout{display:grid;grid-template-columns:330px minmax(0,1fr);
+min-height:calc(100vh - 68px)}
+.sidebar{padding:23px;background:#0c1017;border-right:1px solid var(--line)}
+.eyebrow{font-size:10px;color:var(--accent);letter-spacing:2px;
+font-weight:800;margin-bottom:12px}
+h1{font-size:25px;line-height:1.2;margin:0 0 10px;letter-spacing:-1px}
+.desc{font-size:12px;line-height:1.7;color:var(--muted);margin-bottom:24px}
+label{display:block;font-size:12px;font-weight:700;margin-bottom:9px}
+.field{margin-bottom:19px}
+textarea,select{width:100%;border:1px solid #293247;background:#080b11;
+color:white;border-radius:9px;padding:12px;outline:none}
+textarea{height:145px;resize:vertical;line-height:1.6;font-size:13px}
+textarea:focus,select:focus{border-color:var(--accent)}
+.primary{width:100%;padding:14px;background:var(--accent);color:#10160b;
+border:0;border-radius:9px;font-weight:800;font-size:12px}
+.primary:disabled{opacity:.55;cursor:wait}
+.secondary,.example{background:#141a25;color:white;border:1px solid #30394b;
+border-radius:8px;padding:10px 12px;font-size:12px}
+.secondary:hover,.example:hover{border-color:var(--accent)}
+.examples{border-top:1px solid var(--line);margin-top:25px;padding-top:20px}
+.example{display:block;width:100%;text-align:left;margin-top:8px}
+.workspace{min-width:0;padding:22px;display:flex;flex-direction:column;gap:15px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h2{font-size:17px;margin:0 0 5px}
+.preview{height:min(62vh,620px);min-height:350px;position:relative;
+overflow:hidden;border:1px solid var(--line);border-radius:14px;
+background:radial-gradient(ellipse at 50% 45%,#182435,#0c111b 60%,#080a0f)}
+#viewport{position:absolute;inset:0}
+#viewport canvas{display:block;width:100%;height:100%}
+.badge{position:absolute;top:14px;left:14px;padding:8px 10px;
+background:#111925dd;border:1px solid #303c50;border-radius:6px;
+font-size:10px;pointer-events:none}
+.tools{position:absolute;right:12px;top:12px;display:flex;gap:5px;
+flex-wrap:wrap;justify-content:flex-end;max-width:72%}
+.tools button{background:#121925e8;color:white;border:1px solid #344056;
+border-radius:6px;padding:8px;font-size:10px}
+.hint{position:absolute;bottom:13px;left:50%;transform:translateX(-50%);
+font-size:10px;color:#aab4c5;background:#090c12c9;padding:8px 11px;
+border-radius:7px;white-space:nowrap;pointer-events:none}
+.loading{position:absolute;inset:0;display:none;z-index:4;
+background:#080b11e8;align-items:center;justify-content:center;
+flex-direction:column;gap:14px;text-align:center;padding:20px}
+.loading.show{display:flex}
+.spinner{width:36px;height:36px;border:3px solid #293247;
+border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#message{display:none;padding:12px;background:#151b27;border:1px solid #344056;
+border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;
+font-size:12px;line-height:1.6}
+#message.show{display:block}
+#message.error{color:#ffb7c1;border-color:#a64d5c}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.card,.downloads{background:var(--panel);border:1px solid var(--line);
+border-radius:10px;padding:14px;min-width:0}
+.stat-label{font-size:10px;color:var(--muted);margin-bottom:8px}
+.stat-value{font-size:18px;font-weight:800;overflow-wrap:anywhere}
+.stat-note{font-size:10px;color:var(--muted);margin-top:5px}
+.download-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.download-btn{background:#141a25;border:1px solid #30394b;color:white;
+border-radius:8px;padding:12px 8px;text-align:left;min-width:0}
+.download-btn:hover{border-color:var(--accent)}
+.download-btn strong{display:block;font-size:12px;margin-bottom:5px}
+.download-btn span{font-size:10px;color:var(--muted)}
+.panel-title{font-size:14px;font-weight:800;margin-bottom:6px}
+.panel-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+@media(max-width:850px){
+.layout{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid var(--line)}
+.workspace{padding:13px}.preview{height:50vh;min-height:330px}
+.download-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 </style>
 </head>
-
 <body>
 <header>
   <div class="brand">FORMA<span> AI</span></div>
-  <div class="header-right">
-    <span><i class="status-dot"></i>3D Studio</span>
-    <span>BLENDER READY</span>
-  </div>
+  <div class="small">ADVANCED PROCEDURAL 3D STUDIO</div>
 </header>
-
 <div class="layout">
-  <aside class="sidebar">
-    <div class="eyebrow">AI MODEL GENERATOR</div>
-    <h1>Hayal et.<br>Modele dönüştür.</h1>
-    <div class="description">
-      Metinle tarif ettiğin objeyi yapay zekâyla tasarla.
-      3D ön izlemede incele ve Blender için dışa aktar.
+<aside class="sidebar">
+  <div class="eyebrow">AI MODEL GENERATOR</div>
+  <h1>Hayal et.<br>Modele dönüştür.</h1>
+  <div class="desc">Gelişmiş geometrilerle model üret, 3D ön izlemede incele
+  ve Blender için dışa aktar.</div>
+
+  <div class="field">
+    <label for="prompt">MODELİNİ TARİF ET</label>
+    <textarea id="prompt" maxlength="1800"
+    placeholder="Örn. Eklemli, keskin kavisli pençeleri olan mekanik mantis kıskacı. Metal yüzeyler, bağlantı pimleri, iç içe geçen parçalar ve yeşil ışık detayları..."></textarea>
+  </div>
+  <div class="field">
+    <label for="style">TASARIM STİLİ</label>
+    <select id="style">
+      <option value="realistic">Gerçekçi / Endüstriyel</option>
+      <option value="scifi">Bilim kurgu / Cyberpunk</option>
+      <option value="lowpoly">Low-poly</option>
+      <option value="stylized">Stilize / Oyun modeli</option>
+      <option value="mechanical">Mekanik / Teknik</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="detail">MODEL DETAYI</label>
+    <select id="detail">
+      <option value="standard">Standart</option>
+      <option value="detailed" selected>Detaylı</option>
+      <option value="high">Yüksek detay</option>
+    </select>
+  </div>
+  <button class="primary" id="generate">✦ YAPAY ZEKÂ İLE OLUŞTUR</button>
+
+  <div class="examples">
+    <div class="eyebrow">HIZLI BAŞLANGIÇ</div>
+    <button class="example" data-prompt="Mekanik mantis kıskacı. İki uzun kavisli kesici pençe, segmentli metal parmaklar, mafsallar, bağlantı pimleri, siyah titanyum ve yeşil ışıklı ayrıntılar.">01 / Mekanik mantis</button>
+    <button class="example" data-prompt="Fütüristik savaş kaskı. Simetrik zırh plakaları, sivri alın profili, katmanlı çene koruması, havalandırma yarıkları ve koyu metal.">02 / Savaş kaskı</button>
+    <button class="example" data-prompt="Dört bacaklı mekanik örümcek robot. Segmentli bacaklar, yuvarlak gövde, mafsallar, sensörler ve teknik ayrıntılar.">03 / Robot örümcek</button>
+    <button class="example" data-prompt="Fütüristik robot kolu. Döner taban, üç mafsallı kol, hidrolik pistonlar, kablolar ve iki parmaklı kavrayıcı.">04 / Robot kolu</button>
+  </div>
+</aside>
+
+<main class="workspace">
+  <div class="top">
+    <div>
+      <h2>3D Çalışma Alanı</h2>
+      <div class="small" id="modelName">Henüz model oluşturulmadı</div>
     </div>
+    <button class="secondary" id="reset">⟳ Görünümü sıfırla</button>
+  </div>
 
-    <div class="field">
-      <label for="prompt">MODELİNİ TARİF ET</label>
-      <textarea id="prompt" maxlength="1800"
-        placeholder="Örn. Mekanik bir mantis kıskacı. Üç eklemli metal parmaklar, siyah titanyum gövde, yeşil ışık detayları ve endüstriyel tasarım..."></textarea>
+  <section class="preview">
+    <div id="viewport"></div>
+    <div class="badge">● LIVE VIEWPORT</div>
+    <div class="tools">
+      <button id="wire">Tel kafes</button>
+      <button id="rotate">Otomatik döndür</button>
+      <button id="light">Işık: Stüdyo</button>
     </div>
-
-    <div class="field">
-      <label for="style">TASARIM STİLİ</label>
-      <select id="style">
-        <option value="realistic">Gerçekçi / Endüstriyel</option>
-        <option value="sci-fi">Bilim kurgu / Cyberpunk</option>
-        <option value="low-poly">Low-poly</option>
-        <option value="stylized">Stilize / Oyun modeli</option>
-        <option value="mechanical">Mekanik / Teknik</option>
-      </select>
+    <div class="hint">Sürükle: döndür · Tekerlek: yakınlaştır</div>
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <strong id="loadTitle">Model tasarlanıyor...</strong>
+      <div class="small" id="loadDetail">Geometri hazırlanıyor</div>
     </div>
+  </section>
 
-    <div class="field">
-      <label for="detail">MODEL DETAYI</label>
-      <select id="detail">
-        <option value="standard">Standart</option>
-        <option value="detailed" selected>Detaylı</option>
-        <option value="high">Yüksek detay</option>
-      </select>
+  <div id="message"></div>
+
+  <div class="stats">
+    <div class="card"><div class="stat-label">MODEL PARÇALARI</div>
+      <div class="stat-value" id="parts">0</div><div class="stat-note">Mesh objeleri</div></div>
+    <div class="card"><div class="stat-label">ÜÇGEN SAYISI</div>
+      <div class="stat-value" id="triangles">0</div><div class="stat-note">Tahmini yüzey karmaşıklığı</div></div>
+    <div class="card"><div class="stat-label">DIŞA AKTARIM</div>
+      <div class="stat-value" id="status">Hazır</div><div class="stat-note">OBJ / STL / PY</div></div>
+  </div>
+
+  <section class="downloads">
+    <div class="panel-title">Modelini dışa aktar</div>
+    <div class="panel-desc">OBJ ve STL dosyaları gerçek sahne geometrisinden oluşturulur.
+    Blender Python dosyası da geometriyi yeniden kurmaya çalışır.</div>
+    <div class="download-grid">
+      <button class="download-btn" id="obj"><strong>↓ OBJ</strong><span>3D geometri</span></button>
+      <button class="download-btn" id="stl"><strong>↓ STL</strong><span>Mesh / baskı</span></button>
+      <button class="download-btn" id="py"><strong>↓ BLENDER PY</strong><span>Blender betiği</span></button>
+      <button class="download-btn" id="json"><strong>↓ JSON</strong><span>Model tanımı</span></button>
     </div>
-
-    <button id="generateBtn" class="primary">✦ YAPAY ZEKÂ İLE OLUŞTUR</button>
-
-    <div class="examples">
-      <div class="eyebrow">HIZLI BAŞLANGIÇ</div>
-      <button class="example" data-prompt="Mekanik bir mantis kıskacı, iki kavisli keskin pençe, eklemli metal kollar, endüstriyel siyah titanyum ve yeşil ışıklar.">01 / Mekanik mantis kıskacı</button>
-      <button class="example" data-prompt="Fütüristik bir bilim kurgu kaskı, simetrik zırh panelleri, vizör, çene koruması ve gümüş metal yüzeyler.">02 / Bilim kurgu kaskı</button>
-      <button class="example" data-prompt="Düşük poligonlu stilize bir ejderha heykeli, dört bacak, uzun kuyruk, boynuzlar ve katmanlı kanatlar.">03 / Ejderha heykeli</button>
-      <button class="example" data-prompt="Mekanik bir robot kolu, döner taban, üç eklem, metal bağlantılar ve kavrayıcı iki parmaklı el.">04 / Robot kolu</button>
-    </div>
-  </aside>
-
-  <main class="workspace">
-    <div class="workspace-top">
-      <div>
-        <h2>3D Çalışma Alanı</h2>
-        <div class="subtext" id="modelName">Henüz model oluşturulmadı</div>
-      </div>
-      <button class="secondary" id="resetBtn">⟳ Görünümü sıfırla</button>
-    </div>
-
-    <section class="preview">
-      <div id="viewport"></div>
-
-      <div class="preview-badge">● LIVE VIEWPORT</div>
-
-      <div class="preview-tools">
-        <button id="wireBtn">Tel kafes</button>
-        <button id="rotateBtn">Otomatik döndür</button>
-        <button id="lightBtn">Işık: Stüdyo</button>
-      </div>
-
-      <div class="preview-hint">Sürükle: döndür · Tekerlek: yakınlaştır</div>
-
-      <div class="loading-overlay" id="loading">
-        <div class="spinner"></div>
-        <div id="loadingText">Yapay zekâ çalışıyor...</div>
-        <div id="loadingDetail">Geometri oluşturuluyor</div>
-      </div>
-    </section>
-
-    <div id="message"></div>
-
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="info-label">MODEL PARÇALARI</div>
-        <div class="info-value" id="partCount">0</div>
-        <div class="info-small">Ayrı geometrik objeler</div>
-      </div>
-      <div class="info-card">
-        <div class="info-label">ÜÇGEN SAYISI</div>
-        <div class="info-value" id="triangleCount">0</div>
-        <div class="info-small">Tahmini yüzey karmaşıklığı</div>
-      </div>
-      <div class="info-card">
-        <div class="info-label">DIŞA AKTARIM</div>
-        <div class="info-value" id="exportStatus">Hazır</div>
-        <div class="info-small">OBJ / STL / Blender</div>
-      </div>
-    </div>
-
-    <section class="download-panel">
-      <div class="panel-title">Modelini dışa aktar</div>
-      <div class="panel-description">
-        OBJ ve STL dosyalarını Blender'a aktarabilirsin.
-        Blender Python dosyası, modeli Blender içinde yeniden oluşturmak
-        için gereken komutları içerir. İndirmeden önce bir model oluştur.
-      </div>
-
-      <div class="download-grid">
-        <button class="download-btn" id="objBtn">
-          <strong>↓ OBJ</strong>
-          <span>Genel 3D formatı</span>
-        </button>
-        <button class="download-btn" id="stlBtn">
-          <strong>↓ STL</strong>
-          <span>3D baskı / mesh</span>
-        </button>
-        <button class="download-btn" id="blendBtn">
-          <strong>↓ BLENDER PY</strong>
-          <span>Blender betiği</span>
-        </button>
-        <button class="download-btn" id="jsonBtn">
-          <strong>↓ JSON</strong>
-          <span>Model tanımı</span>
-        </button>
-      </div>
-    </section>
-  </main>
+  </section>
+</main>
 </div>
 
 <script type="module">
@@ -569,37 +205,25 @@ import { OBJExporter } from "three/addons/exporters/OBJExporter.js";
 import { STLExporter } from "three/addons/exporters/STLExporter.js";
 
 const $ = id => document.getElementById(id);
-
 const viewport = $("viewport");
-const loading = $("loading");
-const generateBtn = $("generateBtn");
-const message = $("message");
 
-let scene, camera, renderer, controls;
-let modelGroup;
-let grid;
-let wireframe = false;
-let autoRotate = false;
-let alternateLighting = false;
+let scene, camera, renderer, controls, group, grid;
 let currentSpec = null;
-let lastModelName = "forma_model";
+let autoRotate = false, wireframe = false, darkLight = false;
+let modelFilename = "forma_model";
 
-initScene();
-createStarterModel();
+init();
 animate();
+makeStarter();
 
-function initScene() {
+function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color("#0b1019");
-
   camera = new THREE.PerspectiveCamera(42, 1, 0.1, 1000);
   camera.position.set(7, 5, 9);
 
-  renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: false
-  });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.15;
@@ -607,627 +231,373 @@ function initScene() {
 
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.dampingFactor = 0.07;
-  controls.minDistance = 2;
-  controls.maxDistance = 45;
   controls.target.set(0, 1, 0);
 
-  scene.add(new THREE.HemisphereLight(0xdce9ff, 0x273041, 2.0));
-
-  const key = new THREE.DirectionalLight(0xffffff, 3.2);
-  key.position.set(5, 9, 7);
-  scene.add(key);
-
-  const rim = new THREE.DirectionalLight(0x7b9cff, 2.5);
-  rim.position.set(-6, 4, -5);
-  scene.add(rim);
-
-  const floorLight = new THREE.PointLight(0xa5f35a, 35, 15);
-  floorLight.position.set(0, 2, 4);
-  scene.add(floorLight);
+  scene.add(new THREE.HemisphereLight(0xe3edff, 0x30394b, 2));
+  const key = new THREE.DirectionalLight(0xffffff, 3);
+  key.position.set(5, 9, 7); scene.add(key);
+  const rim = new THREE.DirectionalLight(0x779cff, 2);
+  rim.position.set(-6, 4, -5); scene.add(rim);
+  const glow = new THREE.PointLight(0xa5f35a, 25, 16);
+  glow.position.set(0, 2, 4); scene.add(glow);
 
   grid = new THREE.GridHelper(30, 30, 0x354359, 0x1c2636);
-  grid.position.y = -0.015;
-  scene.add(grid);
-
-  modelGroup = new THREE.Group();
-  modelGroup.name = "FormaAI_Model";
-  scene.add(modelGroup);
-
+  grid.position.y = -0.01; scene.add(grid);
+  group = new THREE.Group(); scene.add(group);
   resize();
-  window.addEventListener("resize", resize);
+  addEventListener("resize", resize);
 }
-
 function resize() {
   if (!renderer) return;
-  const width = Math.max(1, viewport.clientWidth);
-  const height = Math.max(1, viewport.clientHeight);
-  camera.aspect = width / height;
+  const w = Math.max(1, viewport.clientWidth);
+  const h = Math.max(1, viewport.clientHeight);
+  camera.aspect = w/h;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height, false);
+  renderer.setSize(w,h,false);
 }
-
 function animate() {
   requestAnimationFrame(animate);
-  if (autoRotate && modelGroup.children.length) {
-    modelGroup.rotation.y += 0.004;
-  }
+  if (autoRotate) group.rotation.y += 0.004;
   controls.update();
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
-
-function createStarterModel() {
-  currentSpec = {
-    name: "Başlangıç Modeli",
-    objects: [
-      { type: "box", name: "Gövde", size: [1.4, 1.8, 0.8],
-        position: [0, 1, 0], color: "#65758e" },
-      { type: "sphere", name: "Üst Parça", size: [0.65, 0.65, 0.65],
-        position: [0, 2.25, 0], color: "#a5f35a" }
-    ]
+function message(text,error=false) {
+  $("message").textContent=text;
+  $("message").className="show"+(error?" error":"");
+}
+function loading(active,title="",detail="") {
+  $("loading").classList.toggle("show",active);
+  $("loadTitle").textContent=title;
+  $("loadDetail").textContent=detail;
+  $("generate").disabled=active;
+  $("generate").textContent=active?"⏳ OLUŞTURULUYOR...":"✦ YAPAY ZEKÂ İLE OLUŞTUR";
+}
+function safeNum(v,def=0,min=-20,max=20) {
+  v=Number(v);
+  return Number.isFinite(v)?Math.max(min,Math.min(max,v)):def;
+}
+function vec(v,def,min=-20,max=20) {
+  return def.map((d,i)=>safeNum(v?.[i],d,min,max));
+}
+function hex(v) {
+  return typeof v==="string" && /^#[0-9a-f]{6}$/i.test(v) ? v : "#78869a";
+}
+function material(item) {
+  const presets = {
+    metal:[0.82,0.27], matte:[0.04,0.9],
+    plastic:[0.08,0.32], emissive:[0.2,0.28]
   };
-  buildModel(currentSpec);
-}
-
-function showMessage(text, isError = false) {
-  message.textContent = text;
-  message.className = "visible" + (isError ? " error" : "");
-}
-
-function setLoading(active, title = "", detail = "") {
-  loading.classList.toggle("visible", active);
-  $("loadingText").textContent = title;
-  $("loadingDetail").textContent = detail;
-  generateBtn.disabled = active;
-  generateBtn.textContent = active
-    ? "⏳ MODEL OLUŞTURULUYOR..."
-    : "✦ YAPAY ZEKÂ İLE OLUŞTUR";
-}
-
-function cleanName(name) {
-  return String(name || "forma_model")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9_-]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 60) || "forma_model";
-}
-
-function parseAIResponse(response) {
-  let text = "";
-
-  if (typeof response === "string") {
-    text = response;
-  } else if (response?.message?.content) {
-    text = response.message.content;
-  } else if (Array.isArray(response?.message)) {
-    text = response.message.map(x => x.text || "").join("\n");
-  } else if (response?.text) {
-    text = response.text;
-  } else {
-    throw new Error("Yapay zekâ yanıtı okunamadı.");
-  }
-
-  text = text.trim()
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/, "");
-
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-
-  if (start < 0 || end <= start) {
-    throw new Error("Yapay zekâ geçerli bir JSON model tanımı üretmedi.");
-  }
-
-  const spec = JSON.parse(text.slice(start, end + 1));
-
-  if (!spec || !Array.isArray(spec.objects)) {
-    throw new Error("Model tanımında objects dizisi bulunamadı.");
-  }
-
-  if (spec.objects.length < 1 || spec.objects.length > 100) {
-    throw new Error("Model 1 ile 100 arasında geometrik parça içermeli.");
-  }
-
-  return spec;
-}
-
-async function generateModel() {
-  const prompt = $("prompt").value.trim();
-  if (!prompt) {
-    showMessage("Önce oluşturmak istediğin 3D modeli tarif et.", true);
-    return;
-  }
-
-  if (!window.puter?.ai?.chat) {
-    showMessage("Puter.js yüklenemedi. İnternet bağlantını kontrol et.", true);
-    return;
-  }
-
-  setLoading(true, "Yapay zekâ tasarlıyor...", "Geometri tanımı hazırlanıyor");
-  message.className = "";
-
-  try {
-    const style = $("style").value;
-    const detail = $("detail").value;
-
-    const systemPrompt = `
-You are a procedural 3D modeling designer.
-Convert the user's description into a JSON specification for a 3D object.
-
-Return ONLY valid JSON. No markdown, no explanations.
-
-Schema:
-{
-  "name": "Short model name",
-  "objects": [
-    {
-      "type": "box",
-      "name": "part name",
-      "size": [1, 1, 1],
-      "position": [0, 0, 0],
-      "rotation": [0, 0, 0],
-      "color": "#808080",
-      "material": "metal",
-      "segments": 16
-    }
-  ]
-}
-
-Allowed types:
-box, sphere, cylinder, cone, torus, icosahedron, capsule.
-
-Rules:
-- Use only the listed types.
-- size is three positive numbers representing dimensions.
-- position is [x,y,z].
-- rotation is [x,y,z] in radians.
-- All numbers must be finite and between -20 and 20.
-- Each dimension must be between 0.03 and 10.
-- colors must be hex colors.
-- material can be metal, matte, plastic, glasslike, emissive.
-- segments must be an integer from 6 to 32.
-- Create a recognizable object, not just random primitives.
-- Use multiple parts to express details, joints, panels and symmetry.
-- Use the origin near the center of the object's base.
-- Prefer a coherent, balanced and roughly symmetric design when appropriate.
-- Use no more than ${detail === "standard" ? 18 : detail === "detailed" ? 40 : 65} objects.
-- For curved claws, horns and limbs, use overlapping rotated cones and capsules.
-- For articulated mechanical objects, create visible joints and connecting parts.
-- Do not generate scripts or executable code.
-- The selected style is: ${style}.
-- User description: ${prompt}
-`;
-
-    setLoading(true, "Model tasarlanıyor...", "Yapay zekâ geometrik parçaları belirliyor");
-
-    const response = await puter.ai.chat(systemPrompt, {
-      model: "gpt-5.4-nano"
-    });
-
-    setLoading(true, "Geometri oluşturuluyor...", "3D parçalar sahneye yerleştiriliyor");
-
-    const spec = parseAIResponse(response);
-    buildModel(spec);
-    currentSpec = spec;
-    lastModelName = cleanName(spec.name);
-
-    $("modelName").textContent = spec.name || "Yeni model";
-    showMessage("Model başarıyla oluşturuldu. Ön izlemede inceleyebilir ve dosyaları indirebilirsin.");
-    $("exportStatus").textContent = "Hazır";
-
-  } catch (error) {
-    console.error(error);
-    showMessage(
-      "Model oluşturulamadı: " + (error?.message || String(error)) +
-      "\n\nPuter oturumunu, internet bağlantısını ve seçilen modelin erişilebilirliğini kontrol et.",
-      true
-    );
-  } finally {
-    setLoading(false);
-  }
-}
-
-function validateNumber(value, fallback = 0, min = -20, max = 20) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return fallback;
-  return Math.max(min, Math.min(max, number));
-}
-
-function vector3(values, defaults, min, max) {
-  return defaults.map((fallback, index) =>
-    validateNumber(values?.[index], fallback, min, max)
-  );
-}
-
-function makeGeometry(item) {
-  const s = vector3(item.size, [1, 1, 1], 0.03, 10);
-  const segments = Math.round(validateNumber(item.segments, 16, 6, 32));
-
-  switch (item.type) {
-    case "box":
-      return new THREE.BoxGeometry(s[0], s[1], s[2], 1, 1, 1);
-
-    case "sphere":
-      return new THREE.SphereGeometry(
-        s[0] / 2, segments, Math.max(4, Math.floor(segments * 0.65))
-      );
-
-    case "cylinder":
-      return new THREE.CylinderGeometry(
-        s[0] / 2, s[2] / 2, s[1], segments
-      );
-
-    case "cone":
-      return new THREE.ConeGeometry(s[0] / 2, s[1], segments);
-
-    case "torus":
-      return new THREE.TorusGeometry(
-        Math.max(0.02, s[0] / 2),
-        Math.max(0.01, Math.min(s[1] / 4, s[0] / 4)),
-        Math.max(6, Math.floor(segments / 2)),
-        segments
-      );
-
-    case "icosahedron":
-      return new THREE.IcosahedronGeometry(s[0] / 2, 1);
-
-    case "capsule":
-      return new THREE.CapsuleGeometry(
-        Math.max(0.025, Math.min(s[0], s[2]) / 2),
-        Math.max(0.02, s[1] - Math.min(s[0], s[2])),
-        Math.max(2, Math.floor(segments / 4)),
-        segments
-      );
-
-    default:
-      throw new Error("Desteklenmeyen geometri türü: " + item.type);
-  }
-}
-
-function makeMaterial(item) {
-  const color = /^#[0-9a-f]{6}$/i.test(item.color || "")
-    ? item.color
-    : "#78869a";
-
-  const kind = item.material || "metal";
-
-  const settings = {
-    metal:      { metalness: 0.82, roughness: 0.27 },
-    matte:      { metalness: 0.05, roughness: 0.92 },
-    plastic:    { metalness: 0.08, roughness: 0.32 },
-    glasslike:  { metalness: 0.15, roughness: 0.12 },
-    emissive:   { metalness: 0.2, roughness: 0.28 }
-  };
-
-  const opts = settings[kind] || settings.metal;
-
+  const [metalness,roughness]=presets[item.material]||presets.metal;
   return new THREE.MeshStandardMaterial({
-    color,
-    ...opts,
-    emissive: kind === "emissive" ? color : "#000000",
-    emissiveIntensity: kind === "emissive" ? 0.8 : 0,
-    transparent: kind === "glasslike",
-    opacity: kind === "glasslike" ? 0.62 : 1,
-    wireframe,
-    side: THREE.DoubleSide
+    color:hex(item.color),metalness,roughness,
+    emissive:item.material==="emissive"?hex(item.color):"#000000",
+    emissiveIntensity:item.material==="emissive"?0.8:0,
+    wireframe, side:THREE.DoubleSide
   });
 }
 
-function buildModel(spec) {
-  for (const child of [...modelGroup.children]) {
-    modelGroup.remove(child);
-    child.geometry?.dispose();
-    if (Array.isArray(child.material)) {
-      child.material.forEach(m => m.dispose());
-    } else {
-      child.material?.dispose();
+/* Gelişmiş geometri derleyicisi.
+   AI güvenilmeyen metin kodu değil, sınırlandırılmış veri üretir. */
+function geometry(item) {
+  const s=vec(item.size,[1,1,1],0.025,10);
+  const n=Math.round(safeNum(item.segments,16,6,48));
+  switch(item.type) {
+    case "box": return new THREE.BoxGeometry(...s);
+    case "sphere": return new THREE.SphereGeometry(s[0]/2,n,Math.max(4,n>>1));
+    case "cylinder": return new THREE.CylinderGeometry(s[0]/2,s[2]/2,s[1],n);
+    case "cone": return new THREE.ConeGeometry(s[0]/2,s[1],n);
+    case "torus": return new THREE.TorusGeometry(s[0]/2,Math.max(.015,s[1]/5),Math.max(6,n>>1),n);
+    case "ico": return new THREE.IcosahedronGeometry(s[0]/2,1);
+    case "capsule": return new THREE.CapsuleGeometry(Math.min(s[0],s[2])/2,Math.max(.01,s[1]-Math.min(s[0],s[2])),4,n);
+    case "beam": {
+      const a=new THREE.Vector3(...vec(item.from,[0,0,0]));
+      const b=new THREE.Vector3(...vec(item.to,[0,1,0]));
+      const delta=b.clone().sub(a), length=delta.length();
+      const g=new THREE.CylinderGeometry(s[0]/2,s[1]/2,Math.max(.02,length),n);
+      g.translate(0,length/2,0);
+      g.rotateX(Math.PI/2);
+      const direction=delta.clone().normalize();
+      const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),direction);
+      g.applyQuaternion(q);
+      g.translate(...a.toArray());
+      return g;
     }
+    case "lathe": {
+      const points=(item.profile||[]).slice(0,40)
+        .map(p=>new THREE.Vector2(
+          safeNum(p?.[0],.2,.01,5),safeNum(p?.[1],0,-5,5)));
+      if(points.length<3) return new THREE.SphereGeometry(.5,n,n>>1);
+      return new THREE.LatheGeometry(points,n);
+    }
+    case "extrude": {
+      const points=(item.points||[]).slice(0,32);
+      if(points.length<3) return new THREE.BoxGeometry(...s);
+      const shape=new THREE.Shape();
+      shape.moveTo(safeNum(points[0][0],0,-5,5),safeNum(points[0][1],0,-5,5));
+      for(const p of points.slice(1))
+        shape.lineTo(safeNum(p[0],0,-5,5),safeNum(p[1],0,-5,5));
+      shape.closePath();
+      return new THREE.ExtrudeGeometry(shape,{
+        depth:safeNum(item.depth,0.2,.02,5),
+        bevelEnabled:true,bevelSegments:2,steps:1,
+        bevelSize:.025,bevelThickness:.025,curveSegments:8
+      });
+    }
+    default: throw new Error("Bilinmeyen geometri: "+item.type);
   }
+}
+function build(spec) {
+  if(!spec || !Array.isArray(spec.objects) ||
+    spec.objects.length<1 || spec.objects.length>80)
+    throw new Error("Model tanımı geçersiz veya parça sayısı sınırı aşıldı.");
 
-  modelGroup.rotation.set(0, 0, 0);
-
-  for (const item of spec.objects) {
-    if (!item || typeof item !== "object") continue;
-
-    const geometry = makeGeometry(item);
-    const material = makeMaterial(item);
-    const mesh = new THREE.Mesh(geometry, material);
-
-    mesh.name = String(item.name || item.type || "Part").slice(0, 100);
-    mesh.position.fromArray(vector3(item.position, [0, 0, 0], -20, 20));
-    mesh.rotation.fromArray(vector3(item.rotation, [0, 0, 0], -20, 20));
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    modelGroup.add(mesh);
+  const temp=new THREE.Group();
+  for(const item of spec.objects) {
+    if(!item || typeof item!=="object") continue;
+    const geo=geometry(item);
+    const mat=material(item);
+    const mesh=new THREE.Mesh(geo,mat);
+    mesh.name=String(item.name||item.type||"Part").slice(0,80);
+    mesh.position.fromArray(vec(item.position,[0,0,0]));
+    mesh.rotation.fromArray(vec(item.rotation,[0,0,0]));
+    temp.add(mesh);
   }
+  if(!temp.children.length) throw new Error("Oluşturulabilir geometri yok.");
 
-  if (modelGroup.children.length === 0) {
-    throw new Error("Modelde oluşturulabilir parça bulunamadı.");
+  const bounds=new THREE.Box3().setFromObject(temp);
+  const size=bounds.getSize(new THREE.Vector3());
+  const center=bounds.getCenter(new THREE.Vector3());
+  temp.position.sub(center);
+  const scale=Math.min(4/Math.max(size.x,size.y,size.z,1),1.5);
+  temp.scale.setScalar(scale);
+  temp.position.y=size.y*scale/2;
+
+  for(const c of [...group.children]) {
+    group.remove(c);
+    c.geometry?.dispose();
+    if(c.material) c.material.dispose();
   }
-
-  centerModel();
-  updateStats();
+  group.add(temp);
+  currentSpec=spec;
+  modelFilename=clean(spec.name||"forma_model");
+  $("modelName").textContent=spec.name||"Yeni model";
+  stats();
   resetView();
 }
-
-function centerModel() {
-  const box = new THREE.Box3().setFromObject(modelGroup);
-  if (box.isEmpty()) return;
-
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-
-  modelGroup.position.sub(center);
-  modelGroup.position.y += size.y / 2;
-
-  // Kamera ve zemin etrafında makul bir görüntü alanı sağla.
-  const maxDim = Math.max(size.x, size.y, size.z, 1);
-  const scale = Math.min(4 / maxDim, 1.5);
-
-  modelGroup.scale.setScalar(scale);
-  modelGroup.position.y = size.y * scale / 2;
+function stats() {
+  let tris=0;
+  group.traverse(o=>{
+    if(!o.isMesh) return;
+    const g=o.geometry;
+    tris+=Math.floor((g.index?g.index.count:g.attributes.position.count)/3);
+  });
+  $("parts").textContent=group.children.reduce((a,c)=>a+c.children.length,0);
+  $("triangles").textContent=tris.toLocaleString("tr-TR");
 }
-
-function updateStats() {
-  let triangles = 0;
-
-  for (const child of modelGroup.children) {
-    const geometry = child.geometry;
-    if (!geometry) continue;
-
-    const index = geometry.index;
-    const count = index ? index.count : geometry.attributes.position.count;
-    triangles += Math.floor(count / 3);
-  }
-
-  $("partCount").textContent = modelGroup.children.length;
-  $("triangleCount").textContent = triangles.toLocaleString("tr-TR");
+function clean(s) {
+  return String(s).normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-zA-Z0-9_-]/g,"_").slice(0,50)||"forma_model";
 }
-
 function resetView() {
-  camera.position.set(7, 5, 9);
-  controls.target.set(0, 1, 0);
-  controls.update();
-  modelGroup.rotation.set(0, 0, 0);
+  camera.position.set(7,5,9);
+  controls.target.set(0,1,0); controls.update();
+  group.rotation.set(0,0,0);
 }
-
-function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+function makeStarter() {
+  build({name:"Örnek Model",objects:[
+    {type:"box",name:"Gövde",size:[1.3,1.5,.7],position:[0,1,0],color:"#596a84"},
+    {type:"sphere",name:"Üst parça",size:[.6,.6,.6],position:[0,2,0],color:"#a5f35a"},
+    {type:"beam",name:"Bağlantı",from:[-.6,.4,0],to:[-.9,1.5,0],size:[.14,.14,1],color:"#8798b2"}
+  ]});
 }
+function parseResponse(r) {
+  let t=typeof r==="string"?r:
+    r?.message?.content??r?.text??"";
+  if(Array.isArray(t)) t=t.map(x=>x.text||"").join("\n");
+  t=String(t).trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"");
+  const a=t.indexOf("{"),b=t.lastIndexOf("}");
+  if(a<0||b<=a) throw new Error("AI geçerli JSON üretmedi.");
+  return JSON.parse(t.slice(a,b+1));
+}
+async function generate() {
+  const prompt=$("prompt").value.trim();
+  if(!prompt) return message("Önce modelini tarif et.",true);
+  if(!window.puter?.ai?.chat) return message("Puter.js yüklenemedi. İnternet bağlantısını kontrol et.",true);
 
+  loading(true,"Yapay zekâ tasarlıyor...","Gelişmiş geometri planlanıyor");
+  $("message").className="";
+  try {
+    const max=$("detail").value==="standard"?18:
+      $("detail").value==="detailed"?42:70;
+    const system=`You are an expert procedural 3D asset designer.
+Return ONLY valid JSON, no markdown.
+
+Schema:
+{"name":"model name","objects":[OBJECT,...]}
+
+Allowed object types:
+1) box: size [x,y,z]
+2) sphere: size [x,y,z]
+3) cylinder: size [diameterX,height,diameterZ]
+4) cone: size [diameter,height,depth]
+5) torus: size [outer diameter, thickness, depth]
+6) ico: size [x,y,z]
+7) capsule: size [x,y,z]
+8) beam: from [x,y,z], to [x,y,z], size [startDiameter,endDiameter,ignored]
+9) lathe: profile [[radius,height],...], size ignored
+10) extrude: points [[x,y],...], depth
+
+Every object may have:
+"name", "type", "size", "position":[x,y,z],
+"rotation":[rx,ry,rz] in radians, "color":"#RRGGBB",
+"material":"metal|matte|plastic|emissive",
+"segments": 6-48, "from", "to", "profile", "points", "depth".
+
+Constraints:
+- Up to ${max} objects.
+- All dimensions positive and <=10.
+- Coordinates between -10 and 10.
+- No executable code, functions, scripts, or markdown.
+- Design a recognizable, cohesive object with multiple purposeful components.
+- Use beams for long angled limbs, rods, claws and connectors.
+- Use lathe profiles for rotationally symmetric handles, barrels and joints.
+- Use extruded custom profiles for armor plates, blades and fins.
+- Avoid stacking only boxes. Mix shapes and sizes.
+- Add visible joints, layered panels, mechanical fasteners and purposeful details when appropriate.
+- Mirror components using opposite coordinates where symmetry is appropriate.
+- Use several colors/materials with restraint.
+- The selected style is ${$("style").value}.
+- User's object: ${prompt}`;
+    const response=await puter.ai.chat(system,{
+      model:"gpt-5.6-luna"
+    });
+    loading(true,"Geometri oluşturuluyor...","Model parçaları sahneye ekleniyor");
+    const spec=parseResponse(response);
+    build(spec);
+    $("status").textContent="Hazır";
+    message("Model oluşturuldu. Döndürerek inceleyebilir ve Blender için dışa aktarabilirsin.");
+  } catch(e) {
+    console.error(e);
+    message("Üretim başarısız: "+(e?.message||e)+
+      "\n\nPuter oturumunu, model erişimini ve internet bağlantısını kontrol et.",true);
+  } finally { loading(false); }
+}
+function download(blob,name) {
+  const u=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),1500);
+}
 function exportOBJ() {
-  if (!modelGroup.children.length) return;
-  const exporter = new OBJExporter();
-  const output = exporter.parse(modelGroup);
-  downloadBlob(
-    new Blob([output], { type: "text/plain;charset=utf-8" }),
-    lastModelName + ".obj"
-  );
+  download(new Blob([new OBJExporter().parse(group)],
+    {type:"text/plain;charset=utf-8"}),modelFilename+".obj");
 }
-
 function exportSTL() {
-  if (!modelGroup.children.length) return;
-  const exporter = new STLExporter();
-  const output = exporter.parse(modelGroup, { binary: true });
-  downloadBlob(
-    new Blob([output], { type: "application/octet-stream" }),
-    lastModelName + ".stl"
-  );
+  download(new Blob([new STLExporter().parse(group,{binary:true})],
+    {type:"application/octet-stream"}),modelFilename+".stl");
 }
-
-function blenderScript(spec) {
-  const data = JSON.stringify(spec, null, 2);
-
-  return `# Forma AI - Blender model generator
-# Blender > Scripting > Open > Run Script
-import bpy
-import json
-import math
-
-SPEC = json.loads(r'''${data.replace(/'''/g, "")}''')
-
-# Önce sahnedeki objeleri temizle.
+function exportPython() {
+  // Blender'da sahneyi yeniden oluşturmak için bağımsız bir betik.
+  const data=JSON.stringify(currentSpec);
+  const src=`import bpy, json, math
+from mathutils import Vector
+SPEC=json.loads(${JSON.stringify(data)})
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
-
-def make_material(name, hex_color, kind):
-    rgb = tuple(int(hex_color[i:i+2], 16) / 255
-                for i in (1, 3, 5))
-    mat = bpy.data.materials.new(name=name)
-    mat.diffuse_color = (*rgb, 1.0)
-
-    if mat.use_nodes:
-        bsdf = mat.node_tree.nodes.get("Principled BSDF")
-        if bsdf:
-            bsdf.inputs["Base Color"].default_value = (*rgb, 1.0)
-            if kind == "metal":
-                bsdf.inputs["Metallic"].default_value = 0.8
-                bsdf.inputs["Roughness"].default_value = 0.28
-            elif kind == "matte":
-                bsdf.inputs["Roughness"].default_value = 0.9
-            elif kind == "plastic":
-                bsdf.inputs["Roughness"].default_value = 0.3
-            elif kind == "emissive":
-                bsdf.inputs["Emission Color"].default_value = (*rgb, 1.0)
-                bsdf.inputs["Emission Strength"].default_value = 0.8
-            elif kind == "glasslike":
-                bsdf.inputs["Alpha"].default_value = 0.6
-                mat.surface_render_method = 'DITHERED'
-    return mat
-
-def create_part(item):
-    kind = item.get("type", "box")
-    s = item.get("size", [1, 1, 1])
-    loc = item.get("position", [0, 0, 0])
-    rot = item.get("rotation", [0, 0, 0])
-    name = item.get("name", kind)
-    segments = max(6, min(32, int(item.get("segments", 16))))
-
-    if kind == "box":
-        bpy.ops.mesh.primitive_cube_add(size=1, location=loc)
-        obj = bpy.context.object
-        obj.dimensions = s
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    elif kind == "sphere":
-        bpy.ops.mesh.primitive_uv_sphere_add(
-            segments=segments, ring_count=max(4, segments // 2),
-            location=loc)
-        obj = bpy.context.object
-        obj.scale = [s[0]/2, s[1]/2, s[2]/2]
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    elif kind == "cylinder":
-        bpy.ops.mesh.primitive_cylinder_add(
-            vertices=segments, radius=1, depth=1, location=loc)
-        obj = bpy.context.object
-        obj.scale = [s[0]/2, s[1], s[2]/2]
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    elif kind == "cone":
-        bpy.ops.mesh.primitive_cone_add(
-            vertices=segments, radius1=s[0]/2, radius2=0,
-            depth=s[1], location=loc)
-        obj = bpy.context.object
-        obj.scale.z = s[2] / s[1] if s[1] else 1
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    elif kind == "torus":
-        bpy.ops.mesh.primitive_torus_add(
-            major_segments=segments, minor_segments=max(6, segments//2),
-            major_radius=s[0]/2,
-            minor_radius=max(0.01, min(s[1]/4, s[0]/4)),
-            location=loc)
-        obj = bpy.context.object
-        obj.scale.z = s[2] / s[0] if s[0] else 1
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    elif kind == "icosahedron":
-        bpy.ops.mesh.primitive_ico_sphere_add(
-            subdivisions=2, radius=s[0]/2, location=loc)
-        obj = bpy.context.object
-        obj.scale = [1, s[1]/s[0], s[2]/s[0]] if s[0] else [1,1,1]
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    elif kind == "capsule":
-        bpy.ops.mesh.primitive_uv_sphere_add(
-            segments=segments, ring_count=max(4, segments//2),
-            location=loc)
-        obj = bpy.context.object
-        obj.scale = [s[0]/2, s[1]/2, s[2]/2]
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True)
-
-    else:
-        return
-
-    obj.name = name
-    obj.rotation_euler = rot
-
-    color = item.get("color", "#78869a")
-    if not (isinstance(color, str) and len(color) == 7 and color[0] == "#"):
-        color = "#78869a"
-
-    mat = make_material(name + "_Material", color,
-                        item.get("material", "metal"))
-    obj.data.materials.append(mat)
-
-for item in SPEC.get("objects", []):
-    create_part(item)
-
-# Tüm parçaları seçip görünümü modele odakla.
-bpy.ops.object.select_all(action='DESELECT')
-for obj in bpy.context.scene.objects:
-    if obj.type == 'MESH':
-        obj.select_set(True)
-
-print("Forma AI modeli oluşturuldu:", SPEC.get("name", "Model"))
+def mat_for(it):
+ c=it.get("color","#78869a")
+ rgb=tuple(int(c[i:i+2],16)/255 for i in (1,3,5))
+ m=bpy.data.materials.new(it.get("name","Part")+"_Material")
+ m.diffuse_color=(*rgb,1)
+ m.use_nodes=True
+ bs=m.node_tree.nodes.get("Principled BSDF")
+ if bs:
+  bs.inputs["Base Color"].default_value=(*rgb,1)
+  kind=it.get("material","metal")
+  bs.inputs["Metallic"].default_value=.8 if kind=="metal" else .05
+  bs.inputs["Roughness"].default_value=.3 if kind=="metal" else .7
+ return m
+def create(it):
+ t=it.get("type","box"); s=it.get("size",[1,1,1]); p=it.get("position",[0,0,0])
+ n=max(6,min(48,int(it.get("segments",16))))
+ if t=="box":
+  bpy.ops.mesh.primitive_cube_add(size=1,location=p);o=bpy.context.object;o.dimensions=s
+  bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+ elif t in ("sphere","ico","capsule"):
+  if t=="ico": bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=.5,location=p)
+  else: bpy.ops.mesh.primitive_uv_sphere_add(segments=n,ring_count=max(4,n//2),location=p)
+  o=bpy.context.object;o.scale=s
+  bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+ elif t in ("cylinder","cone"):
+  if t=="cone": bpy.ops.mesh.primitive_cone_add(vertices=n,radius1=s[0]/2,depth=s[1],location=p)
+  else: bpy.ops.mesh.primitive_cylinder_add(vertices=n,radius=s[0]/2,depth=s[1],location=p)
+  o=bpy.context.object
+  if t=="cylinder": o.scale.z=s[2]/s[0] if s[0] else 1
+  bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+ elif t=="torus":
+  bpy.ops.mesh.primitive_torus_add(major_segments=n,minor_segments=max(6,n//2),location=p,
+    major_radius=s[0]/2,minor_radius=max(.015,s[1]/5))
+  o=bpy.context.object
+ elif t=="beam":
+  a=Vector(it.get("from",[0,0,0]));b=Vector(it.get("to",[0,1,0]));d=b-a
+  bpy.ops.mesh.primitive_cone_add(vertices=n,radius1=s[0]/2,radius2=s[1]/2,depth=d.length(),location=(a+b)/2)
+  o=bpy.context.object;o.rotation_mode='QUATERNION';o.rotation_quaternion=d.to_track_quat('Z','Y')
+ elif t=="lathe":
+  prof=it.get("profile",[])
+  if len(prof)<3:return
+  mesh=bpy.data.meshes.new("LatheMesh");verts=[];faces=[]
+  for r,z in prof:
+   for j in range(n):
+    ang=2*math.pi*j/n;verts.append((r*math.cos(ang),r*math.sin(ang),z))
+  for i in range(len(prof)-1):
+   for j in range(n):
+    a=i*n+j;b=i*n+(j+1)%n;faces.append((a,b,b+n,a+n))
+  mesh.from_pydata(verts,[],faces);mesh.update()
+  o=bpy.data.objects.new(it.get("name","Lathe"),mesh);bpy.context.collection.objects.link(o);o.location=p
+ elif t=="extrude":
+  pts=it.get("points",[])
+  if len(pts)<3:return
+  verts=[(x,y,0) for x,y in pts]+[(x,y,it.get("depth",.2)) for x,y in pts]
+  L=len(pts);faces=[tuple(range(L-1,-1,-1)),tuple(range(L,2*L))]
+  for i in range(L):faces.append((i,(i+1)%L,(i+1)%L+L,i+L))
+  mesh=bpy.data.meshes.new("ExtrudeMesh");mesh.from_pydata(verts,[],faces);mesh.update()
+  o=bpy.data.objects.new(it.get("name","Extrude"),mesh);bpy.context.collection.objects.link(o);o.location=p
+ else:return
+ o.name=it.get("name",t)
+ o.rotation_euler=it.get("rotation",[0,0,0])
+ o.data.materials.append(mat_for(it))
+for it in SPEC.get("objects",[]):create(it)
+print("Forma AI modeli oluşturuldu:",SPEC.get("name","Model"))
 `;
+  download(new Blob([src],{type:"text/x-python;charset=utf-8"}),modelFilename+".py");
 }
 
-$("generateBtn").addEventListener("click", generateModel);
-
-$("prompt").addEventListener("keydown", event => {
-  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-    generateModel();
-  }
+$("generate").addEventListener("click",generate);
+$("prompt").addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey))generate();
 });
-
-document.querySelectorAll(".example").forEach(button => {
-  button.addEventListener("click", () => {
-    $("prompt").value = button.dataset.prompt;
-  });
+document.querySelectorAll(".example").forEach(b=>
+ b.addEventListener("click",()=>{$("prompt").value=b.dataset.prompt;}));
+$("reset").addEventListener("click",resetView);
+$("wire").addEventListener("click",()=>{
+ wireframe=!wireframe;
+ group.traverse(o=>{if(o.isMesh)o.material.wireframe=wireframe;});
+ $("wire").textContent=wireframe?"Dolu görünüm":"Tel kafes";
 });
-
-$("resetBtn").addEventListener("click", resetView);
-
-$("wireBtn").addEventListener("click", () => {
-  wireframe = !wireframe;
-  modelGroup.traverse(obj => {
-    if (obj.isMesh && obj.material) {
-      obj.material.wireframe = wireframe;
-    }
-  });
-  $("wireBtn").textContent = wireframe ? "Dolu görünüm" : "Tel kafes";
+$("rotate").addEventListener("click",()=>{
+ autoRotate=!autoRotate;
+ $("rotate").textContent=autoRotate?"Döndürmeyi durdur":"Otomatik döndür";
 });
-
-$("rotateBtn").addEventListener("click", () => {
-  autoRotate = !autoRotate;
-  $("rotateBtn").textContent = autoRotate
-    ? "Döndürmeyi durdur" : "Otomatik döndür";
+$("light").addEventListener("click",()=>{
+ darkLight=!darkLight;
+ scene.background.set(darkLight?"#20242c":"#0b1019");
+ $("light").textContent=darkLight?"Işık: Koyu":"Işık: Stüdyo";
 });
-
-$("lightBtn").addEventListener("click", () => {
-  alternateLighting = !alternateLighting;
-  scene.background.set(alternateLighting ? "#20242c" : "#0b1019");
-  $("lightBtn").textContent = alternateLighting
-    ? "Işık: Koyu" : "Işık: Stüdyo";
-});
-
-$("objBtn").addEventListener("click", () => {
-  try { exportOBJ(); }
-  catch (e) { showMessage(e.message, true); }
-});
-
-$("stlBtn").addEventListener("click", () => {
-  try { exportSTL(); }
-  catch (e) { showMessage(e.message, true); }
-});
-
-$("blendBtn").addEventListener("click", () => {
-  try {
-    const output = blenderScript(currentSpec);
-    downloadBlob(
-      new Blob([output], { type: "text/x-python;charset=utf-8" }),
-      lastModelName + ".py"
-    );
-  } catch (e) {
-    showMessage(e.message, true);
-  }
-});
-
-$("jsonBtn").addEventListener("click", () => {
-  downloadBlob(
-    new Blob([JSON.stringify(currentSpec, null, 2)],
-      { type: "application/json;charset=utf-8" }),
-    lastModelName + ".json"
-  );
-});
+$("obj").addEventListener("click",()=>{try{exportOBJ()}catch(e){message(e.message,true)}});
+$("stl").addEventListener("click",()=>{try{exportSTL()}catch(e){message(e.message,true)}});
+$("py").addEventListener("click",()=>{try{exportPython()}catch(e){message(e.message,true)}});
+$("json").addEventListener("click",()=>download(
+ new Blob([JSON.stringify(currentSpec,null,2)],{type:"application/json"}),
+ modelFilename+".json"));
 </script>
 </body>
 </html>
