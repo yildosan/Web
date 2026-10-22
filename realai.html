@@ -1,382 +1,206 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOVA AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0b0d12">
+<title>AI İnsan – 3D Sohbet</title>
+<script src="https://js.puter.com/v2/"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
 <style>
-:root{--bg:#080b12;--panel:#111827;--line:#253248;--cyan:#58e6ff;--purple:#9c83ff;--text:#edf4ff;--muted:#93a1b8}
+:root{--bg:#0b0d12;--panel:rgba(20,24,34,.78);--line:#2a3142;--fg:#eef1f7;--ac:#7c9cff}
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at top,#192844,var(--bg) 55%);color:var(--text);font-family:Segoe UI,Arial,sans-serif;min-height:100vh}
-button,textarea{font:inherit}
-button{cursor:pointer;border:1px solid var(--line);border-radius:10px;background:#ffffff08;color:var(--text);padding:11px 14px}
-button:hover{border-color:var(--cyan)}
-button:disabled{opacity:.5;cursor:not-allowed}
-.primary{background:var(--cyan);color:#071018;font-weight:bold;border-color:var(--cyan)}
-.app{max-width:1400px;margin:auto;padding:20px}
-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:8px 0 18px;gap:12px}
-.brand{display:flex;align-items:center;gap:12px}
-.logo{width:45px;height:45px;border:1px solid var(--cyan);border-radius:14px;display:grid;place-items:center;color:var(--cyan);font-size:25px}
-h1{font-size:20px;letter-spacing:4px;margin:0}
-.small{font-size:12px;color:var(--muted);line-height:1.6}
-.status{font-size:12px;color:var(--muted)}
-main{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;margin-top:20px}
-.panel{background:#111827dc;border:1px solid var(--line);border-radius:20px;overflow:hidden;min-width:0}
-.heading{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
-.heading b{font-size:12px;letter-spacing:1.5px}
-.stage{height:390px;position:relative;background:radial-gradient(ellipse at center,#203958,#090e19 70%)}
-#avatar{width:100%;height:100%;display:block}
-.stage-label{position:absolute;top:16px;left:17px;color:var(--cyan);font-size:10px;letter-spacing:2px}
-.stage-caption{position:absolute;bottom:15px;width:100%;text-align:center;font-size:12px;color:#cbd8eb}
-.camera{padding:16px 18px}
-.camera h3{font-size:12px;margin:0 0 8px}
-.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-#preview{display:none;width:100%;max-height:240px;object-fit:contain;margin-top:12px;border-radius:10px;background:#05070c}
-.chat{display:flex;flex-direction:column;min-height:640px}
-.chat-intro{padding:18px;border-bottom:1px solid var(--line)}
-.chat-intro h2{font-size:18px;margin:0 0 8px}
-.messages{padding:18px;display:flex;flex-direction:column;gap:14px;flex:1;min-height:250px;max-height:460px;overflow:auto}
-.message{max-width:92%;display:flex;flex-direction:column;gap:5px}
-.message.user{align-self:flex-end;align-items:flex-end}
-.message.assistant{align-self:flex-start}
-.name{font-size:10px;letter-spacing:1px;color:var(--muted)}
-.bubble{font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#ffffff08}
-.user .bubble{background:#263d60;border-bottom-right-radius:4px}
-.assistant .bubble{border-bottom-left-radius:4px}
-.composer{padding:14px;border-top:1px solid var(--line)}
-textarea{width:100%;min-height:75px;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:12px;background:#090e19;color:var(--text);outline:none}
-textarea:focus{border-color:var(--cyan)}
-.actions{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
-.action-buttons{display:flex;gap:8px}
-.settings{display:flex;gap:15px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
-footer{padding:18px 3px;color:#8190a7;font-size:11px;line-height:1.6}
-@media(max-width:850px){.app{padding:12px}main{grid-template-columns:1fr}.stage{height:320px}.chat{min-height:570px}.messages{max-height:420px}}
-@media(max-width:430px){h1{font-size:16px;letter-spacing:2px}.actions{align-items:flex-end}.action-buttons button{padding:10px}}
+html,body{margin:0;height:100%;background:radial-gradient(ellipse at 50% 30%,#1b2238,var(--bg) 70%);color:var(--fg);font-family:system-ui,sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+#app{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column}
+#stage{position:relative;flex:1;min-height:0}
+#c{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#status{position:fixed;top:calc(12px + env(safe-area-inset-top));left:14px;font-size:13px;opacity:.7}
+#top{position:fixed;top:calc(10px + env(safe-area-inset-top));right:12px;display:flex;gap:8px}
+select,button,input{font:inherit;font-size:16px;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;backdrop-filter:blur(8px)}
+button{cursor:pointer}button:hover{border-color:var(--ac)}
+#ui{width:100%;max-width:680px;margin:0 auto;padding:6px 10px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+#log{max-height:26dvh;overflow:auto;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(8px);font-size:15px;line-height:1.45}
+#log p{margin:.3em 0}.u{color:var(--ac)}
+#row{display:flex;gap:8px}#row input{flex:1;min-width:0}
+@media(max-width:480px){select,button{padding:8px 10px}#send{display:none}#go{display:block}}
+#go{display:none}
+#mic.on{background:#c0392b}
 </style>
 </head>
 <body>
-<div class="app">
-<header>
-  <div class="brand">
-    <div class="logo">✦</div>
-    <div><h1>N O V A</h1><div class="small">Kişisel yapay zekâ asistanı</div></div>
+<div id="app"><div id="stage"><canvas id="c"></canvas></div>
+<div id="status">Model yükleniyor…</div>
+<div id="top">
+  <select id="model">
+    <option value="gpt-4o-mini">gpt-4o-mini</option>
+    <option value="gpt-5-nano">gpt-5-nano</option>
+    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+  </select>
+  <button id="mute" title="Ses aç/kapat">🔊</button>
+</div>
+<div id="ui">
+  <div id="log"><p><b>AI:</b> Merhaba! Benimle yazarak ya da mikrofonla konuşabilirsin.</p></div>
+  <div id="row">
+    <input id="inp" placeholder="Bir şey yaz…" autocomplete="off">
+    <button id="mic" title="Konuş">🎤</button>
+    <button id="send">Gönder</button><button id="go" title="Gönder">➤</button>
   </div>
-  <div class="status" id="status">● Sistem hazır</div>
-</header>
-
-<main>
-<section class="panel">
-  <div class="heading"><b>3D HOLOGRAM</b><span class="small">NOVA AVATAR</span></div>
-  <div class="stage">
-    <div class="stage-label">AVATAR / 01</div>
-    <canvas id="avatar"></canvas>
-    <div class="stage-caption" id="caption">Seni dinlemeye hazırım.</div>
-  </div>
-  <div class="camera">
-    <h3>GÖRSEL ALGILAMA</h3>
-    <div class="small">Kamera varsayılan olarak kapalıdır. İzin verdiğinde açılır.</div>
-    <video id="video" autoplay playsinline muted style="display:none"></video>
-    <canvas id="capture" style="display:none"></canvas>
-    <img id="preview" alt="Yakalanan kamera görüntüsü">
-    <div class="controls">
-      <button id="cameraOn">◎ Kamerayı aç</button>
-      <button id="takePhoto" disabled>◉ Kare yakala</button>
-      <button id="cameraOff" disabled>Kamerayı kapat</button>
-      <button id="clear">Sohbeti temizle</button>
-    </div>
-  </div>
-</section>
-
-<section class="panel chat">
-  <div class="chat-intro">
-    <h2>Merhaba, ben NOVA.</h2>
-    <div class="small">Türkçe konuşabilir, sorularını yanıtlayabilir ve gönderdiğin görselleri incelemeye çalışabilirim.</div>
-  </div>
-  <div class="messages" id="messages" aria-live="polite">
-    <div class="message assistant"><span class="name">NOVA</span><div class="bubble">Merhaba! Ben NOVA. Sana nasıl yardımcı olabilirim?</div></div>
-  </div>
-  <div class="composer">
-    <textarea id="prompt" placeholder="NOVA'ya bir mesaj yaz..."></textarea>
-    <div class="actions">
-      <span class="small" id="hint">İnternet bağlantısı gereklidir.</span>
-      <div class="action-buttons">
-        <button id="mic">🎙 Konuş</button>
-        <button class="primary" id="send">Gönder ↗</button>
-      </div>
-    </div>
-  </div>
-  <div class="settings">
-    <label><input type="checkbox" id="voice" checked> Yanıtı seslendir</label>
-    <label><input type="checkbox" id="autoVision"> Fotoğrafı otomatik analiz et</label>
-  </div>
-</section>
-</main>
-<footer>NOVA bir demo uygulamasıdır. Kamera yalnızca sen açtığında çalışır. Yapay zekâ istekleri Puter hizmetine gönderilir. API anahtarı gerekmemesi sınırsız ücretsiz kullanım anlamına gelmez.</footer>
+</div>
 </div>
 
-<script src="https://js.puter.com/v2/"></script>
 <script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-const $=id=>document.getElementById(id);
-const messages=$("messages");
-const promptBox=$("prompt");
-let busy=false,stream=null,photo=null,recording=false,recorder=null,chunks=[],micStream=null;
-const history=[];
+const $ = id => document.getElementById(id);
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(2,2,4); scene.add(key);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 100);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.enableZoom = false; controls.enablePan = false;
+controls.minPolarAngle = 1.2; controls.maxPolarAngle = 1.9;
+controls.minAzimuthAngle = -0.8; controls.maxAzimuthAngle = 0.8;
 
-function status(text){$("status").textContent="● "+text}
-function addMessage(role,text){
-  const el=document.createElement("div");
-  el.className="message "+role;
-  const name=document.createElement("span");
-  name.className="name";name.textContent=role==="user"?"SEN":"NOVA";
-  const bubble=document.createElement("div");
-  bubble.className="bubble";bubble.textContent=text;
-  el.append(name,bubble);messages.appendChild(el);
-  messages.scrollTop=messages.scrollHeight;
-  return bubble;
+let fitInfo = null;
+function fit(){
+  if (!fitInfo) return;
+  const {ctr,size} = fitInfo, v = THREE.MathUtils.degToRad(camera.fov/2);
+  const dH = (size.y/2)/Math.tan(v), dW = (size.x/2)/Math.tan(Math.atan(Math.tan(v)*camera.aspect));
+  const dir = camera.position.clone().sub(ctr).normalize();
+  camera.position.copy(ctr).addScaledVector(dir, Math.max(dH,dW)*1.15);
+  controls.target.copy(ctr); controls.update();
 }
-function responseText(r){
-  if(typeof r==="string")return r;
-  if(typeof r?.message?.content==="string")return r.message.content;
-  if(Array.isArray(r?.message?.content))return r.message.content.map(x=>x.text||"").join("\n");
-  if(typeof r?.text==="string")return r.text;
-  return JSON.stringify(r);
+function resize(){
+  const s = $('stage'), w = s.clientWidth, h = s.clientHeight;
+  if (!w || !h) return;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); fit();
 }
-async function askAI(text,image=null){
-  if(busy)return;
-  if(!window.puter?.ai?.chat){
-    addMessage("assistant","Puter.js yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.");
-    return;
-  }
-  busy=true;$("send").disabled=true;$("mic").disabled=true;
-  status(image?"Görüntü analiz ediliyor":"Yanıt hazırlanıyor");
-  $("caption").textContent="Biraz düşünüyorum...";
-  try{
-    const previous=history.slice(-10).map(x=>
-      (x.role==="user"?"Kullanıcı":"NOVA")+": "+x.content
-    ).join("\n");
-    const prompt=
-      "Sen NOVA adında Türkçe konuşan kişisel bir yapay zekâ asistanısın. "+
-      "Varsayılan dilin Türkçe olsun. Açık, doğal ve doğru cevap ver.\n"+
-      "Önceki konuşma:\n"+previous+
-      "\nKullanıcının mesajı: "+text;
-    const result=image
-      ?await puter.ai.chat(prompt,image)
-      :await puter.ai.chat(prompt);
-    const answer=responseText(result).trim()||"Yanıt alınamadı.";
-    history.push({role:"user",content:text},{role:"assistant",content:answer});
-    addMessage("assistant",answer);
-    $("caption").textContent="Seni dinlemeye hazırım.";
-    status("Hazır");
-    if($("voice").checked)speak(answer);
-  }catch(e){
-    console.error(e);
-    addMessage("assistant","İstek başarısız oldu.\nPuter oturumunu, internet bağlantını ve hizmet kullanım sınırını kontrol et.\n\nHata: "+(e.message||e));
-    status("Bağlantı hatası");
-  }finally{
-    busy=false;$("send").disabled=false;$("mic").disabled=false;
+new ResizeObserver(resize).observe($('stage')); camera.position.set(0,0,1); resize();
+
+// --- Model ---
+let morphMeshes = [], root = null;
+const ktx2 = new KTX2Loader().setTranscoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/').detectSupport(renderer);
+new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder)
+  .load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/models/gltf/facecap.glb', gltf => {
+    root = gltf.scene; scene.add(root);
+    root.traverse(o => { if (o.isMesh && o.morphTargetDictionary) morphMeshes.push(o); });
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+    camera.position.set(ctr.x, ctr.y, ctr.z + 1);
+    fitInfo = {ctr, size}; fit();
+    $('status').textContent = 'Hazır';
+    setTimeout(() => $('status').style.opacity = 0, 2000);
+  }, undefined, e => { $('status').textContent = 'Model yüklenemedi: internet bağlantını kontrol et.'; console.error(e); });
+
+const M = {};                       // hedef morph değerleri
+const setM = (n,v) => M[n] = v;
+function applyMorphs(dt){
+  for (const m of morphMeshes){
+    const d = m.morphTargetDictionary, inf = m.morphTargetInfluences;
+    for (const n in M){ const i = d[n]; if (i !== undefined) inf[i] += (M[n] - inf[i]) * Math.min(1, dt*18); }
   }
 }
-function send(){
-  const text=promptBox.value.trim();
-  if(!text||busy)return;
-  promptBox.value="";
-  addMessage("user",text);
-  const image=photo;
-  photo=null;
-  askAI(text,image);
-}
+
+// --- Canlılık: göz kırpma, mimik, kafa hareketi, dudak senkronu ---
+let speaking = false, nextBlink = 2, blink = 0, t = 0, viseme = {jawOpen:0, mouthFunnel:0, mouthPucker:0}, nextViseme = 0;
+const clock = new THREE.Clock();
+(function loop(){
+  requestAnimationFrame(loop);
+  const dt = clock.getDelta(); t += dt;
+  nextBlink -= dt;
+  if (nextBlink < 0){ blink = 0.15; nextBlink = 2 + Math.random()*4; }
+  blink = Math.max(0, blink - dt);
+  const b = blink > 0 ? 1 : 0;
+  setM('eyeBlink_L', b); setM('eyeBlink_R', b);
+  // bakış / kaş
+  setM('eyeLookInLeft', 0); setM('browInnerUp', speaking ? 0.25 + 0.2*Math.sin(t*3) : 0.05);
+  setM('mouthSmile_L', speaking ? 0.25 : 0.12); setM('mouthSmile_R', speaking ? 0.25 : 0.12);
+  // konuşma
+  if (speaking){
+    nextViseme -= dt;
+    if (nextViseme < 0){
+      nextViseme = 0.07 + Math.random()*0.08;
+      const r = Math.random();
+      viseme = { jawOpen: 0.1 + Math.random()*0.55, mouthFunnel: r<0.25 ? 0.5 : 0, mouthPucker: r>0.8 ? 0.5 : 0 };
+    }
+  } else viseme = {jawOpen:0, mouthFunnel:0, mouthPucker:0};
+  for (const k in viseme) setM(k, viseme[k]);
+  applyMorphs(dt);
+  if (root){ root.rotation.y = Math.sin(t*0.5)*0.05; root.rotation.x = Math.sin(t*0.7)*0.02; }
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+// --- Ses (TTS) ---
+let muted = false;
+$('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; if (muted){ speechSynthesis.cancel(); speaking = false; } };
 function speak(text){
-  if(!("speechSynthesis" in window)){
-    $("hint").textContent="Bu tarayıcı sesli okumayı desteklemiyor.";
-    return;
-  }
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang="tr-TR";
-  const voice=speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith("tr"));
-  if(voice)u.voice=voice;
-  u.onstart=()=>{$("caption").textContent="Seninle konuşuyorum..."};
-  u.onend=()=>{$("caption").textContent="Seni dinlemeye hazırım."};
+  if (muted){ speaking = true; setTimeout(()=>speaking=false, Math.min(8000, text.length*55)); return; }
+  const u = new SpeechSynthesisUtterance(text.replace(/[*_`#]/g,''));
+  const lang = /[çğıöşüÇĞİÖŞÜ]/.test(text) ? 'tr' : 'en';
+  u.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
+  const v = speechSynthesis.getVoices().find(v => v.lang.startsWith(lang));
+  if (v) u.voice = v;
+  u.onstart = () => speaking = true;
+  u.onend = u.onerror = () => speaking = false;
   speechSynthesis.speak(u);
 }
-$("send").addEventListener("click",send);
-promptBox.addEventListener("keydown",e=>{
-  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}
-});
+speechSynthesis.onvoiceschanged = () => {};
 
-$("cameraOn").addEventListener("click",async()=>{
+// --- Yapay zeka (Puter.js, API anahtarı yok) ---
+const history = [{role:'system', content:'Sen sıcakkanlı, doğal konuşan bir insan avatarısın. Kullanıcının dilinde, en fazla 2-3 kısa cümleyle yanıt ver. Markdown ve emoji kullanma.'}];
+const log = $('log');
+function add(who, text){
+  const p = document.createElement('p');
+  p.innerHTML = `<b class="${who==='Sen'?'u':''}">${who}:</b> `; p.append(text);
+  log.append(p); log.scrollTop = log.scrollHeight; return p;
+}
+function unlockTTS(){ try{ speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance('')); }catch{} }
+async function ask(text){
+  if (!text.trim()) return;
+  unlockTTS();
+  add('Sen', text); history.push({role:'user', content:text});
+  const wait = add('AI', '…');
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"},audio:false});
-    $("video").srcObject=stream;
-    await $("video").play();
-    $("cameraOn").disabled=true;$("takePhoto").disabled=false;$("cameraOff").disabled=false;
-    status("Kamera açık");
+    if (typeof puter === 'undefined') throw new Error('Puter.js yüklenemedi (internet?).');
+    const r = await puter.ai.chat(history, {model: $('model').value});
+    let out = typeof r === 'string' ? r : (r?.message?.content ?? r?.text ?? '');
+    if (Array.isArray(out)) out = out.map(c => c.text || '').join('');
+    out = String(out).trim() || '(boş yanıt)';
+    history.push({role:'assistant', content:out});
+    wait.lastChild.textContent = out;
+    speak(out);
   }catch(e){
-    addMessage("assistant","Kamera açılamadı. Tarayıcı kamera iznini kontrol et.\n"+(e.message||e));
+    wait.lastChild.textContent = 'Hata: ' + (e?.message || e?.error?.message || JSON.stringify(e));
   }
-});
-$("takePhoto").addEventListener("click",async()=>{
-  const v=$("video"),c=$("capture");
-  if(!v.videoWidth)return;
-  const scale=Math.min(1,960/v.videoWidth);
-  c.width=Math.round(v.videoWidth*scale);
-  c.height=Math.round(v.videoHeight*scale);
-  c.getContext("2d").drawImage(v,0,0,c.width,c.height);
-  photo=c.toDataURL("image/jpeg",0.82);
-  $("preview").src=photo;$("preview").style.display="block";
-  if($("autoVision").checked){
-    addMessage("user","Kamera görüntüsünü analiz et ve gördüklerini Türkçe açıkla.");
-    const img=photo;photo=null;
-    await askAI("Bu kamera görüntüsünü analiz et ve gördüklerini Türkçe açıkla.",img);
-  }else{
-    addMessage("assistant","Fotoğraf yakalandı. Şimdi neyi incelememi istediğini yazıp Gönder'e bas.");
-  }
-});
-$("cameraOff").addEventListener("click",()=>{
-  if(stream)stream.getTracks().forEach(t=>t.stop());
-  stream=null;$("video").srcObject=null;
-  $("cameraOn").disabled=false;$("takePhoto").disabled=true;$("cameraOff").disabled=true;
-  status("Kamera kapalı");
-});
-$("clear").addEventListener("click",()=>{
-  history.length=0;photo=null;messages.replaceChildren();
-  $("preview").removeAttribute("src");$("preview").style.display="none";
-  addMessage("assistant","Sohbet temizlendi. Yeniden başlayabiliriz.");
-});
-
-// Mikrofon: kaydı bitirince Puter speech-to-text kullan.
-$("mic").addEventListener("click",async()=>{
-  if(recording){if(recorder&&recorder.state!=="inactive")recorder.stop();return}
-  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
-    addMessage("assistant","Bu tarayıcı ses kaydını desteklemiyor. Güncel Chrome veya Edge deneyebilirsin.");
-    return;
-  }
-  try{
-    micStream=await navigator.mediaDevices.getUserMedia({audio:true});
-    chunks=[];
-    const type=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":"";
-    recorder=new MediaRecorder(micStream,type?{mimeType:type}:{});
-    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-    recorder.onstop=async()=>{
-      recording=false;$("mic").textContent="🎙 Konuş";
-      micStream?.getTracks().forEach(t=>t.stop());micStream=null;
-      try{
-        if(!window.puter?.ai?.speech2txt)throw new Error("Puter speech-to-text kullanılamıyor.");
-        const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
-        const file=new File([blob],"nova-audio.webm",{type:blob.type});
-        const result=await puter.ai.speech2txt(file);
-        const text=typeof result==="string"?result:(result?.text||result?.transcription||"");
-        if(!text.trim())throw new Error("Ses metne çevrilemedi.");
-        promptBox.value=text.trim();promptBox.focus();status("Ses metne çevrildi");
-      }catch(e){
-        addMessage("assistant","Ses tanınamadı. Tekrar deneyebilir veya mesajını yazabilirsin.\n"+(e.message||e));
-        status("Ses tanıma hatası");
-      }
-    };
-    recorder.start();recording=true;$("mic").textContent="■ Kaydı bitir";
-    $("caption").textContent="Seni dinliyorum...";status("Mikrofon açık");
-  }catch(e){
-    addMessage("assistant","Mikrofon açılamadı. Tarayıcı izinlerini kontrol et.\n"+(e.message||e));
-  }
-});
-
-// Basit, animasyonlu 3D robot karakter.
-const canvas=$("avatar"),stage=canvas.parentElement;
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setClearColor(0,0);
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(35,1,.1,100);
-camera.position.set(0,1.1,7.7);
-scene.add(new THREE.HemisphereLight(0xbbe8ff,0x121326,2));
-const light=new THREE.PointLight(0x58e6ff,45,12);light.position.set(2,3,3);scene.add(light);
-const light2=new THREE.PointLight(0x967bff,30,10);light2.position.set(-3,1,2);scene.add(light2);
-
-const robot=new THREE.Group();scene.add(robot);
-const shell=new THREE.MeshStandardMaterial({color:0x20334b,metalness:.75,roughness:.27});
-const dark=new THREE.MeshStandardMaterial({color:0x090f1a,metalness:.7,roughness:.3});
-const cyan=new THREE.MeshStandardMaterial({color:0x58e6ff,emissive:0x137b98,emissiveIntensity:1.5,metalness:.4});
-const purple=new THREE.MeshStandardMaterial({color:0x967bff,emissive:0x38208f,emissiveIntensity:1.2});
-const face=new THREE.MeshStandardMaterial({color:0x83cce0,metalness:.45,roughness:.25,transparent:true,opacity:.85});
-function ball(parent,pos,scale,material){
-  const m=new THREE.Mesh(new THREE.SphereGeometry(1,32,24),material);
-  m.position.set(...pos);m.scale.set(...scale);parent.add(m);return m;
 }
-function cylinder(parent,pos,r1,r2,h,material){
-  const m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,24),material);
-  m.position.set(...pos);parent.add(m);return m;
-}
-cylinder(robot,[0,.45,0],.19,.22,.4,dark);
-ball(robot,[0,-.15,0],[.78,.82,.43],shell);
-ball(robot,[0,-.08,.41],[.24,.3,.05],cyan);
-ball(robot,[-.72,.22,0],[.28,.3,.29],purple);
-ball(robot,[.72,.22,0],[.28,.3,.29],purple);
-const armL=new THREE.Group();armL.position.set(-.77,.12,0);robot.add(armL);
-ball(armL,[0,-.35,0],[.17,.42,.18],shell);
-ball(armL,[0,-.68,0],[.16,.16,.16],cyan);
-ball(armL,[0,-.94,0],[.14,.3,.15],shell);
-ball(armL,[0,-1.2,0],[.16,.16,.16],dark);
-const armR=armL.clone();armR.position.x=.77;armR.scale.x=-1;robot.add(armR);
+const sendIt = () => { const v = $('inp').value; $('inp').value = ''; ask(v); };
+$('send').onclick = $('go').onclick = sendIt;
+$('inp').addEventListener('keydown', e => { if (e.key === 'Enter') sendIt(); });
 
-const head=new THREE.Group();head.position.y=1.18;robot.add(head);
-ball(head,[0,0,0],[.65,.74,.53],shell);
-ball(head,[0,-.04,.34],[.5,.51,.22],face);
-ball(head,[0,.51,-.02],[.58,.21,.51],dark);
-ball(head,[-.63,0,0],[.12,.26,.2],purple);
-ball(head,[.63,0,0],[.12,.26,.2],purple);
-ball(head,[-.21,.04,.55],[.13,.065,.035],cyan);
-ball(head,[.21,.04,.55],[.13,.065,.035],cyan);
-ball(head,[0,-.25,.56],[.13,.018,.025],cyan);
-cylinder(head,[0,.73,0],.025,.035,.18,cyan);
-ball(head,[0,.84,0],[.07,.07,.07],purple);
-
-const rings=[];
-for(let i=0;i<3;i++){
-  const r=new THREE.Mesh(
-    new THREE.TorusGeometry(1.25+i*.15,.009,8,100),
-    new THREE.MeshBasicMaterial({color:i===1?0x967bff:0x58e6ff,transparent:true,opacity:.4})
-  );
-  r.position.set(0,-.35,-.2);r.rotation.x=1.1+i*.2;robot.add(r);rings.push(r);
+// --- Mikrofon ---
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) $('mic').style.display = 'none';
+else {
+  const rec = new SR(); rec.lang = 'tr-TR'; rec.interimResults = false;
+  rec.onresult = e => ask(e.results[0][0].transcript);
+  rec.onend = () => $('mic').classList.remove('on');
+  $('mic').onclick = () => { unlockTTS(); speaking = false; $('mic').classList.add('on'); try{ rec.start(); }catch{} };
 }
-const platform=new THREE.Mesh(new THREE.CylinderGeometry(.8,1,.12,64),shell);
-platform.position.y=-1.52;robot.add(platform);
-const pr=new THREE.Mesh(new THREE.TorusGeometry(.9,.018,8,100),new THREE.MeshBasicMaterial({color:0x58e6ff}));
-pr.rotation.x=Math.PI/2;pr.position.y=-1.45;robot.add(pr);
-
-const positions=new Float32Array(600);
-for(let i=0;i<200;i++){
-  positions[i*3]=(Math.random()-.5)*8;
-  positions[i*3+1]=(Math.random()-.5)*5;
-  positions[i*3+2]=-2-Math.random()*3;
-}
-const sg=new THREE.BufferGeometry();sg.setAttribute("position",new THREE.BufferAttribute(positions,3));
-scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x78caff,size:.02,transparent:true,opacity:.7})));
-
-function resize(){
-  const w=stage.clientWidth,h=stage.clientHeight;
-  if(!w||!h)return;
-  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
-}
-new ResizeObserver(resize).observe(stage);resize();
-const clock=new THREE.Clock();
-function animate(){
-  requestAnimationFrame(animate);
-  const t=clock.getElapsedTime();
-  robot.position.y=Math.sin(t*1.2)*.05;
-  robot.rotation.y=Math.sin(t*.35)*.15;
-  head.rotation.y=Math.sin(t*.7)*.08;
-  armL.rotation.z=Math.sin(t*.8)*.035;
-  armR.rotation.z=-Math.sin(t*.8)*.035;
-  rings.forEach((r,i)=>r.rotation.z+=.0015*(i+1));
-  cyan.emissiveIntensity=1.2+(Math.sin(t*2.5)+1)*.3;
-  renderer.render(scene,camera);
-}
-animate();
-status("Sistem hazır");
 </script>
 </body>
 </html>
