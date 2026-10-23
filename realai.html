@@ -24,8 +24,16 @@ button{cursor:pointer}button:hover{border-color:var(--ac)}
 #log{max-height:26dvh;overflow:auto;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(8px);font-size:15px;line-height:1.45}
 #log p{margin:.3em 0}.u{color:var(--ac)}
 #row{display:flex;gap:8px}#row input{flex:1;min-width:0}
-@media(max-width:480px){select,button{padding:8px 10px}#send{display:none}#go{display:block}}
 #go{display:none}
+@media(max-width:480px){select,button{padding:8px 10px}#send{display:none}#go{display:block}}
+#scanUI{position:fixed;inset:0;z-index:20;background:rgba(5,7,12,.93);display:flex;align-items:center;justify-content:center;padding:16px}
+#scanUI[hidden]{display:none}
+.box{width:min(420px,100%);text-align:center}
+.vwrap{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:3/4;max-height:62dvh;margin:0 auto;background:#000}
+#vid{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.oval{position:absolute;inset:12% 18%;border:3px dashed rgba(255,255,255,.55);border-radius:50%}
+.btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#smsg{font-size:14px;opacity:.85;min-height:2.6em}
 #mic.on{background:#c0392b}
 </style>
 </head>
@@ -38,6 +46,7 @@ button{cursor:pointer}button:hover{border-color:var(--ac)}
     <option value="gpt-5-nano">gpt-5-nano</option>
     <option value="gemini-2.0-flash">gemini-2.0-flash</option>
   </select>
+  <button id="scan" title="Yüzümü tara">📷</button>
   <button id="mute" title="Ses aç/kapat">🔊</button>
 </div>
 <div id="ui">
@@ -49,6 +58,13 @@ button{cursor:pointer}button:hover{border-color:var(--ac)}
   </div>
 </div>
 </div>
+
+<div id="scanUI" hidden><div class="box">
+  <h3>Yüzünü tarat</h3>
+  <div class="vwrap"><video id="vid" playsinline muted autoplay></video><div class="oval"></div></div>
+  <p id="smsg"></p>
+  <div class="btns"><button id="snap">📸 Tara</button><button id="reset">Orijinal yüz</button><button id="skip">Kapat</button></div>
+</div></div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -103,6 +119,7 @@ new GLTFLoader().setKTX2Loader(ktx2).setMeshoptDecoder(MeshoptDecoder)
     fitInfo = {ctr, size}; fit();
     $('status').textContent = 'Hazır';
     setTimeout(() => $('status').style.opacity = 0, 2000);
+    try{ afterLoad(); }catch(e){ console.error(e); $('status').style.opacity = 1; $('status').textContent = 'Yüz modülü başlatılamadı'; }
   }, undefined, e => { $('status').textContent = 'Model yüklenemedi: internet bağlantını kontrol et.'; console.error(e); });
 
 const M = {};                       // hedef morph değerleri
@@ -112,6 +129,137 @@ function applyMorphs(dt){
     const d = m.morphTargetDictionary, inf = m.morphTargetInfluences;
     for (const n in M){ const i = d[n]; if (i !== undefined) inf[i] += (M[n] - inf[i]) * Math.min(1, dt*18); }
   }
+}
+
+// --- Yüz tarama: kullanıcının yüzünü sadece yüz bölgesine yansıtır ---
+const LS = 'aiInsanFace', msg = t => $('smsg').textContent = t, ss = (a,b,x) => { const t = Math.min(1, Math.max(0, (x-a)/(b-a))); return t*t*(3-2*t); };
+let head = null, model = null, stream = null, landmarker = null;
+const faceUni = { value: new THREE.Texture() };
+
+function analyzeHead(){
+  root.updateMatrixWorld(true);
+  head = morphMeshes.reduce((a,b) => a.geometry.attributes.position.count >= b.geometry.attributes.position.count ? a : b);
+  const g = head.geometry, pos = g.attributes.position, nor = g.attributes.normal, n = pos.count, dict = head.morphTargetDictionary;
+  const W = new Float32Array(n*3), N = new Float32Array(n*3), v = new THREE.Vector3(), nm = new THREE.Matrix3().getNormalMatrix(head.matrixWorld);
+  for (let i=0;i<n;i++){
+    v.fromBufferAttribute(pos,i).applyMatrix4(head.matrixWorld); W.set([v.x,v.y,v.z], i*3);
+    v.fromBufferAttribute(nor,i).applyMatrix3(nm).normalize(); N.set([v.x,v.y,v.z], i*3);
+  }
+  // Morph hedeflerinden göz ve ağız merkezlerini bul
+  const region = name => {
+    const a = g.morphAttributes.position[dict[name]], mg = new Float32Array(n); let mx = 0;
+    for (let i=0;i<n;i++){
+      const rel = g.morphTargetsRelative;
+      mg[i] = Math.hypot(a.getX(i)-(rel?0:pos.getX(i)), a.getY(i)-(rel?0:pos.getY(i)), a.getZ(i)-(rel?0:pos.getZ(i)));
+      mx = Math.max(mx, mg[i]);
+    }
+    const c = [0,0,0], nn = [0,0,0]; let k = 0;
+    for (let i=0;i<n;i++) if (mg[i] > mx*0.45){ k++; for (let j=0;j<3;j++){ c[j]+=W[i*3+j]; nn[j]+=N[i*3+j]; } }
+    return { c: c.map(q=>q/k), nrm: nn };
+  };
+  const eyes = [region('eyeBlink_L'), region('eyeBlink_R')].sort((a,b) => a.c[0]-b.c[0]);
+  const mouth = region('mouthFunnel');
+  const f = new THREE.Vector3(...mouth.nrm).normalize();
+  model = { W, N, f, P: [eyes[0].c, eyes[1].c, mouth.c] };
+  // Sadece baş mesh'inin malzemesine yüz shader'ı ekle
+  head.geometry.setAttribute('uvFace', new THREE.BufferAttribute(new Float32Array(n*2), 2));
+  head.geometry.setAttribute('faceW', new THREE.BufferAttribute(new Float32Array(n), 1));
+  const mat = head.material.clone(); head.material = mat;
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.faceTex = faceUni;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute vec2 uvFace;attribute float faceW;varying vec2 vFaceUv;varying float vFaceW;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvFaceUv=uvFace;vFaceW=faceW;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform sampler2D faceTex;varying vec2 vFaceUv;varying float vFaceW;')
+      .replace('#include <map_fragment>', `#include <map_fragment>
+      if (vFaceW > 0.001){
+        vec3 ph = texture2D(faceTex, vFaceUv).rgb, phL = texture2D(faceTex, vFaceUv, 5.0).rgb;
+        #ifdef USE_MAP
+        vec3 bL = texture2D(map, vMapUv, 5.0).rgb;
+        #else
+        vec3 bL = diffuseColor.rgb;
+        #endif
+        float edge = 1.0 - smoothstep(0.3, 1.0, vFaceW);
+        ph *= mix(vec3(1.0), clamp(bL / max(phL, vec3(0.03)), 0.5, 2.0), edge);
+        diffuseColor.rgb = mix(diffuseColor.rgb, ph, vFaceW);
+      }`);
+  };
+  mat.customProgramCacheKey = () => 'face'; mat.needsUpdate = true;
+}
+
+function clearFace(){ if (!head) return; const a = head.geometry.attributes.faceW; a.array.fill(0); a.needsUpdate = true; }
+
+function applyFace(d){
+  const img = new Image();
+  img.onload = () => {
+    const tex = new THREE.Texture(img); tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4; tex.needsUpdate = true; faceUni.value = tex;
+    const { W, N, f, P } = model, [A,B,M] = P;
+    const dist = Math.hypot(B[0]-A[0], B[1]-A[1]), eyeY = (A[1]+B[1])/2, m = Math.abs(eyeY - M[1]);
+    const cx = (A[0]+B[0])/2, cy = (eyeY + M[1])/2, rx = 1.05*dist, ry = 1.2*m;
+    // Model (x,y) -> fotoğraf (px,py) afin dönüşümü: göz, göz, ağız
+    const inv = new THREE.Matrix3().set(A[0],A[1],1, B[0],B[1],1, M[0],M[1],1).invert();
+    const [a,b,c] = new THREE.Vector3(d.pts[0][0], d.pts[1][0], d.pts[2][0]).applyMatrix3(inv).toArray();
+    const [e,h,k] = new THREE.Vector3(d.pts[0][1], d.pts[1][1], d.pts[2][1]).applyMatrix3(inv).toArray();
+    const uv = head.geometry.attributes.uvFace, fw = head.geometry.attributes.faceW, n = fw.count;
+    for (let i=0;i<n;i++){
+      const x = W[i*3], y = W[i*3+1], u = (a*x+b*y+c)/d.w, v = 1 - (e*x+h*y+k)/d.h;
+      const r = Math.hypot((x-cx)/rx, (y-cy)/ry), dot = N[i*3]*f.x + N[i*3+1]*f.y + N[i*3+2]*f.z;
+      let w = (1 - ss(0.7, 1, r)) * ss(0.15, 0.5, dot);
+      if (u < 0.02 || u > 0.98 || v < 0.02 || v > 0.98) w = 0;
+      uv.array[i*2] = u; uv.array[i*2+1] = v; fw.array[i] = w;
+    }
+    uv.needsUpdate = fw.needsUpdate = true;
+  };
+  img.src = d.img;
+}
+
+async function getLandmarker(){
+  if (landmarker) return landmarker;
+  const V = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  const { FaceLandmarker, FilesetResolver } = await import(V + '/vision_bundle.mjs');
+  const fs = await FilesetResolver.forVisionTasks(V + '/wasm');
+  return landmarker = await FaceLandmarker.createFromOptions(fs, {
+    baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task' },
+    runningMode: 'IMAGE', numFaces: 1 });
+}
+
+async function openScan(){
+  $('scanUI').hidden = false; msg('Kamera açılıyor…');
+  getLandmarker().catch(() => msg('Yüz modeli yüklenemedi (internet?).'));
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:960} }, audio:false });
+    $('vid').srcObject = stream; msg('Yüzünü ovalin içine getir, kameraya düz bak ve "Tara"ya bas.');
+  }catch(e){ msg('Kamera açılamadı. İzin ver ve sayfayı HTTPS üzerinden aç; istersen Kapat ile devam et.'); }
+}
+function closeScan(){ stream?.getTracks().forEach(t => t.stop()); stream = null; $('scanUI').hidden = true; }
+
+async function scanFace(){
+  const v = $('vid'); if (!v.videoWidth) return msg('Kamera hazır değil.');
+  const k = Math.min(1, 1024/Math.max(v.videoWidth, v.videoHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth*k); c.height = Math.round(v.videoHeight*k);
+  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+  msg('Yüz analiz ediliyor…');
+  const f = (await getLandmarker()).detect(c).faceLandmarks?.[0];
+  if (!f) return msg('Yüz bulunamadı. Işığı artırıp tekrar dene.');
+  const P = i => [f[i].x*c.width, f[i].y*c.height];
+  const avg = ids => { const p = ids.map(P); return [p.reduce((s,q)=>s+q[0],0)/p.length, p.reduce((s,q)=>s+q[1],0)/p.length]; };
+  let eA = avg([33,133,159,145]), eB = avg([263,362,386,374]); const mo = avg([61,291,0,17]);
+  if (eA[0] > eB[0]) [eA, eB] = [eB, eA];
+  const nose = P(1), dA = Math.abs(nose[0]-P(33)[0]), dB = Math.abs(P(263)[0]-nose[0]);
+  if (Math.abs(dA-dB)/(dA+dB) > 0.22) return msg('Yüzünü kameraya düz çevir ve tekrar dene.');
+  const d = { img: c.toDataURL('image/jpeg', 0.9), pts: [eA, eB, mo], w: c.width, h: c.height };
+  try{ localStorage.setItem(LS, JSON.stringify(d)); }catch{}
+  applyFace(d); closeScan();
+}
+$('scan').onclick = openScan; $('skip').onclick = closeScan;
+$('snap').onclick = () => scanFace().catch(e => msg('Hata: ' + (e?.message || e)));
+$('reset').onclick = () => { try{ localStorage.removeItem(LS); }catch{} clearFace(); closeScan(); };
+function afterLoad(){
+  analyzeHead();
+  let saved = null; try{ saved = JSON.parse(localStorage.getItem(LS)); }catch{}
+  saved ? applyFace(saved) : openScan();
 }
 
 // --- Canlılık: göz kırpma, mimik, kafa hareketi, dudak senkronu ---
