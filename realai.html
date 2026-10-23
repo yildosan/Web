@@ -63,7 +63,7 @@ button{cursor:pointer}button:hover{border-color:var(--ac)}
   <h3>Yüzünü tarat</h3>
   <div class="vwrap"><video id="vid" playsinline muted autoplay></video><div class="oval"></div></div>
   <p id="smsg"></p>
-  <div class="btns"><button id="snap">📸 Tara</button><button id="reset">Orijinal yüz</button><button id="skip">Kapat</button></div>
+  <div class="btns"><button id="cam">🎥 Kamerayı aç</button><button id="snap">📸 Tara</button><button id="up">🖼 Fotoğraf yükle/çek</button><input id="fileIn" type="file" accept="image/*" capture="user" hidden><button id="reset">Orijinal yüz</button><button id="skip">Kapat</button></div>
 </div></div>
 
 <script type="module">
@@ -225,21 +225,30 @@ async function getLandmarker(){
     runningMode: 'IMAGE', numFaces: 1 });
 }
 
-async function openScan(){
-  $('scanUI').hidden = false; msg('Kamera açılıyor…');
+function openScan(){
+  $('scanUI').hidden = false; msg('“Kamerayı aç”a basıp izin ver ya da “Fotoğraf yükle/çek” ile bir selfie seç.');
   getLandmarker().catch(() => msg('Yüz modeli yüklenemedi (internet?).'));
+}
+async function startCam(){
+  if (!navigator.mediaDevices?.getUserMedia) return msg('Bu sayfada kamera erişimi kapalı (HTTPS ya da tarayıcıda açılmış olmalı; uygulama içi önizleme/dosya olarak açma desteklenmez). “Fotoğraf yükle/çek” ile devam edebilirsin.');
   try{
+    stream?.getTracks().forEach(t => t.stop());
     stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:960} }, audio:false });
-    $('vid').srcObject = stream; msg('Yüzünü ovalin içine getir, kameraya düz bak ve "Tara"ya bas.');
-  }catch(e){ msg('Kamera açılamadı. İzin ver ve sayfayı HTTPS üzerinden aç; istersen Kapat ile devam et.'); }
+    $('vid').srcObject = stream; await $('vid').play().catch(() => {});
+    msg('Yüzünü ovalin içine getir, düz bak ve “Tara”ya bas.');
+  }catch(e){
+    msg(e?.name === 'NotAllowedError' ? 'Kamera izni verilmedi ya da bu sayfada engelli. Adres çubuğundaki kilit/kamera simgesinden izin ver, olmazsa “Fotoğraf yükle/çek”i kullan.' : 'Kamera açılamadı (' + (e?.name || e) + '). “Fotoğraf yükle/çek”i dene.');
+  }
 }
 function closeScan(){ stream?.getTracks().forEach(t => t.stop()); stream = null; $('scanUI').hidden = true; }
 
-async function scanFace(){
-  const v = $('vid'); if (!v.videoWidth) return msg('Kamera hazır değil.');
-  const k = Math.min(1, 1024/Math.max(v.videoWidth, v.videoHeight));
-  const c = document.createElement('canvas'); c.width = Math.round(v.videoWidth*k); c.height = Math.round(v.videoHeight*k);
-  c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+async function scanFace(src){
+  src = src || $('vid');
+  const sw = src.videoWidth || src.width, sh = src.videoHeight || src.height;
+  if (!sw) return msg('Kamera hazır değil. Önce “Kamerayı aç”a bas.');
+  const k = Math.min(1, 1024/Math.max(sw, sh));
+  const c = document.createElement('canvas'); c.width = Math.round(sw*k); c.height = Math.round(sh*k);
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
   msg('Yüz analiz ediliyor…');
   const f = (await getLandmarker()).detect(c).faceLandmarks?.[0];
   if (!f) return msg('Yüz bulunamadı. Işığı artırıp tekrar dene.');
@@ -254,6 +263,13 @@ async function scanFace(){
   applyFace(d); closeScan();
 }
 $('scan').onclick = openScan; $('skip').onclick = closeScan;
+$('cam').onclick = startCam; $('up').onclick = () => $('fileIn').click();
+$('fileIn').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try{ let b; try{ b = await createImageBitmap(f, {imageOrientation:'from-image'}); }catch{ b = await createImageBitmap(f); } await scanFace(b); }
+  catch(err){ msg('Fotoğraf okunamadı: ' + (err?.message || err)); }
+  e.target.value = '';
+};
 $('snap').onclick = () => scanFace().catch(e => msg('Hata: ' + (e?.message || e)));
 $('reset').onclick = () => { try{ localStorage.removeItem(LS); }catch{} clearFace(); closeScan(); };
 function afterLoad(){
