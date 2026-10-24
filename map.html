@@ -71,6 +71,32 @@ $('btnSearch').onclick = async () => {
 };
 $('q').addEventListener('keydown', e => { if (e.key === 'Enter') $('btnSearch').click(); });
 
+const MIRRORS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+];
+async function fetchOverpass(q) {
+  const errors = [];
+  for (const url of MIRRORS) {
+    const host = new URL(url).host;
+    status('Yollar indiriliyor... (' + host + ')');
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 45000);
+    try {
+      const r = await fetch(url + '?data=' + encodeURIComponent(q), {signal: ctl.signal});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (!j.elements) throw new Error('Geçersiz yanıt');
+      return j;
+    } catch (err) {
+      errors.push(host + ': ' + (err.name === 'AbortError' ? 'zaman aşımı' : err.message));
+    } finally { clearTimeout(timer); }
+  }
+  throw new Error('Tüm sunucular yanıt vermedi → ' + errors.join(' | '));
+}
+
 $('btnScan').onclick = async () => {
   const b = map.getBounds();
   const s = b.getSouth(), w = b.getWest(), n = b.getNorth(), e = b.getEast();
@@ -82,13 +108,7 @@ $('btnScan').onclick = async () => {
   $('btnScan').disabled = true; status('Yollar indiriliyor...');
   const q = `[out:json][timeout:40];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)(_link)?$"](${s},${w},${n},${e});out geom;`;
   try {
-    const r = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: 'data=' + encodeURIComponent(q)
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json();
+    const j = await fetchOverpass(q);
     const withService = $('chkService').checked;
     const roads = [];
     for (const el of j.elements) {
@@ -120,7 +140,7 @@ $('btnScan').onclick = async () => {
     $('btnJson').disabled = $('btnObj').disabled = false;
     status(roads.length + ' yol bulundu • alan ' + Math.round(sizeX) + ' × ' + Math.round(sizeZ) + ' m', true);
   } catch (err) {
-    status('Tarama başarısız (' + err.message + '). İnternet bağlantını kontrol et ve biraz sonra tekrar dene.');
+    status('Tarama başarısız. ' + err.message);
   }
   $('btnScan').disabled = false;
 };
