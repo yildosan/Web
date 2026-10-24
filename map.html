@@ -21,6 +21,7 @@
   button:disabled{opacity:.4;cursor:not-allowed}
   button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
   label{display:flex;gap:8px;align-items:center;color:var(--mute);font-size:13px}
+  aside>*{flex-shrink:0}
   canvas{width:100%;aspect-ratio:1/1;background:#0d0f13;border:1px solid var(--line);border-radius:6px}
   #status{font-size:13px;color:var(--mute);min-height:38px}
   #status.ok{color:var(--ok)}
@@ -48,7 +49,7 @@
       <button id="btnJson" disabled>JSON indir</button>
       <button id="btnObj" disabled>3B model (.obj) indir</button>
     </div>
-    <p class="s">Harita verisi © OpenStreetMap katkıcıları (ODbL). Google Maps şartları yol verisini başka bir üründe kullanmaya izin vermediği için OpenStreetMap kullanılır.</p>
+    <p class="s">Harita verisi © OpenStreetMap katkıcıları (ODbL), OpenFreeMap / OpenMapTiles. Google Maps şartları yol verisini başka bir üründe kullanmaya izin vermediği için OpenStreetMap kullanılır.</p>
   </aside>
 </div>
 
@@ -58,7 +59,7 @@ const $ = id => document.getElementById(id);
 const map = L.map('map').setView([43.7384, 7.4246], 16);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(map);
 
-const WIDTH = {motorway:14, trunk:12, primary:10, secondary:9, tertiary:8, unclassified:7, residential:7, living_street:5, service:4.5};
+const WIDTH = {motorway:14, trunk:12, primary:10, secondary:9, tertiary:8, unclassified:7, residential:7, living_street:5, service:4.5, raceway:10};
 let game = null;
 
 function status(t, ok){ const s = $('status'); s.textContent = t; s.className = ok ? 'ok' : ''; }
@@ -140,6 +141,142 @@ function finish(g, info) {
   status(g.roads.length + ' yol • ' + Math.round(g.size.x) + ' × ' + Math.round(g.size.z) + ' m • ' + info, true);
 }
 
+// ---------- Ana kaynak: OpenFreeMap vektör karoları (CDN, hızlı, anahtarsız) ----------
+let ofmTpl = null;
+async function getTpl() {
+  if (ofmTpl) return ofmTpl;
+  const r = await fetch('https://tiles.openfreemap.org/planet');
+  if (!r.ok) throw new Error('TileJSON HTTP ' + r.status);
+  ofmTpl = (await r.json()).tiles[0];
+  return ofmTpl;
+}
+
+function readTile(buf) {
+  const b = new Uint8Array(buf); let p = 0;
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength), td = new TextDecoder();
+  const varint = () => { let r = 0, m = 1, x; do { x = b[p++]; r += (x & 127) * m; m *= 128; } while (x & 128); return r; };
+  const skip = w => { if (w === 0) varint(); else if (w === 1) p += 8; else if (w === 2) { const l = varint(); p += l; } else if (w === 5) p += 4; };
+  const str = () => { const l = varint(); const t = td.decode(b.subarray(p, p + l)); p += l; return t; };
+  function value(end) {
+    let v = null;
+    while (p < end) {
+      const t = varint(), f = t >> 3, w = t & 7;
+      if (f === 1) v = str();
+      else if (f === 2) { v = dv.getFloat32(p, true); p += 4; }
+      else if (f === 3) { v = dv.getFloat64(p, true); p += 8; }
+      else if (f === 4 || f === 5) v = varint();
+      else if (f === 6) { const z = varint(); v = z % 2 ? -(z + 1) / 2 : z / 2; }
+      else if (f === 7) v = !!varint();
+      else skip(w);
+    }
+    return v;
+  }
+  function feature(end) {
+    const F = {tags: [], type: 0, geom: []};
+    while (p < end) {
+      const t = varint(), f = t >> 3, w = t & 7;
+      if (f === 2 || f === 4) { const l = varint(), e = p + l, a = f === 2 ? F.tags : F.geom; while (p < e) a.push(varint()); }
+      else if (f === 3) F.type = varint();
+      else skip(w);
+    }
+    return F;
+  }
+  function layer(end) {
+    const L = {name: '', features: [], keys: [], values: [], extent: 4096};
+    while (p < end) {
+      const t = varint(), f = t >> 3, w = t & 7;
+      if (f === 1) L.name = str();
+      else if (f === 2) { const l = varint(); L.features.push(feature(p + l)); }
+      else if (f === 3) L.keys.push(str());
+      else if (f === 4) { const l = varint(); L.values.push(value(p + l)); }
+      else if (f === 5) L.extent = varint();
+      else skip(w);
+    }
+    return L;
+  }
+  const layers = {};
+  while (p < b.length) {
+    const t = varint(), f = t >> 3, w = t & 7;
+    if (f === 3 && w === 2) { const l = varint(); const L = layer(p + l); layers[L.name] = L; } else skip(w);
+  }
+  return layers;
+}
+
+function geomLines(geom) {
+  const out = []; let cur = null, x = 0, y = 0, i = 0;
+  while (i < geom.length) {
+    const c = geom[i++], cmd = c & 7, cnt = c >> 3;
+    for (let k = 0; k < cnt; k++) {
+      if (cmd === 7) continue;
+      const dx = geom[i++], dy = geom[i++];
+      x += (dx >> 1) ^ -(dx & 1); y += (dy >> 1) ^ -(dy & 1);
+      if (cmd === 1) { cur = []; out.push(cur); }
+      cur.push([x, y]);
+    }
+  }
+  return out;
+}
+
+// Çizgiyi dikdörtgene kırpar (Liang–Barsky)
+function clipLine(pts, x0, y0, x1, y1) {
+  const out = []; let cur = null;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const ax = pts[i][0], ay = pts[i][1], dx = pts[i + 1][0] - ax, dy = pts[i + 1][1] - ay;
+    const P = [-dx, dx, -dy, dy], Q = [ax - x0, x1 - ax, ay - y0, y1 - ay];
+    let t0 = 0, t1 = 1, ok = true;
+    for (let k = 0; k < 4 && ok; k++) {
+      if (P[k] === 0) { if (Q[k] < 0) ok = false; }
+      else { const t = Q[k] / P[k]; if (P[k] < 0) { if (t > t1) ok = false; else if (t > t0) t0 = t; } else { if (t < t0) ok = false; else if (t < t1) t1 = t; } }
+    }
+    if (!ok) { cur = null; continue; }
+    if (!cur || t0 > 0) { cur = [[ax + t0 * dx, ay + t0 * dy]]; out.push(cur); }
+    cur.push([ax + t1 * dx, ay + t1 * dy]);
+    if (t1 < 1) cur = null;
+  }
+  return out.filter(l => l.length > 1);
+}
+
+const CLS = {motorway: 'motorway', trunk: 'trunk', primary: 'primary', secondary: 'secondary', tertiary: 'tertiary', minor: 'residential', raceway: 'raceway', service: 'service'};
+
+async function fromOpenFreeMap(s, w, n, e, withService) {
+  const Z = 14, N = 2 ** Z, tpl = await getTpl();
+  const mx = lon => (lon + 180) / 360;
+  const my = lat => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2; };
+  const X0 = mx(w), X1 = mx(e), Y0 = my(n), Y1 = my(s);
+  const tx0 = Math.floor(X0 * N), tx1 = Math.floor(X1 * N), ty0 = Math.floor(Y0 * N), ty1 = Math.floor(Y1 * N);
+  if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) > 16) throw new Error('çok fazla karo, yaklaş');
+  const toLon = x => x * 360 - 180, toLat = y => Math.atan(Math.sinh(Math.PI * (1 - 2 * y))) * 180 / Math.PI;
+  const jobs = [];
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) jobs.push((async () => {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const r = await fetch(tpl.replace('{z}', Z).replace('{x}', tx).replace('{y}', ty), {signal: ctl.signal});
+      if (r.status === 404 || r.status === 204) return [];
+      if (!r.ok) throw new Error('karo HTTP ' + r.status);
+      const L = readTile(await r.arrayBuffer()).transportation;
+      if (!L) return [];
+      const ways = [];
+      for (const F of L.features) {
+        if (F.type !== 2) continue;
+        const pr = {};
+        for (let i = 0; i < F.tags.length; i += 2) pr[L.keys[F.tags[i]]] = L.values[F.tags[i + 1]];
+        const hw = CLS[pr.class];
+        if (!hw || (hw === 'service' && !withService)) continue;
+        for (const line of geomLines(F.geom)) {
+          for (const seg of clipLine(line, 0, 0, L.extent, L.extent)) {
+            const m = seg.map(([x, y]) => [(tx + x / L.extent) / N, (ty + y / L.extent) / N]);
+            for (const c of clipLine(m, X0, Y0, X1, Y1))
+              ways.push({type: 'way', id: ways.length + tx * 1e6 + ty, tags: {highway: hw, name: pr.name || '', oneway: pr.oneway === 1 ? 'yes' : 'no'},
+                         geometry: c.map(([x, y]) => ({lat: toLat(y), lon: toLon(x)}))});
+          }
+        }
+      }
+      return ways;
+    } finally { clearTimeout(timer); }
+  })());
+  return {elements: (await Promise.all(jobs)).flat()};
+}
+
 $('btnScan').onclick = async () => {
   const b = map.getBounds();
   const s = b.getSouth(), w = b.getWest(), n = b.getNorth(), e = b.getEast();
@@ -148,24 +285,22 @@ $('btnScan').onclick = async () => {
   if (areaKm2 > 6) { status('Alan çok büyük (' + areaKm2.toFixed(1) + ' km²). Yaklaş ve tekrar dene (en çok 6 km²).'); return; }
 
   const withService = $('chkService').checked;
-  const key = 'ym1:' + [s, w, n, e].map(v => v.toFixed(4)).join(',') + withService;
-  try {
-    const hit = localStorage.getItem(key);
-    if (hit) { finish(build(JSON.parse(hit), withService), 'önbellekten (anında)'); return; }
-  } catch (_) {}
-
   $('btnScan').disabled = true;
-  const t0 = Date.now();
-  const tick = setInterval(() => status('Yollar indiriliyor... ' + Math.round((Date.now() - t0) / 1000) + ' sn (4 sunucu aynı anda deneniyor)'), 500);
-  const types = withService ? 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service'
-                            : 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street';
-  const q = `[out:json][timeout:20];way["highway"~"^(${types})(_link)?$"](${s},${w},${n},${e});out geom qt;`;
+  const t0 = Date.now(), sec = () => ((Date.now() - t0) / 1000).toFixed(1);
+  const tick = setInterval(() => status('Yollar indiriliyor... ' + Math.round(sec()) + ' sn'), 500);
   try {
-    const {j, host} = await raceOverpass(q);
-    try { localStorage.setItem(key, JSON.stringify(j)); } catch (_) {}
-    finish(build(j, withService), ((Date.now() - t0) / 1000).toFixed(1) + ' sn (' + host + ')');
+    let j, used = 'OpenFreeMap';
+    try { j = await fromOpenFreeMap(s, w, n, e, withService); }
+    catch (err1) {
+      status('Ana kaynak yanıt vermedi, yedek sunucular deneniyor...');
+      const types = withService ? 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service'
+                                : 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street';
+      try { const r = await raceOverpass(`[out:json][timeout:20];way["highway"~"^(${types})(_link)?$"](${s},${w},${n},${e});out geom qt;`); j = r.j; used = r.host; }
+      catch (err2) { throw new Error('OpenFreeMap: ' + err1.message + ' | Overpass: ' + err2.message); }
+    }
+    finish(build(j, withService), sec() + ' sn (' + used + ')');
   } catch (err) {
-    status('Tüm sunucular başarısız oldu: ' + err.message + ' — "Dosyadan yükle" ile elle veri verebilirsin.');
+    status('Tüm kaynaklar başarısız: ' + err.message + ' — "Dosyadan yükle" ile elle veri verebilirsin.');
   }
   clearInterval(tick);
   $('btnScan').disabled = false;
