@@ -42,6 +42,8 @@
     <label><input type="checkbox" id="chkService"> Servis ve park yollarını da ekle</label>
     <label><input type="checkbox" id="chkProps" checked> Ağaç, çalı ve sokak lambası ekle</label>
     <label><input type="checkbox" id="chkBld" checked> Binaları ekle (ana kaynakta)</label>
+    <label><input type="checkbox" id="chkDem" checked> Yükseklik ekle (rakım, eğim, çukur, tepe)</label>
+    <label><input type="checkbox" id="chkSlope" checked> Önizlemede eğimi renkle göster</label>
     <button id="btnScan">Görünen alandaki yolları tara</button>
     <button class="sec" id="btnImport">Dosyadan yükle (.json)</button>
     <input type="file" id="file" accept=".json,application/json" hidden>
@@ -52,7 +54,7 @@
       <button class="sec" id="btnObj" disabled>OBJ indir</button>
       <button class="sec" id="btnJson" disabled>JSON indir</button>
     </div>
-    <p class="s">Harita verisi © OpenStreetMap katkıcıları (ODbL), OpenFreeMap / OpenMapTiles. Google Maps şartları yol verisini başka bir üründe kullanmaya izin vermediği için OpenStreetMap kullanılır.</p>
+    <p class="s">Harita verisi © OpenStreetMap katkıcıları (ODbL), OpenFreeMap / OpenMapTiles. Yükseklik verisi: Terrain Tiles on AWS. Google Maps şartları yol verisini başka bir üründe kullanmaya izin vermediği için OpenStreetMap kullanılır.</p>
   </aside>
 </div>
 
@@ -142,17 +144,97 @@ function build(j, withService) {
   return {
     format: 'yaris-haritasi', version: 1, units: 'meters',
     note: 'points = [x, z]. x doğuya, z güneye doğru artar. Y (yukarı) = 0.',
-    origin: {lat: lat0, lon: lon0},
+    origin: {lat: lat0, lon: lon0, kx, kz},
     size: {x: +((maxLon - minLon) * kx).toFixed(1), z: +((maxLat - minLat) * kz).toFixed(1)},
     roads, buildings
   };
 }
 
-function finish(g, info) {
+async function finish(g, info) {
   if (!g) { status('Bu alanda yol bulunamadı.'); return; }
-  game = g; game.props = genProps(g); draw();
+  const dem = await addElevation(g);
+  game = g; game.props = genProps(g);
+  if (g.H) for (const p of game.props) p.y = +g.H(p.x, p.z).toFixed(2);
+  draw();
   $('btnJson').disabled = $('btnObj').disabled = $('btnGlb').disabled = false;
-  status(g.roads.length + ' yol • ' + g.buildings.length + ' bina • ' + g.props.length + ' ağaç/obje • ' + Math.round(g.size.x) + ' × ' + Math.round(g.size.z) + ' m • ' + info, true);
+  status(g.roads.length + ' yol • ' + g.buildings.length + ' bina • ' + g.props.length + ' ağaç/obje • ' + Math.round(g.size.x) + ' × ' + Math.round(g.size.z) + ' m • ' + dem + ' • ' + info, true);
+}
+
+// ---------- Yükseklik (rakım) verisi: AWS Terrarium karoları ----------
+async function loadDEM(s, w, n, e) {
+  const mx = lon => (lon + 180) / 360;
+  const my = lat => { const r = lat * Math.PI / 180; return (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2; };
+  let Z = 14, N, tx0, tx1, ty0, ty1;
+  for (; Z >= 10; Z--) {
+    N = 2 ** Z; tx0 = Math.floor(mx(w) * N); tx1 = Math.floor(mx(e) * N); ty0 = Math.floor(my(n) * N); ty1 = Math.floor(my(s) * N);
+    if ((tx1 - tx0 + 1) * (ty1 - ty0 + 1) <= 12) break;
+  }
+  if (Z < 10) throw new Error('alan çok geniş');
+  const tiles = new Map(); let size = 256; const jobs = [];
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) jobs.push((async () => {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+    try {
+      const r = await fetch(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${Z}/${tx}/${ty}.png`, {signal: ctl.signal});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const bmp = await createImageBitmap(await r.blob());
+      const cv = document.createElement('canvas'); size = cv.width = cv.height = bmp.width;
+      const c = cv.getContext('2d', {willReadFrequently: true}); c.drawImage(bmp, 0, 0);
+      const d = c.getImageData(0, 0, size, size).data, h = new Float32Array(size * size);
+      for (let i = 0; i < h.length; i++) h[i] = d[i * 4] * 256 + d[i * 4 + 1] + d[i * 4 + 2] / 256 - 32768;
+      tiles.set(tx + ',' + ty, h);
+    } finally { clearTimeout(timer); }
+  })());
+  await Promise.all(jobs);
+  const X0 = tx0 * size, X1 = (tx1 + 1) * size - 1, Y0 = ty0 * size, Y1 = (ty1 + 1) * size - 1;
+  const px = (ix, iy) => {
+    ix = Math.min(Math.max(ix, X0), X1); iy = Math.min(Math.max(iy, Y0), Y1);
+    return tiles.get(Math.floor(ix / size) + ',' + Math.floor(iy / size))[(iy % size) * size + (ix % size)];
+  };
+  return (lat, lon) => {
+    const gx = mx(lon) * N * size - 0.5, gy = my(lat) * N * size - 0.5, x0 = Math.floor(gx), y0 = Math.floor(gy), fx = gx - x0, fy = gy - y0;
+    return (px(x0, y0) * (1 - fx) + px(x0 + 1, y0) * fx) * (1 - fy) + (px(x0, y0 + 1) * (1 - fx) + px(x0 + 1, y0 + 1) * fx) * fy;
+  };
+}
+
+// Yolları sıklaştırır, rakım örnekler, yumuşatır; eğim istatistiği çıkarır. Dönen metin durum satırına yazılır.
+async function addElevation(g) {
+  g.H = null; g.dem = null;
+  if (!$('chkDem').checked) return 'düz zemin';
+  const {lat, lon, kx, kz} = g.origin, hx = g.size.x / 2 + 60, hz = g.size.z / 2 + 60;
+  let sampler;
+  try { sampler = await loadDEM(lat - hz / kz, lon - hx / kx, lat + hz / kz, lon + hx / kx); }
+  catch (err) { return 'yükseklik alınamadı (' + (err.name === 'AbortError' ? 'zaman aşımı' : err.message) + '), model düz'; }
+  const E = (x, z) => sampler(lat - z / kz, lon + x / kx);
+  let mn = Infinity, mxE = -Infinity;
+  for (let i = 0; i <= 40; i++) for (let j = 0; j <= 40; j++) { const v = E(-hx + 2 * hx * i / 40, -hz + 2 * hz * j / 40); if (v < mn) mn = v; if (v > mxE) mxE = v; }
+  const base = Math.floor(mn);
+  g.H = (x, z) => E(x, z) - base;
+  let maxG = 0, steep = '';
+  for (const r of g.roads) {
+    const P = [];
+    for (let i = 0; i < r.points.length; i++) {
+      P.push(r.points[i]);
+      if (i < r.points.length - 1) {
+        const [ax, az] = r.points[i], [bx, bz] = r.points[i + 1], L = Math.hypot(bx - ax, bz - az);
+        for (let q = 8; q < L - 1; q += 8) P.push([+(ax + (bx - ax) * q / L).toFixed(2), +(az + (bz - az) * q / L).toFixed(2)]);
+      }
+    }
+    let y = P.map(([x, z]) => g.H(x, z));
+    for (let pass = 0; pass < 3; pass++) { const t = y.slice(); for (let i = 1; i < y.length - 1; i++) t[i] = (y[i - 1] + 2 * y[i] + y[i + 1]) / 4; y = t; }
+    r.points = P; r.y = y.map(v => +v.toFixed(2));
+    let tl = 0, tg = 0, mg = 0;
+    for (let i = 0; i < P.length - 1; i++) {
+      const d = Math.hypot(P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]) || 1, gr = Math.abs(y[i + 1] - y[i]) / d * 100;
+      tl += d; tg += gr * d;
+      const k = Math.min(i + 3, P.length - 1); let dd = 0; for (let q = i; q < k; q++) dd += Math.hypot(P[q + 1][0] - P[q][0], P[q + 1][1] - P[q][1]);
+      if (dd > 15) mg = Math.max(mg, Math.abs(y[k] - y[i]) / dd * 100);   // en az ~15 m'lik pencere
+    }
+    r.avgGrade = +(tg / (tl || 1)).toFixed(1); r.maxGrade = +mg.toFixed(1);
+    if (mg > maxG) { maxG = mg; steep = r.name || r.type; }
+  }
+  for (const b of g.buildings) b.y0 = +Math.min(...b.points.map(([x, z]) => g.H(x, z))).toFixed(2);
+  g.dem = {source: 'AWS Terrarium', baseElevation: base, minElevation: +mn.toFixed(1), maxElevation: +mxE.toFixed(1), maxGrade: +maxG.toFixed(1), steepestRoad: steep};
+  return 'rakım ' + Math.round(mn) + '–' + Math.round(mxE) + ' m, en dik yol %' + maxG.toFixed(1) + (steep ? ' (' + steep + ')' : '');
 }
 
 // ---------- Ana kaynak: OpenFreeMap vektör karoları (CDN, hızlı, anahtarsız) ----------
@@ -331,7 +413,8 @@ $('btnScan').onclick = async () => {
       try { const r = await raceOverpass(`[out:json][timeout:20];way["highway"~"^(${types})(_link)?$"](${s},${w},${n},${e});out geom qt;`); j = r.j; used = r.host; }
       catch (err2) { throw new Error('OpenFreeMap: ' + err1.message + ' | Overpass: ' + err2.message); }
     }
-    finish(build(j, withService), sec() + ' sn (' + used + ')');
+    clearInterval(tick); status('Yükseklik verisi indiriliyor...');
+    await finish(build(j, withService), sec() + ' sn (' + used + ')');
   } catch (err) {
     status('Tüm kaynaklar başarısız: ' + err.message + ' — "Dosyadan yükle" ile elle veri verebilirsin.');
   }
@@ -343,10 +426,20 @@ $('btnScan').onclick = async () => {
 $('btnImport').onclick = () => $('file').click();
 $('file').onchange = async ev => {
   const f = ev.target.files[0]; if (!f) return;
-  try { finish(build(JSON.parse(await f.text()), $('chkService').checked), 'dosyadan: ' + f.name); }
+  try { await finish(build(JSON.parse(await f.text()), $('chkService').checked), 'dosyadan: ' + f.name); }
   catch (_) { status('Dosya okunamadı. Overpass JSON (out geom) formatı olmalı.'); }
   ev.target.value = '';
 };
+
+const RAMP = [[0, [38, 70, 62]], [0.35, [88, 128, 78]], [0.65, [172, 150, 100]], [1, [238, 238, 238]]];
+function ramp(t) {
+  for (let i = 1; i < RAMP.length; i++) if (t <= RAMP[i][0]) {
+    const [t0, c0] = RAMP[i - 1], [t1, c1] = RAMP[i], u = (t - t0) / (t1 - t0);
+    return 'rgb(' + c0.map((v, k) => Math.round(v + (c1[k] - v) * u)).join(',') + ')';
+  }
+  return 'rgb(238,238,238)';
+}
+const gradeColor = gr => gr < 3 ? '#4cc38a' : gr < 6 ? '#ffd166' : gr < 10 ? '#ff9f43' : '#ff5d5d';
 
 function draw() {
   const c = $('prev'), g = c.getContext('2d');
@@ -355,24 +448,41 @@ function draw() {
   const sc = Math.min(c.width / sx, c.height / sz) * 0.95;
   const ox = c.width / 2, oz = c.height / 2;
   g.lineCap = g.lineJoin = 'round';
+  if (game.H && game.dem) {                                  // rakım haritası (zemin renkleri)
+    const K = 72, span = game.dem.maxElevation - game.dem.minElevation || 1;
+    for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) {
+      const x = -sx / 2 + sx * (i + 0.5) / K, z = -sz / 2 + sz * (j + 0.5) / K;
+      g.fillStyle = ramp(Math.min(1, Math.max(0, (game.H(x, z) + game.dem.baseElevation - game.dem.minElevation) / span)));
+      g.fillRect(ox + (x - sx / 2 / K) * sc, oz + (z - sz / 2 / K) * sc, sx / K * sc + 1, sz / K * sc + 1);
+    }
+  }
   if ($('chkBld').checked) {
     g.fillStyle = '#3b414c';
     for (const b of game.buildings) { g.beginPath(); b.points.forEach(([x, z], i) => i ? g.lineTo(ox + x * sc, oz + z * sc) : g.moveTo(ox + x * sc, oz + z * sc)); g.closePath(); g.fill(); }
   }
   const colors = {motorway:'#ffb703', trunk:'#ffb703', primary:'#f4d35e', secondary:'#e8eaed', tertiary:'#c9ced6'};
+  const bySlope = $('chkSlope').checked && game.H;
   for (const r of game.roads) {
-    g.strokeStyle = colors[r.type] || '#7a8494';
     g.lineWidth = Math.max(1, r.width * sc * 0.8);
-    g.beginPath();
-    r.points.forEach(([x, z], i) => i ? g.lineTo(ox + x * sc, oz + z * sc) : g.moveTo(ox + x * sc, oz + z * sc));
-    g.stroke();
+    if (bySlope && r.y) {
+      for (let i = 0; i < r.points.length - 1; i++) {
+        const [ax, az] = r.points[i], [bx, bz] = r.points[i + 1], d = Math.hypot(bx - ax, bz - az) || 1;
+        g.strokeStyle = gradeColor(Math.abs(r.y[i + 1] - r.y[i]) / d * 100);
+        g.beginPath(); g.moveTo(ox + ax * sc, oz + az * sc); g.lineTo(ox + bx * sc, oz + bz * sc); g.stroke();
+      }
+    } else {
+      g.strokeStyle = colors[r.type] || '#7a8494';
+      g.beginPath();
+      r.points.forEach(([x, z], i) => i ? g.lineTo(ox + x * sc, oz + z * sc) : g.moveTo(ox + x * sc, oz + z * sc));
+      g.stroke();
+    }
   }
   if ($('chkProps').checked) for (const p of game.props) {
     g.fillStyle = p.t === 'lamp' ? '#ffd166' : p.t === 'pine' ? '#2e8b57' : '#6fcf50';
     g.beginPath(); g.arc(ox + p.x * sc, oz + p.z * sc, p.t === 'lamp' ? 1.3 : Math.max(1.4, 2 * p.s * sc), 0, 7); g.fill();
   }
 }
-$('chkProps').onchange = $('chkBld').onchange = () => { if (game) draw(); };
+$('chkProps').onchange = $('chkBld').onchange = $('chkSlope').onchange = () => { if (game) draw(); };
 
 function download(name, data, mime) {
   const a = document.createElement('a');
@@ -458,11 +568,11 @@ function genProps(g) {
 const COL = {ground: '#5f8450', road: '#3a3c41', trunk: '#6b4a2f', leaf: '#4e9a3b', pine: '#2e6b3c', lamp: '#8d939c', wall: '#cfc8bb', roof: '#8e6f64'};
 
 // Dönel gövde: prof = [[yarıçap, y], ...] alttan üste
-function lathe(m, cx, cz, prof, sides) {
+function lathe(m, cx, cz, prof, sides, y0 = 0) {
   const rings = [];
   for (const [r, y] of prof) {
     const ring = [];
-    for (let i = 0; i < sides; i++) { const a = i / sides * Math.PI * 2; m.pos.push(cx + r * Math.cos(a), y, cz + r * Math.sin(a)); ring.push(m.pos.length / 3 - 1); }
+    for (let i = 0; i < sides; i++) { const a = i / sides * Math.PI * 2; m.pos.push(cx + r * Math.cos(a), y + y0, cz + r * Math.sin(a)); ring.push(m.pos.length / 3 - 1); }
     rings.push(ring);
   }
   for (let k = 0; k < prof.length - 1; k++) {
@@ -494,16 +604,71 @@ function earclip(P) {
   return out;
 }
 
+function computeNormals(m) {
+  const n = new Float32Array(m.pos.length), p = m.pos;
+  for (let t = 0; t < m.idx.length; t += 3) {
+    const a = m.idx[t] * 3, b = m.idx[t + 1] * 3, c = m.idx[t + 2] * 3;
+    const ux = p[b] - p[a], uy = p[b + 1] - p[a + 1], uz = p[b + 2] - p[a + 2], vx = p[c] - p[a], vy = p[c + 1] - p[a + 1], vz = p[c + 2] - p[a + 2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    for (const i of [a, b, c]) { n[i] += nx; n[i + 1] += ny; n[i + 2] += nz; }
+  }
+  for (let i = 0; i < n.length; i += 3) {
+    const l = Math.hypot(n[i], n[i + 1], n[i + 2]);
+    if (l > 1e-9) { n[i] /= l; n[i + 1] /= l; n[i + 2] /= l; } else n[i + 1] = 1;
+  }
+  m.nrm = n;
+}
+
 function buildMeshes(g, withProps, withBld) {
   const M = {}; for (const k in COL) M[k] = {pos: [], idx: []};
-  const hx = g.size.x / 2 + 30, hz = g.size.z / 2 + 30, G = M.ground, gy = -0.15;
-  G.pos.push(-hx, gy, -hz, hx, gy, -hz, hx, gy, hz, -hx, gy, hz); G.idx.push(0, 3, 1, 1, 3, 2);
+  const hx = g.size.x / 2 + 30, hz = g.size.z / 2 + 30, G = M.ground;
+  let T = () => 0;
 
-  const R = M.road;                                    // yol şeritleri
+  if (g.H) {                                            // yükseklik haritası (arazi)
+    const step = Math.min(12, Math.max(4, Math.max(hx, hz) * 2 / 160));
+    const nx = Math.ceil(2 * hx / step) + 1, nz = Math.ceil(2 * hz / step) + 1, dx = 2 * hx / (nx - 1), dz = 2 * hz / (nz - 1);
+    const Hn = new Float32Array(nx * nz), best = new Float32Array(nx * nz).fill(1e9), ry = new Float32Array(nx * nz);
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) Hn[j * nx + i] = g.H(-hx + i * dx, -hz + j * dz);
+    const flat = Math.max(dx, dz) * 1.5, blend = 10;
+    for (const r of g.roads) {                          // araziyi yola göre düzleştir (yol altı kazı/dolgu)
+      if (!r.y) continue;
+      const hw = r.width / 2, rad = hw + flat + blend;
+      for (let q = 0; q < r.points.length - 1; q++) {
+        const [ax, az] = r.points[q], [bx, bz] = r.points[q + 1], ya = r.y[q], yb = r.y[q + 1];
+        const i0 = Math.max(0, Math.floor((Math.min(ax, bx) - rad + hx) / dx)), i1 = Math.min(nx - 1, Math.ceil((Math.max(ax, bx) + rad + hx) / dx));
+        const j0 = Math.max(0, Math.floor((Math.min(az, bz) - rad + hz) / dz)), j1 = Math.min(nz - 1, Math.ceil((Math.max(az, bz) + rad + hz) / dz));
+        const sx = bx - ax, sz = bz - az, l2 = sx * sx + sz * sz || 1;
+        for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+          const X = -hx + i * dx, Z = -hz + j * dz;
+          const u = Math.min(1, Math.max(0, ((X - ax) * sx + (Z - az) * sz) / l2));
+          const d = Math.hypot(ax + u * sx - X, az + u * sz - Z) - hw, k = j * nx + i;
+          if (d < best[k]) { best[k] = d; ry[k] = ya + (yb - ya) * u; }
+        }
+      }
+    }
+    for (let k = 0; k < Hn.length; k++) {
+      const d = best[k];
+      if (d < flat + blend) { const t = d <= flat ? 0 : (d - flat) / blend, sm = t * t * (3 - 2 * t); Hn[k] = (ry[k] - 0.3) * (1 - sm) + Hn[k] * sm; }
+    }
+    T = (x, z) => {
+      const fx = Math.min(Math.max((x + hx) / dx, 0), nx - 1.001), fz = Math.min(Math.max((z + hz) / dz, 0), nz - 1.001);
+      const i = Math.floor(fx), j = Math.floor(fz), u = fx - i, v = fz - j, k = j * nx + i;
+      return (Hn[k] * (1 - u) + Hn[k + 1] * u) * (1 - v) + (Hn[k + nx] * (1 - u) + Hn[k + nx + 1] * u) * v;
+    };
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) G.pos.push(-hx + i * dx, Hn[j * nx + i], -hz + j * dz);
+    for (let j = 0; j < nz - 1; j++) for (let i = 0; i < nx - 1; i++) { const a = j * nx + i, b = a + 1, c = a + nx + 1, d = a + nx; G.idx.push(a, d, b, b, d, c); }
+    computeNormals(G);
+  } else {
+    const gy = -0.15;
+    G.pos.push(-hx, gy, -hz, hx, gy, -hz, hx, gy, hz, -hx, gy, hz); G.idx.push(0, 3, 1, 1, 3, 2);
+  }
+
+  const R = M.road;                                    // yol şeritleri (araziye oturur)
   for (const r of g.roads) {
-    const P = r.points.filter((p, i, a) => i === 0 || p[0] !== a[i - 1][0] || p[1] !== a[i - 1][1]);
+    const keep = []; r.points.forEach((p, i) => { if (i === 0 || p[0] !== r.points[i - 1][0] || p[1] !== r.points[i - 1][1]) keep.push(i); });
+    const P = keep.map(i => r.points[i]), Y = keep.map(i => r.y ? r.y[i] : 0);
     if (P.length < 2) continue;
-    const h = r.width / 2, base = R.pos.length / 3;
+    const h = r.width / 2, base = R.pos.length / 3, y0 = g.H ? 0.02 : 0.02;
     for (let i = 0; i < P.length; i++) {
       let nx = 0, nz = 0;
       for (const [a, b] of [[i - 1, i], [i, i + 1]]) {
@@ -512,37 +677,40 @@ function buildMeshes(g, withProps, withBld) {
         nx += -dz / len; nz += dx / len;
       }
       const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
-      R.pos.push(P[i][0] + nx * h, 0.02, P[i][1] + nz * h, P[i][0] - nx * h, 0.02, P[i][1] - nz * h);
+      R.pos.push(P[i][0] + nx * h, Y[i] + y0, P[i][1] + nz * h, P[i][0] - nx * h, Y[i] + y0, P[i][1] - nz * h);
     }
     for (let i = 0; i < P.length - 1; i++) { const l0 = base + i * 2, r0 = l0 + 1, l1 = l0 + 2, r1 = l0 + 3; R.idx.push(l0, r1, r0, l0, l1, r1); }
   }
+  if (g.H) computeNormals(R);
 
   if (withProps) for (const p of g.props) {
-    const s = p.s;
+    const s = p.s, y = T(p.x, p.z);
     if (p.t === 'tree') {
-      lathe(M.trunk, p.x, p.z, [[0.22 * s, 0], [0.17 * s, 2.6 * s]], 6);
-      lathe(M.leaf, p.x, p.z, [[0, 1.9 * s], [1.5 * s, 2.7 * s], [2 * s, 4 * s], [1.5 * s, 5.3 * s], [0, 6.1 * s]], 7);
+      lathe(M.trunk, p.x, p.z, [[0.22 * s, 0], [0.17 * s, 2.6 * s]], 6, y - 0.15);
+      lathe(M.leaf, p.x, p.z, [[0, 1.9 * s], [1.5 * s, 2.7 * s], [2 * s, 4 * s], [1.5 * s, 5.3 * s], [0, 6.1 * s]], 7, y - 0.15);
     } else if (p.t === 'pine') {
-      lathe(M.trunk, p.x, p.z, [[0.2 * s, 0], [0.16 * s, 1.8 * s]], 6);
-      lathe(M.pine, p.x, p.z, [[2 * s, 1.4 * s], [0, 5 * s]], 8);
-      lathe(M.pine, p.x, p.z, [[1.5 * s, 3.6 * s], [0, 7.4 * s]], 8);
+      lathe(M.trunk, p.x, p.z, [[0.2 * s, 0], [0.16 * s, 1.8 * s]], 6, y - 0.15);
+      lathe(M.pine, p.x, p.z, [[2 * s, 1.4 * s], [0, 5 * s]], 8, y - 0.15);
+      lathe(M.pine, p.x, p.z, [[1.5 * s, 3.6 * s], [0, 7.4 * s]], 8, y - 0.15);
     } else if (p.t === 'bush') {
-      lathe(M.leaf, p.x, p.z, [[0, 0], [0.8 * s, 0.4 * s], [0.95 * s, 0.9 * s], [0.7 * s, 1.4 * s], [0, 1.7 * s]], 6);
+      lathe(M.leaf, p.x, p.z, [[0, 0], [0.8 * s, 0.4 * s], [0.95 * s, 0.9 * s], [0.7 * s, 1.4 * s], [0, 1.7 * s]], 6, y - 0.1);
     } else if (p.t === 'lamp') {
-      lathe(M.lamp, p.x, p.z, [[0.1, 0], [0.07, 7.2]], 6);
-      lathe(M.lamp, p.x, p.z, [[0.55, 7.0], [0.4, 7.15], [0, 7.4]], 8);
+      lathe(M.lamp, p.x, p.z, [[0.1, 0], [0.07, 7.2]], 6, y);
+      lathe(M.lamp, p.x, p.z, [[0.55, 7.0], [0.4, 7.15], [0, 7.4]], 8, y);
     }
   }
 
-  if (withBld) for (const b of g.buildings) {
+  if (withBld) for (const b of g.buildings) {          // bina tabanı en alçak köşeye oturur, 1.5 m temel gömülür
     const P = b.points, n = P.length, W = M.wall, Rf = M.roof;
+    const yb = Math.min(...P.map(([x, z]) => T(x, z)));
     let base = W.pos.length / 3;
-    for (const [x, z] of P) W.pos.push(x, 0, z, x, b.h, z);
+    for (const [x, z] of P) W.pos.push(x, yb - 1.5, z, x, yb + b.h, z);
     for (let i = 0; i < n; i++) { const j = (i + 1) % n, b0 = base + i * 2, t0 = b0 + 1, b1 = base + j * 2, t1 = b1 + 1; W.idx.push(b0, t0, b1, b1, t0, t1); }
     base = Rf.pos.length / 3;
-    for (const [x, z] of P) Rf.pos.push(x, b.h, z);
+    for (const [x, z] of P) Rf.pos.push(x, yb + b.h, z);
     for (const [a, c, d] of earclip(P)) Rf.idx.push(base + a, base + d, base + c);
   }
+  Object.defineProperty(M, '_T', {value: T, enumerable: false});
   return M;
 }
 
@@ -565,19 +733,19 @@ function hexLin(h) {
 
 function makeGLB(M) {
   const bufs = [], views = [], acc = [], prims = [], mats = []; let off = 0;
+  const addView = (arr, target) => { views.push({buffer: 0, byteOffset: off, byteLength: arr.byteLength, target}); bufs.push(arr); off += arr.byteLength; return views.length - 1; };
   for (const k in M) {
     const m = M[k]; if (!m.idx.length) continue;
     const pos = new Float32Array(m.pos), idx = new Uint32Array(m.idx);
     const mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
     for (let i = 0; i < pos.length; i += 3) for (let c = 0; c < 3; c++) { const v = pos[i + c]; if (v < mn[c]) mn[c] = v; if (v > mx[c]) mx[c] = v; }
-    views.push({buffer: 0, byteOffset: off, byteLength: pos.byteLength, target: 34962}); bufs.push(pos); off += pos.byteLength;
-    acc.push({bufferView: views.length - 1, componentType: 5126, count: pos.length / 3, type: 'VEC3', min: mn, max: mx});
-    const pa = acc.length - 1;
-    views.push({buffer: 0, byteOffset: off, byteLength: idx.byteLength, target: 34963}); bufs.push(idx); off += idx.byteLength;
-    acc.push({bufferView: views.length - 1, componentType: 5125, count: idx.length, type: 'SCALAR'});
+    const attrs = {};
+    acc.push({bufferView: addView(pos, 34962), componentType: 5126, count: pos.length / 3, type: 'VEC3', min: mn, max: mx}); attrs.POSITION = acc.length - 1;
+    if (m.nrm) { acc.push({bufferView: addView(m.nrm, 34962), componentType: 5126, count: pos.length / 3, type: 'VEC3'}); attrs.NORMAL = acc.length - 1; }
+    acc.push({bufferView: addView(idx, 34963), componentType: 5125, count: idx.length, type: 'SCALAR'});
     const [r, gg, b] = hexLin(COL[k]);
     mats.push({name: k, pbrMetallicRoughness: {baseColorFactor: [r, gg, b, 1], metallicFactor: 0, roughnessFactor: 0.9}});
-    prims.push({attributes: {POSITION: pa}, indices: acc.length - 1, material: mats.length - 1});
+    prims.push({attributes: attrs, indices: acc.length - 1, material: mats.length - 1});
   }
   const json = {asset: {version: '2.0', generator: 'yaris-haritasi'}, scene: 0, scenes: [{nodes: [0]}], nodes: [{mesh: 0, name: 'yaris_haritasi'}],
     meshes: [{primitives: prims}], materials: mats, accessors: acc, bufferViews: views, buffers: [{byteLength: off}]};
