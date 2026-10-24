@@ -820,7 +820,7 @@ function makeGLB(M) {
     mats.push({name: k, pbrMetallicRoughness: {baseColorFactor: [r, gg, b, 1], metallicFactor: 0, roughnessFactor: 0.9, ...(m.uv ? {baseColorTexture: {index: 0}} : {})}});
     prims.push({attributes: attrs, indices: acc.length - 1, material: mats.length - 1});
   }
-  const json = {asset: {version: '2.0', generator: 'yaris-haritasi'}, scene: 0, scenes: [{nodes: [0]}], nodes: [{mesh: 0, name: 'yaris_haritasi'}],
+  const json = {asset: {version: '2.0', generator: 'harita'}, scene: 0, scenes: [{nodes: [0]}], nodes: [{mesh: 0, name: 'harita'}],
     meshes: [{primitives: prims}], materials: mats, accessors: acc, bufferViews: views, buffers: [{byteLength: off}]};
   if (tex !== null) Object.assign(json, {images: [{bufferView: tex, mimeType: 'image/png'}], samplers: [{magFilter: 9729, minFilter: 9987, wrapS: 10497, wrapT: 10497}], textures: [{sampler: 0, source: 0}]});
   const js = new TextEncoder().encode(JSON.stringify(json)), jl = Math.ceil(js.length / 4) * 4;
@@ -834,13 +834,13 @@ function makeGLB(M) {
 
 let mcK = null, mcG = null, mcM = null;
 const meshes = () => { const k = $('chkProps').checked + ',' + $('chkBld').checked; if (mcG === game && mcK === k) return mcM; mcG = game; mcK = k; return mcM = buildMeshes(game, $('chkProps').checked, $('chkBld').checked); };
-$('btnGlb').onclick = () => download('yaris-haritasi.glb', makeGLB(meshes()), 'application/octet-stream');
-$('btnObj').onclick = () => download('yaris-haritasi.obj', makeObj(meshes()), 'application/octet-stream');
+$('btnGlb').onclick = () => download('harita.glb', makeGLB(meshes()), 'application/octet-stream');
+$('btnObj').onclick = () => download('harita.obj', makeObj(meshes()), 'application/octet-stream');
 $('btnJson').onclick = () => {
   const o = {...game};
   if (!$('chkProps').checked) delete o.props;
   if (!$('chkBld').checked) delete o.buildings;
-  download('yaris-haritasi.json', JSON.stringify(o), 'application/octet-stream');
+  download('harita.json', JSON.stringify(o), 'application/octet-stream');
 };
 </script>
 </body>
