@@ -40,6 +40,8 @@
     </div>
     <label><input type="checkbox" id="chkService"> Servis ve park yollarını da ekle</label>
     <button id="btnScan">Görünen alandaki yolları tara</button>
+    <button class="sec" id="btnImport">Dosyadan yükle (.json)</button>
+    <input type="file" id="file" accept=".json,application/json" hidden>
     <canvas id="prev" width="640" height="640"></canvas>
     <div id="status">Henüz tarama yapılmadı.</div>
     <div class="row">
@@ -77,72 +79,105 @@ const MIRRORS = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
 ];
-async function fetchOverpass(q) {
-  const errors = [];
-  for (const url of MIRRORS) {
-    const host = new URL(url).host;
-    status('Yollar indiriliyor... (' + host + ')');
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 45000);
-    try {
-      const r = await fetch(url + '?data=' + encodeURIComponent(q), {signal: ctl.signal});
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json();
-      if (!j.elements) throw new Error('Geçersiz yanıt');
-      return j;
-    } catch (err) {
-      errors.push(host + ': ' + (err.name === 'AbortError' ? 'zaman aşımı' : err.message));
-    } finally { clearTimeout(timer); }
+
+// Tüm sunucuları AYNI ANDA dener, ilk cevap vereni kullanır, diğerlerini iptal eder.
+function raceOverpass(q) {
+  return new Promise((resolve, reject) => {
+    const ctls = [], errs = []; let done = false, failed = 0;
+    MIRRORS.forEach(url => {
+      const ctl = new AbortController(); ctls.push(ctl);
+      const host = new URL(url).host;
+      const t = setTimeout(() => ctl.abort(), 30000);
+      fetch(url + '?data=' + encodeURIComponent(q), {signal: ctl.signal})
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(j => {
+          if (!j.elements) throw new Error('geçersiz yanıt');
+          if (!done) { done = true; ctls.forEach(c => c.abort()); resolve({j, host}); }
+        })
+        .catch(e => {
+          errs.push(host + ': ' + (e.name === 'AbortError' ? 'zaman aşımı' : e.message));
+          if (++failed === MIRRORS.length && !done) reject(new Error(errs.join(' | ')));
+        })
+        .finally(() => clearTimeout(t));
+    });
+  });
+}
+
+function build(j, withService) {
+  const ways = j.elements.filter(e => e.type === 'way' && e.geometry && e.geometry.length > 1 && e.tags && e.tags.highway);
+  let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
+  for (const w of ways) for (const p of w.geometry) {
+    if (p.lat < minLat) minLat = p.lat; if (p.lat > maxLat) maxLat = p.lat;
+    if (p.lon < minLon) minLon = p.lon; if (p.lon > maxLon) maxLon = p.lon;
   }
-  throw new Error('Tüm sunucular yanıt vermedi → ' + errors.join(' | '));
+  const lat0 = (minLat + maxLat) / 2, lon0 = (minLon + maxLon) / 2;
+  const kx = 111320 * Math.cos(lat0 * Math.PI / 180), kz = 110540;
+  const roads = [];
+  for (const el of ways) {
+    const tags = el.tags, type = tags.highway.replace('_link', '');
+    if (type === 'service' && !withService) continue;
+    const lanes = parseInt(tags.lanes);
+    const width = lanes ? Math.max(lanes * 3.4, 5) : (WIDTH[type] || 6);
+    roads.push({
+      id: el.id, name: tags.name || '', type, width: +width.toFixed(1), oneway: tags.oneway === 'yes',
+      points: el.geometry.map(p => [+((p.lon - lon0) * kx).toFixed(2), +(-(p.lat - lat0) * kz).toFixed(2)])
+    });
+  }
+  if (!roads.length) return null;
+  return {
+    format: 'yaris-haritasi', version: 1, units: 'meters',
+    note: 'points = [x, z]. x doğuya, z güneye doğru artar. Y (yukarı) = 0.',
+    origin: {lat: lat0, lon: lon0},
+    size: {x: +((maxLon - minLon) * kx).toFixed(1), z: +((maxLat - minLat) * kz).toFixed(1)},
+    roads
+  };
+}
+
+function finish(g, info) {
+  if (!g) { status('Bu alanda yol bulunamadı.'); return; }
+  game = g; draw();
+  $('btnJson').disabled = $('btnObj').disabled = false;
+  status(g.roads.length + ' yol • ' + Math.round(g.size.x) + ' × ' + Math.round(g.size.z) + ' m • ' + info, true);
 }
 
 $('btnScan').onclick = async () => {
   const b = map.getBounds();
   const s = b.getSouth(), w = b.getWest(), n = b.getNorth(), e = b.getEast();
-  const lat0 = (s + n) / 2, lon0 = (w + e) / 2;
-  const kx = 111320 * Math.cos(lat0 * Math.PI / 180), kz = 110540;
-  const areaKm2 = (n - s) * kz * (e - w) * kx / 1e6;
+  const lat0 = (s + n) / 2;
+  const areaKm2 = (n - s) * 110.54 * (e - w) * 111.32 * Math.cos(lat0 * Math.PI / 180);
   if (areaKm2 > 6) { status('Alan çok büyük (' + areaKm2.toFixed(1) + ' km²). Yaklaş ve tekrar dene (en çok 6 km²).'); return; }
 
-  $('btnScan').disabled = true; status('Yollar indiriliyor...');
-  const q = `[out:json][timeout:40];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service)(_link)?$"](${s},${w},${n},${e});out geom;`;
+  const withService = $('chkService').checked;
+  const key = 'ym1:' + [s, w, n, e].map(v => v.toFixed(4)).join(',') + withService;
   try {
-    const j = await fetchOverpass(q);
-    const withService = $('chkService').checked;
-    const roads = [];
-    for (const el of j.elements) {
-      if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) continue;
-      const tags = el.tags || {};
-      const type = tags.highway.replace('_link', '');
-      if (type === 'service' && !withService) continue;
-      const lanes = parseInt(tags.lanes);
-      const width = lanes ? Math.max(lanes * 3.4, 5) : (WIDTH[type] || 6);
-      roads.push({
-        id: el.id,
-        name: tags.name || '',
-        type,
-        width: +width.toFixed(1),
-        oneway: tags.oneway === 'yes',
-        points: el.geometry.map(p => [+((p.lon - lon0) * kx).toFixed(2), +(-(p.lat - lat0) * kz).toFixed(2)])
-      });
-    }
-    if (!roads.length) { status('Bu alanda yol bulunamadı.'); $('btnScan').disabled = false; return; }
-    const sizeX = (e - w) * kx, sizeZ = (n - s) * kz;
-    game = {
-      format: 'yaris-haritasi', version: 1, units: 'meters',
-      note: 'points = [x, z]. x doğuya, z güneye doğru artar. Y (yukarı) = 0.',
-      origin: {lat: lat0, lon: lon0},
-      size: {x: +sizeX.toFixed(1), z: +sizeZ.toFixed(1)},
-      roads
-    };
-    draw(); 
-    $('btnJson').disabled = $('btnObj').disabled = false;
-    status(roads.length + ' yol bulundu • alan ' + Math.round(sizeX) + ' × ' + Math.round(sizeZ) + ' m', true);
+    const hit = localStorage.getItem(key);
+    if (hit) { finish(build(JSON.parse(hit), withService), 'önbellekten (anında)'); return; }
+  } catch (_) {}
+
+  $('btnScan').disabled = true;
+  const t0 = Date.now();
+  const tick = setInterval(() => status('Yollar indiriliyor... ' + Math.round((Date.now() - t0) / 1000) + ' sn (4 sunucu aynı anda deneniyor)'), 500);
+  const types = withService ? 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service'
+                            : 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street';
+  const q = `[out:json][timeout:20];way["highway"~"^(${types})(_link)?$"](${s},${w},${n},${e});out geom qt;`;
+  try {
+    const {j, host} = await raceOverpass(q);
+    try { localStorage.setItem(key, JSON.stringify(j)); } catch (_) {}
+    finish(build(j, withService), ((Date.now() - t0) / 1000).toFixed(1) + ' sn (' + host + ')');
   } catch (err) {
-    status('Tarama başarısız. ' + err.message);
+    status('Tüm sunucular başarısız oldu: ' + err.message + ' — "Dosyadan yükle" ile elle veri verebilirsin.');
   }
+  clearInterval(tick);
   $('btnScan').disabled = false;
+};
+
+// İnternetsiz yedek: Overpass Turbo / Overpass'tan alınmış "out geom" JSON dosyasını yükle
+$('btnImport').onclick = () => $('file').click();
+$('file').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try { finish(build(JSON.parse(await f.text()), $('chkService').checked), 'dosyadan: ' + f.name); }
+  catch (_) { status('Dosya okunamadı. Overpass JSON (out geom) formatı olmalı.'); }
+  ev.target.value = '';
 };
 
 function draw() {
