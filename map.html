@@ -122,6 +122,7 @@ function build(j, withService) {
   for (const el of ways) {
     const tags = el.tags, type = tags.highway.replace('_link', '');
     if (type === 'service' && !withService) continue;
+    if (tags.brunnel === 'tunnel' || tags.tunnel === 'yes') continue;
     const lanes = parseInt(tags.lanes);
     const width = lanes ? Math.max(lanes * 3.4, 5) : (WIDTH[type] || 6);
     roads.push({
@@ -134,7 +135,7 @@ function build(j, withService) {
     let pts = b.ring.map(p => [+((p.lon - lon0) * kx).toFixed(2), +(-(p.lat - lat0) * kz).toFixed(2)])
       .filter((p, i, a) => i === 0 || p[0] !== a[i - 1][0] || p[1] !== a[i - 1][1]);
     if (pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) pts.pop();
-    if (pts.length < 3 || pts.length > 150) continue;
+    if (pts.length < 3 || pts.length > 250) continue;
     let A = 0; for (let i = 0; i < pts.length; i++) { const q = pts[(i + 1) % pts.length]; A += pts[i][0] * q[1] - q[0] * pts[i][1]; }
     if (Math.abs(A) < 4) continue;
     if (A < 0) pts.reverse();
@@ -362,7 +363,7 @@ async function fromOpenFreeMap(s, w, n, e, withService) {
           for (const seg of clipLine(line, 0, 0, L.extent, L.extent)) {
             const m = seg.map(([x, y]) => [(tx + x / L.extent) / N, (ty + y / L.extent) / N]);
             for (const c of clipLine(m, X0, Y0, X1, Y1))
-              ways.push({type: 'way', id: ways.length + tx * 1e6 + ty, tags: {highway: hw, name: pr.name || '', oneway: pr.oneway === 1 ? 'yes' : 'no'},
+              ways.push({type: 'way', id: ways.length + tx * 1e6 + ty, tags: {highway: hw, name: pr.name || '', oneway: pr.oneway === 1 ? 'yes' : 'no', brunnel: pr.brunnel || ''},
                          geometry: c.map(([x, y]) => ({lat: toLat(y), lon: toLon(x)}))});
           }
         }
@@ -389,7 +390,7 @@ async function fromOpenFreeMap(s, w, n, e, withService) {
     } finally { clearTimeout(timer); }
   })());
   const res = await Promise.all(jobs);
-  return {elements: res.flatMap(r => r.ways), buildings: res.flatMap(r => r.bld).slice(0, 4000)};
+  return {elements: res.flatMap(r => r.ways), buildings: res.flatMap(r => r.bld).slice(0, 20000)};
 }
 
 $('btnScan').onclick = async () => {
@@ -402,12 +403,12 @@ $('btnScan').onclick = async () => {
   const withService = $('chkService').checked;
   $('btnScan').disabled = true;
   const t0 = Date.now(), sec = () => ((Date.now() - t0) / 1000).toFixed(1);
-  const tick = setInterval(() => status('Yollar indiriliyor... ' + Math.round(sec()) + ' sn'), 500);
+  let fb = false; const tick = setInterval(() => { if (!fb) status('Yollar indiriliyor... ' + Math.round(sec()) + ' sn'); }, 500);
   try {
     let j, used = 'OpenFreeMap';
     try { j = await fromOpenFreeMap(s, w, n, e, withService); }
     catch (err1) {
-      status('Ana kaynak yanıt vermedi, yedek sunucular deneniyor...');
+      fb = true; status('Ana kaynak yanıt vermedi, yedek sunucular deneniyor...');
       const types = withService ? 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|service'
                                 : 'motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street';
       try { const r = await raceOverpass(`[out:json][timeout:20];way["highway"~"^(${types})(_link)?$"](${s},${w},${n},${e});out geom qt;`); j = r.j; used = r.host; }
@@ -426,7 +427,7 @@ $('btnScan').onclick = async () => {
 $('btnImport').onclick = () => $('file').click();
 $('file').onchange = async ev => {
   const f = ev.target.files[0]; if (!f) return;
-  try { await finish(build(JSON.parse(await f.text()), $('chkService').checked), 'dosyadan: ' + f.name); }
+  try { const j = JSON.parse(await f.text()); await finish(j.format === 'yaris-haritasi' ? Object.assign(j, {buildings: j.buildings || []}) : build(j, $('chkService').checked), 'dosyadan: ' + f.name); }
   catch (_) { status('Dosya okunamadı. Overpass JSON (out geom) formatı olmalı.'); }
   ev.target.value = '';
 };
@@ -565,7 +566,50 @@ function genProps(g) {
 }
 
 // ---------- 3B mesh üretimi ----------
-const COL = {ground: '#5f8450', road: '#3a3c41', trunk: '#6b4a2f', leaf: '#4e9a3b', pine: '#2e6b3c', lamp: '#8d939c', wall: '#cfc8bb', roof: '#8e6f64'};
+const COL = {ground: '#5f8450', road: '#3a3c41', trunk: '#6b4a2f', leaf: '#4e9a3b', pine: '#2e6b3c', lamp: '#8d939c', wall: '#cfc8bb', roof: '#8e6f64', walk: '#a9a69e', mark: '#e9e6dc'};
+const NOWALK = new Set(['motorway', 'trunk', 'service', 'raceway']);
+const TINT = [[.96,.93,.86],[.93,.86,.76],[.88,.80,.70],[.90,.90,.92],[.95,.82,.70],[.80,.82,.78]];
+function facade() {
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = '#f3efe6'; g.fillRect(0, 0, 128, 128);
+  g.fillStyle = '#d9d3c4'; g.fillRect(0, 118, 128, 10);
+  g.fillStyle = '#c7c0b0'; g.fillRect(26, 22, 76, 82);
+  const gr = g.createLinearGradient(0, 28, 0, 98); gr.addColorStop(0, '#6f8499'); gr.addColorStop(1, '#2f3d4c');
+  g.fillStyle = gr; g.fillRect(31, 27, 66, 72);
+  g.fillStyle = '#c7c0b0'; g.fillRect(62, 27, 4, 72); g.fillRect(31, 60, 66, 3);
+  g.fillStyle = '#b3ab99'; g.fillRect(22, 104, 84, 5);
+  return c;
+}
+function quadTo(m, a, b, c, d, s) {
+  const k = m.pos.length / 3; m.pos.push(...a, ...b, ...c, ...d);
+  m.idx.push(...(s > 0 ? [k, k + 1, k + 2, k, k + 2, k + 3] : [k, k + 2, k + 1, k, k + 3, k + 2]));
+}
+// Kaldırım, bordür ve kesikli orta çizgi (kesişen yollarda atlanır)
+function roadDeco(r, P, Y, h, M, onRoad) {
+  const n = P.length, N = [], SW = 2.4;
+  for (let i = 0; i < n; i++) { let nx = 0, nz = 0; for (const [a, b] of [[i - 1, i], [i, i + 1]]) { if (a < 0 || b >= n) continue; const dx = P[b][0] - P[a][0], dz = P[b][1] - P[a][1], l = Math.hypot(dx, dz) || 1; nx += -dz / l; nz += dx / l; } const l = Math.hypot(nx, nz) || 1; N.push([nx / l, nz / l]); }
+  const at = (i, o, s, y) => [P[i][0] + N[i][0] * o * s, y, P[i][1] + N[i][1] * o * s];
+  if (!NOWALK.has(r.type)) for (const s of [1, -1]) for (let i = 0; i < n - 1; i++) {
+    const j = i + 1, o = s * (h + 1);
+    if (onRoad(P[i][0] + N[i][0] * o, P[i][1] + N[i][1] * o, r) || onRoad(P[j][0] + N[j][0] * o, P[j][1] + N[j][1] * o, r) || onRoad((P[i][0] + P[j][0] + (N[i][0] + N[j][0]) * o) / 2, (P[i][1] + P[j][1] + (N[i][1] + N[j][1]) * o) / 2, r)) continue;
+    quadTo(M.walk, at(i, h, s, Y[i] + .15), at(i, h + SW, s, Y[i] + .05), at(j, h + SW, s, Y[j] + .05), at(j, h, s, Y[j] + .15), s);
+    quadTo(M.walk, at(i, h, s, Y[i] + .02), at(i, h, s, Y[i] + .15), at(j, h, s, Y[j] + .15), at(j, h, s, Y[j] + .02), s);
+  }
+  if (r.width >= 5.5 && !r.oneway && r.type !== 'service') {
+    let carry = 0;
+    for (let i = 0; i < n - 1; i++) {
+      const dx = P[i + 1][0] - P[i][0], dz = P[i + 1][1] - P[i][1], L = Math.hypot(dx, dz); if (!L) continue;
+      const ux = dx / L, uz = dz / L; let d = carry;
+      for (; d < L; d += 7) {
+        const e = Math.min(d + 3, L); if (e - d < 1 || onRoad(P[i][0] + ux * (d + e) / 2, P[i][1] + uz * (d + e) / 2, r)) continue;
+        const y0 = Y[i] + (Y[i + 1] - Y[i]) * d / L + .05, y1 = Y[i] + (Y[i + 1] - Y[i]) * e / L + .05, nx = -uz * .08, nz = ux * .08;
+        const sx = P[i][0] + ux * d, sz = P[i][1] + uz * d, ex = P[i][0] + ux * e, ez = P[i][1] + uz * e;
+        quadTo(M.mark, [sx - nx, y0, sz - nz], [sx + nx, y0, sz + nz], [ex + nx, y1, ez + nz], [ex - nx, y1, ez - nz], 1);
+      }
+      carry = d - L;
+    }
+  }
+}
 
 // Dönel gövde: prof = [[yarıçap, y], ...] alttan üste
 function lathe(m, cx, cz, prof, sides, y0 = 0) {
@@ -621,15 +665,16 @@ function computeNormals(m) {
 
 function buildMeshes(g, withProps, withBld) {
   const M = {}; for (const k in COL) M[k] = {pos: [], idx: []};
+  M.wall.uv = []; M.wall.col = [];
   const hx = g.size.x / 2 + 30, hz = g.size.z / 2 + 30, G = M.ground;
   let T = () => 0;
 
   if (g.H) {                                            // yükseklik haritası (arazi)
-    const step = Math.min(12, Math.max(4, Math.max(hx, hz) * 2 / 160));
+    const step = Math.min(8, Math.max(3, Math.max(hx, hz) * 2 / 300));
     const nx = Math.ceil(2 * hx / step) + 1, nz = Math.ceil(2 * hz / step) + 1, dx = 2 * hx / (nx - 1), dz = 2 * hz / (nz - 1);
     const Hn = new Float32Array(nx * nz), best = new Float32Array(nx * nz).fill(1e9), ry = new Float32Array(nx * nz);
     for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) Hn[j * nx + i] = g.H(-hx + i * dx, -hz + j * dz);
-    const flat = Math.max(dx, dz) * 1.5, blend = 10;
+    const flat = Math.max(dx, dz) * 1.2 + 2.4, blend = 8;
     for (const r of g.roads) {                          // araziyi yola göre düzleştir (yol altı kazı/dolgu)
       if (!r.y) continue;
       const hw = r.width / 2, rad = hw + flat + blend;
@@ -648,7 +693,7 @@ function buildMeshes(g, withProps, withBld) {
     }
     for (let k = 0; k < Hn.length; k++) {
       const d = best[k];
-      if (d < flat + blend) { const t = d <= flat ? 0 : (d - flat) / blend, sm = t * t * (3 - 2 * t); Hn[k] = (ry[k] - 0.3) * (1 - sm) + Hn[k] * sm; }
+      if (d < flat + blend) { const t = d <= flat ? 0 : (d - flat) / blend, sm = t * t * (3 - 2 * t); Hn[k] = (ry[k] - 0.06) * (1 - sm) + Hn[k] * sm; }
     }
     T = (x, z) => {
       const fx = Math.min(Math.max((x + hx) / dx, 0), nx - 1.001), fz = Math.min(Math.max((z + hz) / dz, 0), nz - 1.001);
@@ -663,6 +708,20 @@ function buildMeshes(g, withProps, withBld) {
     G.pos.push(-hx, gy, -hz, hx, gy, -hz, hx, gy, hz, -hx, gy, hz); G.idx.push(0, 3, 1, 1, 3, 2);
   }
 
+  const RG = new Map(), RC = 30;
+  for (const r of g.roads) for (let i = 0; i < r.points.length - 1; i++) {
+    const [ax, az] = r.points[i], [bx, bz] = r.points[i + 1];
+    for (let a = Math.floor(Math.min(ax, bx) / RC); a <= Math.floor(Math.max(ax, bx) / RC); a++) for (let b = Math.floor(Math.min(az, bz) / RC); b <= Math.floor(Math.max(az, bz) / RC); b++) { const k = a + ',' + b; (RG.get(k) || RG.set(k, []).get(k)).push([r, ax, az, bx, bz]); }
+  }
+  const onRoad = (x, z, self) => {
+    const c = RG.get(Math.floor(x / RC) + ',' + Math.floor(z / RC)); if (!c) return false;
+    for (const [r, ax, az, bx, bz] of c) {
+      if (r === self) continue;
+      const dx = bx - ax, dz = bz - az, u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1))), px = ax + u * dx - x, pz = az + u * dz - z, rr = r.width / 2 + 0.4;
+      if (px * px + pz * pz < rr * rr) return true;
+    }
+    return false;
+  };
   const R = M.road;                                    // yol şeritleri (araziye oturur)
   for (const r of g.roads) {
     const keep = []; r.points.forEach((p, i) => { if (i === 0 || p[0] !== r.points[i - 1][0] || p[1] !== r.points[i - 1][1]) keep.push(i); });
@@ -680,6 +739,7 @@ function buildMeshes(g, withProps, withBld) {
       R.pos.push(P[i][0] + nx * h, Y[i] + y0, P[i][1] + nz * h, P[i][0] - nx * h, Y[i] + y0, P[i][1] - nz * h);
     }
     for (let i = 0; i < P.length - 1; i++) { const l0 = base + i * 2, r0 = l0 + 1, l1 = l0 + 2, r1 = l0 + 3; R.idx.push(l0, r1, r0, l0, l1, r1); }
+    roadDeco(r, P, Y, h, M, onRoad);
   }
   if (g.H) computeNormals(R);
 
@@ -704,8 +764,15 @@ function buildMeshes(g, withProps, withBld) {
     const P = b.points, n = P.length, W = M.wall, Rf = M.roof;
     const yb = Math.min(...P.map(([x, z]) => T(x, z)));
     let base = W.pos.length / 3;
-    for (const [x, z] of P) W.pos.push(x, yb - 1.5, z, x, yb + b.h, z);
-    for (let i = 0; i < n; i++) { const j = (i + 1) % n, b0 = base + i * 2, t0 = b0 + 1, b1 = base + j * 2, t1 = b1 + 1; W.idx.push(b0, t0, b1, b1, t0, t1); }
+    const tc = TINT[Math.floor((Math.abs(Math.sin(P[0][0] * 12.9898 + P[0][1] * 78.233) * 43758.5453) % 1) * TINT.length)]; let uo = 0;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, [x0, z0] = P[i], [x1, z1] = P[j], nb = Math.max(1, Math.round(Math.hypot(x1 - x0, z1 - z0) / 3.5)), k = W.pos.length / 3;
+      W.pos.push(x0, yb - 1.5, z0, x0, yb + b.h, z0, x1, yb - 1.5, z1, x1, yb + b.h, z1);
+      W.uv.push(uo, 1.5 / 3.2, uo, -b.h / 3.2, uo + nb, 1.5 / 3.2, uo + nb, -b.h / 3.2);
+      for (let q = 0; q < 4; q++) W.col.push(...tc);
+      W.idx.push(k, k + 1, k + 2, k + 2, k + 1, k + 3); uo += nb;
+    }
+    
     base = Rf.pos.length / 3;
     for (const [x, z] of P) Rf.pos.push(x, yb + b.h, z);
     for (const [a, c, d] of earclip(P)) Rf.idx.push(base + a, base + d, base + c);
@@ -733,7 +800,9 @@ function hexLin(h) {
 
 function makeGLB(M) {
   const bufs = [], views = [], acc = [], prims = [], mats = []; let off = 0;
-  const addView = (arr, target) => { views.push({buffer: 0, byteOffset: off, byteLength: arr.byteLength, target}); bufs.push(arr); off += arr.byteLength; return views.length - 1; };
+  const addView = (arr, target, len) => { views.push({buffer: 0, byteOffset: off, byteLength: len ?? arr.byteLength, target}); bufs.push(arr); off += arr.byteLength; return views.length - 1; };
+  let tex = null;
+  if (M.wall && M.wall.idx.length) { const bin = atob(facade().toDataURL('image/png').split(',')[1]), pad = new Uint8Array(Math.ceil(bin.length / 4) * 4); for (let i = 0; i < bin.length; i++) pad[i] = bin.charCodeAt(i); tex = addView(pad, undefined, bin.length); }
   for (const k in M) {
     const m = M[k]; if (!m.idx.length) continue;
     const pos = new Float32Array(m.pos), idx = new Uint32Array(m.idx);
@@ -742,13 +811,18 @@ function makeGLB(M) {
     const attrs = {};
     acc.push({bufferView: addView(pos, 34962), componentType: 5126, count: pos.length / 3, type: 'VEC3', min: mn, max: mx}); attrs.POSITION = acc.length - 1;
     if (m.nrm) { acc.push({bufferView: addView(m.nrm, 34962), componentType: 5126, count: pos.length / 3, type: 'VEC3'}); attrs.NORMAL = acc.length - 1; }
+    if (m.uv) {
+      acc.push({bufferView: addView(new Float32Array(m.uv), 34962), componentType: 5126, count: m.uv.length / 2, type: 'VEC2'}); attrs.TEXCOORD_0 = acc.length - 1;
+      acc.push({bufferView: addView(new Float32Array(m.col), 34962), componentType: 5126, count: m.col.length / 3, type: 'VEC3'}); attrs.COLOR_0 = acc.length - 1;
+    }
     acc.push({bufferView: addView(idx, 34963), componentType: 5125, count: idx.length, type: 'SCALAR'});
-    const [r, gg, b] = hexLin(COL[k]);
-    mats.push({name: k, pbrMetallicRoughness: {baseColorFactor: [r, gg, b, 1], metallicFactor: 0, roughnessFactor: 0.9}});
+    const [r, gg, b] = m.uv ? [1, 1, 1] : hexLin(COL[k]);
+    mats.push({name: k, pbrMetallicRoughness: {baseColorFactor: [r, gg, b, 1], metallicFactor: 0, roughnessFactor: 0.9, ...(m.uv ? {baseColorTexture: {index: 0}} : {})}});
     prims.push({attributes: attrs, indices: acc.length - 1, material: mats.length - 1});
   }
   const json = {asset: {version: '2.0', generator: 'yaris-haritasi'}, scene: 0, scenes: [{nodes: [0]}], nodes: [{mesh: 0, name: 'yaris_haritasi'}],
     meshes: [{primitives: prims}], materials: mats, accessors: acc, bufferViews: views, buffers: [{byteLength: off}]};
+  if (tex !== null) Object.assign(json, {images: [{bufferView: tex, mimeType: 'image/png'}], samplers: [{magFilter: 9729, minFilter: 9987, wrapS: 10497, wrapT: 10497}], textures: [{sampler: 0, source: 0}]});
   const js = new TextEncoder().encode(JSON.stringify(json)), jl = Math.ceil(js.length / 4) * 4;
   const total = 12 + 8 + jl + 8 + off, out = new Uint8Array(total), dv = new DataView(out.buffer);
   dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);
@@ -758,7 +832,8 @@ function makeGLB(M) {
   return out;
 }
 
-const meshes = () => buildMeshes(game, $('chkProps').checked, $('chkBld').checked);
+let mcK = null, mcG = null, mcM = null;
+const meshes = () => { const k = $('chkProps').checked + ',' + $('chkBld').checked; if (mcG === game && mcK === k) return mcM; mcG = game; mcK = k; return mcM = buildMeshes(game, $('chkProps').checked, $('chkBld').checked); };
 $('btnGlb').onclick = () => download('yaris-haritasi.glb', makeGLB(meshes()), 'application/octet-stream');
 $('btnObj').onclick = () => download('yaris-haritasi.obj', makeObj(meshes()), 'application/octet-stream');
 $('btnJson').onclick = () => {
