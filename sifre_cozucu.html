@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiz Ses Şifre Çözücü</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: #f4f6f8;
+    color: #222;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  h1 { margin-top: 0; font-size: 22px; color: #1a3c5a; }
+  .notice {
+    background: #eef6fb;
+    border-left: 4px solid #3b82f6;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 14px;
+    color: #1f3a5f;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 18px 0;
+  }
+  button {
+    padding: 10px 18px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-baslat { background: #10b981; color: #fff; }
+  .btn-baslat:hover:not(:disabled) { background: #059669; }
+  .btn-durdur { background: #ef4444; color: #fff; }
+  .btn-durdur:hover:not(:disabled) { background: #dc2626; }
+  .btn-temizle { background: #6b7280; color: #fff; }
+  .btn-temizle:hover:not(:disabled) { background: #4b5563; }
+  .status {
+    margin: 10px 0;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #374151;
+  }
+  .status.running { background: #dcfce7; color: #166534; }
+  .status.stopped { background: #fee2e2; color: #991b1b; }
+  .readout {
+    display: flex;
+    gap: 20px;
+    margin: 16px 0;
+    font-size: 15px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+  .readout div {
+    padding: 10px 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    flex: 1;
+  }
+  .readout strong { color: #111827; display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  textarea#sonuc {
+    width: 100%;
+    height: 220px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 15px;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    resize: vertical;
+    outline: none;
+  }
+  textarea#sonuc:focus { border-color: #3b82f6; }
+  .footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 12px;
+  }
+  .warning {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-top: 16px;
+    border: 1px solid #f59e0b;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🔊 Tiz Ses Şifre Çözücü</h1>
+
+  <div class="notice">
+    <strong>Nasıl çalışır?</strong><br>
+    Bu sayfa mikrofon üzerinden gelen sesi analiz eder ve <strong>200 Hz – 12.000 Hz</strong> arasındaki dominant frekansı tekrar metne dönüştürür.<br>
+    <em>Not: Mikrofon izni gerektirir. Çalıştırmak için https:// veya localhost adresinden açman gerekebilir.</em>
+  </div>
+
+  <div class="controls">
+    <button id="btnBaslat" class="btn-baslat" onclick="baslat()">Mikrofonu Başlat</button>
+    <button id="btnDurdur" class="btn-durdur" disabled onclick="durdur()">Durdur</button>
+    <button id="btnTemizle" class="btn-temizle" onclick="temizle()">Temizle</button>
+  </div>
+
+  <div id="durum" class="status stopped">Hazır — Mikrofon kapalı</div>
+
+  <div class="readout">
+    <div><strong>Canlı Frekans</strong><span id="guncelFrekans">- Hz</span></div>
+    <div><strong>Tahmin Edilen Karakter</strong><span id="guncelKarakter">-</span></div>
+  </div>
+
+  <textarea id="sonuc" readonly placeholder="Çözülen metin burada görünecek..."></textarea>
+
+  <div class="warning">
+    ⚠️ Bu çözücü, <code>metin_tiz_ses.py</code> ile üretilen sesleri en iyi şekilde çözer. Orthogonal/kafes sesler, çok gürültülü ortam veya farklı frekans aralığı kullanılmışsa sonuçlar hassasiyet kaybı gösterebilir.
+  </div>
+
+  <div class="footer">
+    Geliştirilmiş demo — Web Audio API + AnalyserNode (FFT) ile gerçek zamanlı spektrum analizi.
+  </div>
+</div>
+
+<script>
+  // Sabitler (metin_tiz_ses.py ile aynı olmalı)
+  const MIN_FREKANS = 200;      // Hz
+  const MAX_FREKANS = 12000;    // Hz
+  const ASCII_MIN = 32;         // boşluk
+  const ASCII_MAX = 126;        // ~
+  const ASCII_RANGE = ASCII_MAX - ASCII_MIN; // 94
+  const FREKANS_RANGE = MAX_FREKANS - MIN_FREKANS; // 11800
+
+  // Durum
+  let audioContext = null;
+  let analyser = null;
+  let source = null;
+  let animationId = null;
+  let isRunning = false;
+
+  // Metin akışı kontrolü
+  let sonEklenenKarakter = '';
+  let sonEklemeZamani = 0;
+  const MIN_KARAKTER_ARALIGI_MS = 180; // Aynı karakterin tekrarını engellemek için
+
+  const btnBaslat = document.getElementById('btnBaslat');
+  const btnDurdur = document.getElementById('btnDurdur');
+  const btnTemizle = document.getElementById('btnTemizle');
+  const durumEl = document.getElementById('durum');
+  const frekansEl = document.getElementById('guncelFrekans');
+  const karakterEl = document.getElementById('guncelKarakter');
+  const sonucEl = document.getElementById('sonuc');
+
+  // Frekans -> Karakter dönüşümü (Python'daki ters işlem)
+  function frekansaKarakterCevir(frekans) {
+    // Sınırları sabit tut
+    const f = Math.min(Math.max(frekans, MIN_FREKANS), MAX_FREKANS);
+    const oran = (f - MIN_FREKANS) / FREKANS_RANGE;
+    const kod = Math.round(ASCII_MIN + oran * ASCII_RANGE);
+    const clamped = Math.min(ASCII_MAX, Math.max(ASCII_MIN, kod));
+    return String.fromCharCode(clamped);
+  }
+
+  function metneEkle(char) {
+    const simdi = Date.now();
+    // Aynı karakterin sürekli basılmasını engelle (fiziksel tuş basımı gibi davranış)
+    if (char === sonEklenenKarakter && simdi - sonEklemeZamani < MIN_KARAKTER_ARALIGI_MS) {
+      return;
+    }
+    sonucEl.value += char;
+    sonucEl.scrollTop = sonucEl.scrollHeight;
+    sonEklenenKarakter = char;
+    sonEklemeZamani = simdi;
+  }
+
+  function guncelleUI(frekans, karakter, varMi) {
+    if (varMi) {
+      frekansEl.textContent = frekans.toFixed(0) + ' Hz';
+      karakterEl.textContent = karakter === ' ' ? "'(boşluk)'" : `"${karakter}"`;
+    } else {
+      frekansEl.textContent = '- Hz';
+      karakterEl.textContent = '-';
+    }
+  }
+
+  async function baslat() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      source = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048; // frequencyBinCount = 1024
+      source.connect(analyser);
+
+      isRunning = true;
+      btnBaslat.disabled = true;
+      btnDurdur.disabled = false;
+      durumEl.className = 'status running';
+      durumEl.textContent = 'Çalışıyor — Mikrofon dinleniyor...';
+
+      analizDongusu();
+    } catch (err) {
+      console.error(err);
+      alert('Mikrofon erişimi alınamadı: ' + err.message);
+    }
+  }
+
+  function durdur() {
+    isRunning = false;
+    if (animationId) cancelAnimationFrame(animationId);
+    if (audioContext) {
+      try { audioContext.close(); } catch (e) {}
+    }
+    btnBaslat.disabled = false;
+    btnDurdur.disabled = true;
+    durumEl.className = 'status stopped';
+    durumEl.textContent = 'Durduruldu';
+    guncelleUI(0, '-', false);
+  }
+
+  function temizle() {
+    sonucEl.value = '';
+    sonEklenenKarakter = '';
+    sonEklemeZamani = 0;
+    guncelleUI(0, '-', false);
+  }
+
+  function analizDongusu() {
+    if (!isRunning) return;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteFrequencyData(dataArray);
+
+    const sampleRate = audioContext.sampleRate;
+    const freqStep = sampleRate / analyser.fftSize;
+
+    let maxMag = 0;
+    let maxFreq = 0;
+
+    // Sadece duyulabilir aralıkta (200-12000 Hz) en güçlü frekansı ara
+    for (let i = 0; i < bufferLength; i++) {
+      const freq = i * freqStep;
+      if (freq >= MIN_FREKANS && freq <= MAX_FREKANS) {
+        if (dataArray[i] > maxMag) {
+          maxMag = dataArray[i];
+          maxFreq = freq;
+        }
+      }
+    }
+
+    // Eşik: çok düşük seviyeli sesleri yoksay (ortam gürültüsü)
+    const ESIGE = 35;
+
+    if (maxMag > ESIGE) {
+      const karakter = frekansaKarakterCevir(maxFreq);
+      metneEkle(karakter);
+      guncelleUI(maxFreq, karakter, true);
+    } else {
+      guncelleUI(0, '-', false);
+    }
+
+    animationId = requestAnimationFrame(analizDongusu);
+  }
+
+  // Sayfa kapatılırken temizle
+  window.addEventListener('beforeunload', durdur);
+</script>
+
+</body>
+</html>
