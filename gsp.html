@@ -3,135 +3,152 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>İzsür – Fotoğraftan Konum Tahmini</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>İzsür – Derin Konum Analizi</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
   --paper:#EEF1F4; --panel:#FFFFFF; --ink:#14202B; --muted:#5B6B78; --line:#D3DBE2;
-  --teal:#1F6F78; --teal-d:#154E55; --pin:#D6336C; --warn:#B26A00;
+  --teal:#1F6F78; --teal-d:#154E55; --pin:#D6336C; --warn:#B26A00; --ok:#1E7B45;
   --head:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
   --body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--body);
-  background-image:
-   radial-gradient(circle at 20% 10%, rgba(31,111,120,.07) 0 1px, transparent 1px);
-  background-size:22px 22px}
-header{padding:28px 20px 8px;max-width:1200px;margin:0 auto}
+  background-image:radial-gradient(circle at 20% 10%, rgba(31,111,120,.07) 0 1px, transparent 1px);background-size:22px 22px}
+header{padding:28px 20px 8px;max-width:1240px;margin:0 auto}
 h1{font:800 clamp(34px,6vw,58px)/1 var(--head);margin:0;letter-spacing:-.03em}
-header p{margin:8px 0 0;color:var(--muted);max-width:60ch}
-main{max-width:1200px;margin:0 auto;padding:16px 20px 60px;display:grid;gap:20px;
-  grid-template-columns:minmax(300px,420px) 1fr;align-items:start}
-@media(max-width:860px){main{grid-template-columns:1fr}}
+header p{margin:8px 0 0;color:var(--muted);max-width:68ch}
+main{max-width:1240px;margin:0 auto;padding:16px 20px 60px;display:grid;gap:20px;
+  grid-template-columns:minmax(300px,430px) 1fr;align-items:start}
+@media(max-width:880px){main{grid-template-columns:1fr}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
 h2{font:700 18px/1.2 var(--head);margin:0 0 12px}
-.drop{border:2px dashed var(--teal);border-radius:10px;min-height:190px;display:grid;place-items:center;
-  text-align:center;padding:16px;cursor:pointer;color:var(--teal-d);background:#F5FAFA;transition:background .15s}
+h3.sub{font:700 16px var(--head);margin:22px 0 8px}
+.drop{border:2px dashed var(--teal);border-radius:10px;min-height:170px;display:grid;place-items:center;
+  text-align:center;padding:14px;cursor:pointer;color:var(--teal-d);background:#F5FAFA}
 .drop.over{background:#DDF0F1}
-.drop img{max-width:100%;max-height:300px;border-radius:6px;display:block}
-.drop small{color:var(--muted)}
+.drop img{max-width:100%;max-height:280px;border-radius:6px;display:block}
+.drop small,.muted{color:var(--muted)}
 label{display:block;font-weight:600;margin:14px 0 5px;font-size:14px}
-input[type=text],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;
-  font:inherit;background:#fff;color:var(--ink)}
+label.chk{display:flex;gap:8px;align-items:center;font-weight:500;margin:6px 0}
+input[type=text],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:var(--ink)}
 textarea{resize:vertical;min-height:62px}
 :focus-visible{outline:3px solid var(--pin);outline-offset:2px}
-.row{display:flex;gap:8px}
-.row>*{flex:1}
+.row{display:flex;gap:8px}.row>*{flex:1}
 button{font:600 15px var(--body);border:0;border-radius:6px;padding:11px 16px;cursor:pointer}
 .primary{background:var(--teal);color:#fff;width:100%;margin-top:16px}
-.primary:hover{background:var(--teal-d)}
-.primary:disabled{opacity:.55;cursor:wait}
+.primary:hover{background:var(--teal-d)}.primary:disabled{opacity:.55;cursor:wait}
 .ghost{background:transparent;border:1px solid var(--line);color:var(--ink);padding:7px 11px;font-size:13px}
 .ghost:hover{border-color:var(--teal);color:var(--teal-d)}
-#map{height:380px;border-radius:10px;border:1px solid var(--line);background:#DCE4EA}
+#map{height:420px;border-radius:10px;border:1px solid var(--line);background:#DCE4EA}
 .stack{display:grid;gap:20px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.steps li{display:flex;gap:10px;align-items:baseline;font-size:14px}
+.steps .ic{width:18px;text-align:center;font-weight:700}
+.st-run .ic{color:var(--warn)}.st-ok .ic{color:var(--ok)}.st-fail .ic{color:#B3261E}.st-wait{color:var(--muted)}
 .place{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .flag{font-size:46px;line-height:1}
 .place h3{font:800 clamp(24px,4vw,34px)/1.1 var(--head);margin:0}
 .place p{margin:2px 0 0;color:var(--muted)}
 .bar{height:10px;background:#E3E9EE;border-radius:99px;overflow:hidden;margin:14px 0 4px}
-.bar span{display:block;height:100%;background:var(--teal);width:0;transition:width .6s}
+.bar span{display:block;height:100%;background:var(--teal);transition:width .6s}
 .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
-.meta div{background:var(--paper);border-radius:6px;padding:9px 11px}
+.meta div{background:var(--paper);border-radius:6px;padding:9px 11px;overflow-wrap:anywhere}
 .meta b{display:block;font-size:12px;color:var(--muted);font-weight:500}
-.clue{padding:10px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:130px 1fr;gap:10px}
-.clue:first-child{border-top:0}
-.clue strong{font-family:var(--head)}
+.check{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.check:first-of-type{border-top:0}
+.check i{font-style:normal;font-weight:700;width:18px}
+.check.ok i{color:var(--ok)}.check.bad i{color:var(--warn)}
+.clue{padding:10px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:140px 1fr;gap:10px}
+.clue:first-child{border-top:0}.clue strong{font-family:var(--head)}
 .clue em{font-style:normal;color:var(--muted);font-size:13px}
 @media(max-width:520px){.clue{grid-template-columns:1fr;gap:2px}}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:500;border-top:0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+details{border-top:1px solid var(--line);padding:8px 0}
+details summary{cursor:pointer;font-weight:600}
+details ul{margin:8px 0 0;padding-left:18px}
+details li{margin:4px 0}
+details li em{color:var(--muted);font-style:normal}
 .alts{display:grid;gap:8px}
-.alt{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;width:100%;
-  background:var(--paper);border:1px solid var(--line);color:var(--ink);padding:10px 12px}
+.alt{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);color:var(--ink);padding:10px 12px}
 .alt:hover{border-color:var(--teal)}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.actions a{text-decoration:none;border-radius:6px}
 .err{background:#FDECEC;border:1px solid #E5A5A5;color:#8A1C1C;border-radius:8px;padding:12px}
 .note{font-size:13px;color:var(--muted);border-left:3px solid var(--warn);padding-left:10px;margin-top:14px}
+.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:#DDF0F1;color:var(--teal-d);margin:0 4px 4px 0}
 .hist{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
 .hist button{padding:0;background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden;text-align:left}
 .hist img{width:100%;height:76px;object-fit:cover;display:block}
 .hist span{display:block;padding:5px 8px;font-size:12px;line-height:1.3}
 .hidden{display:none!important}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;
-  animation:sp .8s linear infinite;vertical-align:-2px;margin-right:8px}
-@keyframes sp{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){.spin{animation:none}.bar span{transition:none}}
+.models{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.exifpin{background:#2457C5;border:2px solid #fff;width:14px;height:14px;border-radius:3px}
+@media(prefers-reduced-motion:reduce){.bar span{transition:none}}
 </style>
 </head>
 <body>
 <header>
   <h1>İzsür</h1>
-  <p>Bir fotoğraf yükle; mimari, bitki örtüsü, tabelalar, yol işaretleri ve ışık gibi ipuçlarından çekildiği yeri tahmin etsin. API anahtarı gerekmez, yapay zekâ puter.js üzerinden çalışır.</p>
+  <p>Fotoğraf; EXIF verisi, yakın plan kırpmalar, metin okuma (OCR), birden çok yapay zekâ modeli, hakem değerlendirmesi ve harita doğrulamasıyla çok aşamalı taranır. API anahtarı gerekmez, yapay zekâ puter.js ile çalışır.</p>
 </header>
 
 <main>
-  <section class="card" aria-labelledby="h-up">
-    <h2 id="h-up">Fotoğraf</h2>
+  <section class="card">
+    <h2>Fotoğraf</h2>
     <div class="drop" id="drop" tabindex="0" role="button" aria-label="Fotoğraf seç veya sürükle">
-      <div id="dropInner">
-        <strong>Fotoğrafı buraya sürükle</strong><br>
-        <small>tıkla, yapıştır (Ctrl+V) ya da aşağıya bağlantı gir</small>
-      </div>
+      <div id="dropInner"><strong>Fotoğrafı buraya sürükle</strong><br><small>tıkla, yapıştır (Ctrl+V) ya da bağlantı gir</small></div>
     </div>
     <input type="file" id="file" accept="image/*" class="hidden">
+    <div id="exifBadges" style="margin-top:8px"></div>
 
     <label for="url">Görsel bağlantısı (isteğe bağlı)</label>
-    <div class="row">
-      <input type="text" id="url" placeholder="https://…/foto.jpg">
-      <button class="ghost" id="loadUrl" style="flex:0 0 auto">Yükle</button>
+    <div class="row"><input type="text" id="url" placeholder="https://…/foto.jpg"><button class="ghost" id="loadUrl" style="flex:0 0 auto">Yükle</button></div>
+
+    <label for="depth">Tarama derinliği</label>
+    <select id="depth">
+      <option value="fast">Hızlı: tek model, tek geçiş</option>
+      <option value="deep" selected>Detaylı: kırpmalar + OCR + çoklu model + hakem</option>
+      <option value="max">Maksimum: 3×3 kırpma + tüm modeller + hakem</option>
+    </select>
+
+    <label>Karşılaştırılacak modeller</label>
+    <div class="models">
+      <label class="chk"><input type="checkbox" class="mdl" value="gpt-4o" checked> GPT-4o</label>
+      <label class="chk"><input type="checkbox" class="mdl" value="claude-sonnet-4" checked> Claude Sonnet 4</label>
+      <label class="chk"><input type="checkbox" class="mdl" value="gemini-2.0-flash"> Gemini 2.0 Flash</label>
+      <label class="chk"><input type="checkbox" class="mdl" value="gpt-5-nano"> GPT-5 nano</label>
     </div>
 
-    <label for="model">Yapay zekâ modeli</label>
-    <select id="model">
-      <option value="gpt-4o">GPT-4o (dengeli)</option>
-      <option value="gpt-5-nano">GPT-5 nano (hızlı)</option>
-      <option value="claude-sonnet-4">Claude Sonnet 4 (ayrıntılı)</option>
-      <option value="gemini-2.0-flash">Gemini 2.0 Flash (hızlı)</option>
+    <label for="judge">Hakem ve kanıt çıkarma modeli</label>
+    <select id="judge">
+      <option value="gpt-4o">GPT-4o</option>
+      <option value="claude-sonnet-4">Claude Sonnet 4</option>
+      <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
     </select>
 
     <label for="hint">Ek bağlam (isteğe bağlı)</label>
     <textarea id="hint" placeholder="Örn: Avrupa'da bir tatilde çekildi, Mayıs ayı"></textarea>
 
-    <label><input type="checkbox" id="alts" checked> Alternatif konumları da listele</label>
+    <label class="chk"><input type="checkbox" id="alts" checked> Alternatif konumları da listele</label>
+    <label class="chk"><input type="checkbox" id="geo" checked> Koordinatları harita verisiyle doğrula (OpenStreetMap)</label>
 
-    <button class="primary" id="go" disabled>Konumu tahmin et</button>
-    <p class="note">Tahminler olasılıksal ve yanlış olabilir. Başkasının özel fotoğrafını izni olmadan konumlandırmak için kullanma.</p>
+    <button class="primary" id="go" disabled>Derin taramayı başlat</button>
+    <p class="note">Tahminler olasılıksaldır ve yanlış olabilir. Başkasının özel fotoğrafını izni olmadan konumlandırmak için kullanma. Doğrulama adımı yalnızca koordinatları OpenStreetMap'e gönderir, fotoğrafı göndermez.</p>
   </section>
 
   <section class="stack">
     <div id="map" aria-label="Harita"></div>
-
-    <div class="card" id="result">
-      <h2>Sonuç</h2>
-      <p style="margin:0;color:var(--muted)">Henüz analiz yok. Bir fotoğraf seçip tahmini başlat.</p>
-    </div>
-
+    <div class="card hidden" id="progress"><h2>İlerleme</h2><ul class="steps" id="steps"></ul></div>
+    <div class="card" id="result"><h2>Sonuç</h2><p class="muted" style="margin:0">Henüz analiz yok. Bir fotoğraf seçip taramayı başlat.</p></div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h2 style="margin:0">Geçmiş</h2>
-        <button class="ghost" id="clear">Temizle</button>
+        <h2 style="margin:0">Geçmiş</h2><button class="ghost" id="clear">Temizle</button>
       </div>
       <div class="hist" id="hist"></div>
     </div>
@@ -142,213 +159,484 @@ button{font:600 15px var(--body);border:0;border-radius:6px;padding:11px 16px;cu
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-let imageSrc = null;      // modele gönderilecek kaynak (data URL ya da bağlantı)
-let thumb = null;
-let last = null;
-const HKEY = 'izsur_history_v1';
+const HKEY = 'izsur_history_v2';
+const COLORS = ['#D6336C','#2457C5','#E08A00','#7A3FB8','#1E7B45'];
+const S = {orig:null, full:null, thumb:null, exif:null, remoteOnly:false};
 
-/* ---------- Harita ---------- */
-const map = L.map('map', {worldCopyJump:true}).setView([30, 20], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 18, attribution: '&copy; OpenStreetMap'
-}).addTo(map);
-let layer = L.layerGroup().addTo(map);
-
-function drawOnMap(r){
-  layer.clearLayers();
-  const pts = [];
-  if (isNum(r.latitude) && isNum(r.longitude)) {
-    const p = [r.latitude, r.longitude]; pts.push(p);
-    L.circleMarker(p, {radius:9, color:'#fff', weight:2, fillColor:'#D6336C', fillOpacity:1}).addTo(layer)
-      .bindPopup(esc(label(r)));
-    if (isNum(r.radius_km) && r.radius_km > 0)
-      L.circle(p, {radius:r.radius_km*1000, color:'#1F6F78', weight:1.5, fillOpacity:.12}).addTo(layer);
-  }
-  (r.alternatives||[]).forEach(a=>{
-    if (isNum(a.latitude) && isNum(a.longitude)) {
-      pts.push([a.latitude,a.longitude]);
-      L.circleMarker([a.latitude,a.longitude],{radius:6,color:'#1F6F78',weight:2,fillColor:'#fff',fillOpacity:1})
-        .addTo(layer).bindPopup(esc(a.place||'Alternatif'));
-    }
+/* ================= Yardımcılar ================= */
+const isNum = n => typeof n === 'number' && isFinite(n);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const errMsg = e => e?.message || e?.error?.message || (typeof e==='string'?e:JSON.stringify(e)) || 'Bilinmeyen hata';
+function flag(cc){ if(!cc||cc.length!==2) return '🌍'; return String.fromCodePoint(...cc.toUpperCase().split('').map(c=>127397+c.charCodeAt(0))); }
+function haversine(a,b){
+  const R=6371, t=x=>x*Math.PI/180;
+  const dLat=t(b[0]-a[0]), dLon=t(b[1]-a[1]);
+  const h=Math.sin(dLat/2)**2+Math.cos(t(a[0]))*Math.cos(t(b[0]))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function fmtKm(k){ return k<1?'<1 km':k<100?k.toFixed(1)+' km':Math.round(k).toLocaleString('tr')+' km'; }
+function resize(src,max,q){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};
+    img.onerror=()=>rej(new Error('Görsel okunamadı'));img.src=src;
   });
-  if (pts.length > 1) map.fitBounds(pts, {padding:[40,40], maxZoom:12});
-  else if (pts.length) map.setView(pts[0], r.radius_km > 200 ? 5 : r.radius_km > 30 ? 8 : 11);
 }
-
-/* ---------- Yardımcılar ---------- */
-function isNum(n){ return typeof n === 'number' && isFinite(n); }
-function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function label(r){ return [r.neighborhood, r.city, r.region, r.country].filter(Boolean).join(', ') || 'Bilinmiyor'; }
-function flag(cc){
-  if (!cc || cc.length !== 2) return '🌍';
-  return String.fromCodePoint(...cc.toUpperCase().split('').map(c=>127397+c.charCodeAt(0)));
-}
-function resize(src, max, q){
-  return new Promise((res, rej)=>{
-    const img = new Image();
-    img.onload = ()=>{
-      const k = Math.min(1, max/Math.max(img.width,img.height));
-      const c = document.createElement('canvas');
-      c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-      res(c.toDataURL('image/jpeg', q));
+function makeCrops(src,n,out){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const W=img.width,H=img.height,list=[];
+      const cut=(x,y,w,h)=>{const k=Math.min(1,out/Math.max(w,h));const c=document.createElement('canvas');
+        c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(img,x,y,w,h,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.85);};
+      const cw=W/n,ch=H/n,ov=.1;
+      for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+        const x=Math.max(0,i*cw-cw*ov),y=Math.max(0,j*ch-ch*ov);
+        list.push(cut(x,y,Math.min(W-x,cw*(1+2*ov)),Math.min(H-y,ch*(1+2*ov))));
+      }
+      list.push(cut(W*.25,H*.25,W*.5,H*.5));
+      res(list);
     };
-    img.onerror = ()=>rej(new Error('Görsel okunamadı'));
-    img.src = src;
+    img.onerror=()=>rej(new Error('Görsel işlenemedi'));img.src=src;
   });
 }
 
-/* ---------- Görsel yükleme ---------- */
-function showPreview(src){
-  $('dropInner').innerHTML = '<img alt="Seçilen fotoğraf" src="'+src+'">';
-  $('go').disabled = false;
+/* ================= EXIF ================= */
+function parseExif(buf){
+  try{
+    const v=new DataView(buf);
+    if(v.getUint16(0)!==0xFFD8) return null;
+    let o=2;
+    while(o<v.byteLength-4){
+      const m=v.getUint16(o),len=v.getUint16(o+2);
+      if(m===0xFFE1&&v.getUint32(o+4)===0x45786966) return readTiff(v,o+10);
+      if((m&0xFF00)!==0xFF00) break;
+      o+=2+len;
+    }
+  }catch(e){}
+  return null;
+}
+function readTiff(v,s){
+  const le=v.getUint16(s)===0x4949;
+  const u16=o=>v.getUint16(o,le),u32=o=>v.getUint32(o,le);
+  const tsz={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};
+  const readIFD=off=>{
+    const tags={},n=u16(s+off);
+    for(let i=0;i<n;i++){
+      const e=s+off+2+i*12,tag=u16(e),type=u16(e+2),cnt=u32(e+4);
+      const size=(tsz[type]||1)*cnt,vo=size>4?s+u32(e+8):e+8;
+      if(type===2){let t='';for(let k=0;k<cnt-1;k++)t+=String.fromCharCode(v.getUint8(vo+k));tags[tag]=t.trim();}
+      else if(type===5){const a=[];for(let k=0;k<cnt;k++){const d=u32(vo+k*8+4);a.push(d?u32(vo+k*8)/d:0);}tags[tag]=a;}
+      else if(type===3) tags[tag]=u16(vo);
+      else if(type===4) tags[tag]=u32(vo);
+    }
+    return tags;
+  };
+  const out={};
+  const ifd0=readIFD(u32(s+4));
+  out.make=ifd0[0x010F];out.model=ifd0[0x0110];out.software=ifd0[0x0131];
+  if(ifd0[0x8769]){const ex=readIFD(ifd0[0x8769]);out.date=ex[0x9003]||ex[0x9004];}
+  if(ifd0[0x8825]){
+    const g=readIFD(ifd0[0x8825]);
+    const dms=a=>a&&a.length>=3?a[0]+a[1]/60+a[2]/3600:null;
+    let lat=dms(g[2]),lon=dms(g[4]);
+    if(isNum(lat)&&isNum(lon)){
+      if(g[1]==='S')lat=-lat;if(g[3]==='W')lon=-lon;
+      out.lat=lat;out.lon=lon;
+      if(g[6]) out.alt=g[6][0]*(g[5]===1?-1:1);
+    }
+  }
+  return Object.keys(out).length?out:null;
+}
+function exifBadges(){
+  const e=S.exif,box=$('exifBadges');
+  if(!e){box.innerHTML='<span class="badge" style="background:#EEF1F4;color:#5B6B78">EXIF verisi yok</span>';return;}
+  const b=[];
+  if(isNum(e.lat))b.push('GPS konumu var');
+  if(e.make||e.model)b.push([e.make,e.model].filter(Boolean).join(' '));
+  if(e.date)b.push(e.date);
+  box.innerHTML=b.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')||'<span class="badge">EXIF var, konum yok</span>';
+}
+
+/* ================= Harita ================= */
+const map=L.map('map',{worldCopyJump:true}).setView([30,20],2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(map);
+const layer=L.layerGroup().addTo(map);
+function drawOnMap(R){
+  layer.clearLayers();
+  const pts=[],f=R.final;
+  (R.models||[]).forEach((m,i)=>{
+    const d=m.data; if(!isNum(d.latitude)||!isNum(d.longitude))return;
+    pts.push([d.latitude,d.longitude]);
+    L.circleMarker([d.latitude,d.longitude],{radius:7,color:'#fff',weight:2,fillColor:COLORS[(i+1)%COLORS.length],fillOpacity:.95})
+      .addTo(layer).bindTooltip(esc(m.model+': '+(d.city||d.country||'')));
+  });
+  (f.alternatives||[]).forEach(a=>{
+    if(isNum(a.latitude)&&isNum(a.longitude)){pts.push([a.latitude,a.longitude]);
+      L.circleMarker([a.latitude,a.longitude],{radius:5,color:'#1F6F78',weight:2,fillColor:'#fff',fillOpacity:1}).addTo(layer).bindTooltip(esc('Alternatif: '+(a.place||'')));}
+  });
+  if(R.exif&&isNum(R.exif.lat)){
+    pts.push([R.exif.lat,R.exif.lon]);
+    L.marker([R.exif.lat,R.exif.lon],{icon:L.divIcon({className:'',html:'<div class="exifpin"></div>',iconSize:[14,14]})}).addTo(layer).bindTooltip('EXIF GPS konumu');
+  }
+  if(isNum(f.latitude)&&isNum(f.longitude)){
+    const p=[f.latitude,f.longitude];pts.push(p);
+    L.circleMarker(p,{radius:11,color:'#fff',weight:3,fillColor:COLORS[0],fillOpacity:1}).addTo(layer).bindTooltip('Nihai tahmin',{permanent:false});
+    if(isNum(f.radius_km)&&f.radius_km>0)L.circle(p,{radius:f.radius_km*1000,color:'#1F6F78',weight:1.5,fillOpacity:.1}).addTo(layer);
+  }
+  if(pts.length>1)map.fitBounds(pts,{padding:[40,40],maxZoom:12});
+  else if(pts.length)map.setView(pts[0],f.radius_km>200?5:f.radius_km>30?8:11);
+}
+
+/* ================= Görsel yükleme ================= */
+function showPreview(src){$('dropInner').innerHTML='<img alt="Seçilen fotoğraf" src="'+src+'">';$('go').disabled=false;}
+async function loadBlob(blob){
+  const buf=await blob.arrayBuffer();
+  S.exif=parseExif(buf);
+  S.orig=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(new Blob([buf],{type:blob.type||'image/jpeg'}));});
+  S.full=await resize(S.orig,1600,.88);
+  S.thumb=await resize(S.orig,200,.7);
+  S.remoteOnly=false;
+  showPreview(S.full);exifBadges();
 }
 async function handleFile(f){
-  if (!f || !f.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = async ()=>{
-    try {
-      imageSrc = await resize(reader.result, 1400, .86);   // hızlı ve hafif gönderim
-      thumb = await resize(reader.result, 200, .7);
-      showPreview(imageSrc);
-    } catch(e){ showError(e.message); }
-  };
-  reader.readAsDataURL(f);
+  if(!f||!f.type.startsWith('image/'))return;
+  try{await loadBlob(f);}catch(e){showError(errMsg(e));}
 }
-$('drop').addEventListener('click', ()=>$('file').click());
-$('drop').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('file').click(); }});
-$('file').addEventListener('change', e=>handleFile(e.target.files[0]));
+$('drop').addEventListener('click',()=>$('file').click());
+$('drop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click();}});
+$('file').addEventListener('change',e=>handleFile(e.target.files[0]));
 ['dragenter','dragover'].forEach(t=>$('drop').addEventListener(t,e=>{e.preventDefault();$('drop').classList.add('over');}));
 ['dragleave','drop'].forEach(t=>$('drop').addEventListener(t,e=>{e.preventDefault();$('drop').classList.remove('over');}));
-$('drop').addEventListener('drop', e=>handleFile(e.dataTransfer.files[0]));
-window.addEventListener('paste', e=>{
-  const item = [...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
-  if (item) handleFile(item.getAsFile());
-});
-$('loadUrl').addEventListener('click', ()=>{
-  const u = $('url').value.trim();
-  if (!/^https?:\/\//i.test(u)) return showError('Geçerli bir http(s) bağlantısı gir.');
-  imageSrc = u; thumb = u; showPreview(u);
+$('drop').addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
+window.addEventListener('paste',e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it)handleFile(it.getAsFile());});
+$('loadUrl').addEventListener('click',async()=>{
+  const u=$('url').value.trim();
+  if(!/^https?:\/\//i.test(u))return showError('Geçerli bir http(s) bağlantısı gir.');
+  try{const r=await fetch(u);if(!r.ok)throw 0;await loadBlob(await r.blob());}
+  catch{ // CORS engeli: yalnızca bağlantıyı modele ver (kırpma ve EXIF yok)
+    S.orig=S.full=u;S.thumb=u;S.exif=null;S.remoteOnly=true;showPreview(u);exifBadges();
+  }
 });
 
-/* ---------- Yapay zekâ ---------- */
-function buildPrompt(wantAlts, hint){
-  return `You are an expert photo geolocation analyst (GeoGuessr master level).
-Determine where this photo was most likely taken, using ONLY environmental and geographic evidence:
-architecture, vegetation, terrain, soil colour, road markings, driving side, utility poles, bollards, license plate formats,
-signage language and script, vehicle types, sun position, climate, season, and any visible landmarks.
-Do NOT identify or describe any person. If there is no usable evidence, lower the confidence honestly instead of guessing wildly.
-${hint ? 'User context: ' + hint + '\n' : ''}
-Reply with ONLY one valid JSON object, no markdown, in this exact shape:
-{
- "country": "", "country_code": "ISO-3166 alpha-2", "region": "state/province", "city": "", "neighborhood": "",
- "latitude": 0, "longitude": 0, "confidence": 0-100, "radius_km": uncertainty radius in km,
- "summary": "2-3 sentence explanation in Turkish",
- "driving_side": "left|right|unknown", "climate": "", "language_script": "", "season_time": "",
- "clues": [{"category":"Mimari|Bitki örtüsü|Tabela ve dil|Yol ve altyapı|Araçlar|Arazi|Güneş ve iklim|Diğer","observation":"in Turkish","weight":"high|medium|low"}],
- "alternatives": ${wantAlts ? '[{"place":"","latitude":0,"longitude":0,"confidence":0-100}] (2 to 3 different candidate places)' : '[]'}
-}`;
-}
+/* ================= Yapay zekâ çağrıları ================= */
 function extractText(resp){
-  if (typeof resp === 'string') return resp;
-  const c = resp?.message?.content ?? resp?.text ?? resp;
-  if (typeof c === 'string') return c;
-  if (Array.isArray(c)) return c.map(p=>p.text ?? '').join('');
+  if(typeof resp==='string')return resp;
+  const c=resp?.message?.content??resp?.text??resp;
+  if(typeof c==='string')return c;
+  if(Array.isArray(c))return c.map(p=>p.text??'').join('');
   return String(c);
 }
 function parseJSON(t){
-  const clean = t.replace(/```json|```/g,'').trim();
-  const a = clean.indexOf('{'), b = clean.lastIndexOf('}');
-  if (a < 0 || b < 0) throw new Error('Model geçerli bir JSON döndürmedi.');
-  return JSON.parse(clean.slice(a, b+1));
+  const c=t.replace(/```json|```/g,'').trim();
+  const a=c.indexOf('{'),b=c.lastIndexOf('}');
+  if(a<0||b<0)throw new Error('Model geçerli JSON döndürmedi');
+  return JSON.parse(c.slice(a,b+1));
+}
+async function ask(prompt,images,model){
+  const tries=[images,images.slice(0,3),images.slice(0,1)].filter((a,i,arr)=>i===0||a.length<arr[i-1].length);
+  let last;
+  for(const imgs of tries){
+    try{
+      const r=await puter.ai.chat(prompt,imgs.length===1?imgs[0]:imgs,{model});
+      return extractText(r);
+    }catch(e){last=e;}
+  }
+  throw new Error(errMsg(last));
 }
 
-$('go').addEventListener('click', async ()=>{
-  if (!imageSrc) return;
-  const btn = $('go');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Analiz ediliyor…';
-  try {
-    const prompt = buildPrompt($('alts').checked, $('hint').value.trim());
-    const resp = await puter.ai.chat(prompt, imageSrc, {model: $('model').value});
-    const data = parseJSON(extractText(resp));
-    ['latitude','longitude','confidence','radius_km'].forEach(k=>{ if (data[k] != null) data[k] = Number(data[k]); });
-    last = data;
-    render(data);
-    drawOnMap(data);
-    saveHistory(data);
-  } catch (e) {
-    showError(e?.message || (e && JSON.stringify(e)) || 'Bilinmeyen hata');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Konumu tahmin et';
+const SCHEMA=(alts)=>`{
+ "country":"","country_code":"ISO-3166 alpha-2","region":"state/province","city":"","neighborhood":"",
+ "latitude":0,"longitude":0,"confidence":0-100,"radius_km":0,
+ "summary":"3-4 sentences in Turkish",
+ "reasoning":"step by step deduction in Turkish: which clue narrows down what",
+ "driving_side":"left|right|unknown","climate":"","language_script":"","season_time":"",
+ "clues":[{"category":"Mimari|Bitki örtüsü|Tabela ve dil|Yol ve altyapı|Araçlar|Arazi|Güneş ve iklim|Diğer","observation":"Turkish","weight":"high|medium|low"}],
+ "ruled_out":["regions/countries you excluded and why, in Turkish"],
+ "alternatives":${alts?'[{"place":"","latitude":0,"longitude":0,"confidence":0-100}] (2-3 different candidates)':'[]'}
+}`;
+
+function evidencePrompt(nImgs){return `You are a forensic image analyst preparing evidence for photo geolocation.
+You receive ${nImgs} images: the first is the full photo, the others are zoomed crops (grid tiles left-to-right, top-to-bottom, then a centre crop). The crops overlap with the full photo.
+Catalogue EVERYTHING that carries geographic information. Read every piece of visible text literally (OCR) in its original script and give a translation.
+Report only what is really visible. Never identify or describe individual people.
+Reply with ONLY one JSON object, no markdown:
+{"texts":[{"text":"","language":"","where":"","meaning":""}],
+ "plates":[{"text":"","format_notes":"","likely_country":""}],
+ "signs_and_brands":[{"name":"","type":"","region_hint":""}],
+ "landmarks":[{"name":"","confidence":""}],
+ "architecture":[{"item":"","style":"","region_hint":""}],
+ "vegetation":[{"species_or_type":"","region_hint":""}],
+ "terrain_geology":[{"item":"","region_hint":""}],
+ "roads":[{"feature":"lane marking colours, kerbs, bollards, road sign shapes","region_hint":""}],
+ "infrastructure":[{"item":"poles, power lines, sockets, street lights, hydrants, manholes","region_hint":""}],
+ "vehicles":[{"item":"","region_hint":""}],
+ "flags_symbols":[{"item":"","region_hint":""}],
+ "sun_shadow":"shadow direction/length, sun elevation, hemisphere and time-of-day inference",
+ "weather_climate":"","other":[{"item":"","region_hint":""}]}`;}
+
+function locatePrompt(ev,exif,hint,alts){
+  return `You are an expert photo geolocation analyst (GeoGuessr world-champion level).
+Locate where this photo was taken. Use the image plus the structured evidence below (OCR, zoomed-crop findings).
+Weigh strong, specific evidence (readable text, plates, landmarks, road standards, languages) over generic mood. Consider the sun/shadow geometry. Explicitly rule out competing regions.
+Do NOT identify any person. If evidence is thin, lower the confidence and widen radius_km honestly.
+${ev?'EVIDENCE JSON:\n'+JSON.stringify(ev).slice(0,7000)+'\n':''}${exif?'PHOTO METADATA (may be stripped or edited): '+JSON.stringify(exif)+'\n':''}${hint?'User context: '+hint+'\n':''}
+Reply with ONLY one valid JSON object, no markdown, exactly this shape:
+${SCHEMA(alts)}`;
+}
+function judgePrompt(ev,exif,results,hint,alts){
+  return `You are the chief adjudicator for a photo geolocation task. Several analysts independently produced estimates.
+Study the image, the evidence and the analysts' answers. Find contradictions, discard claims not supported by visible evidence, and decide the single most probable location. If analysts disagree, choose by strength of evidence, not by majority alone. State each contradiction you found.
+Do NOT identify any person.
+${ev?'EVIDENCE JSON:\n'+JSON.stringify(ev).slice(0,5000)+'\n':''}${exif?'PHOTO METADATA: '+JSON.stringify(exif)+'\n':''}${hint?'User context: '+hint+'\n':''}
+ANALYST RESULTS:
+${JSON.stringify(results.map(r=>({model:r.model,country:r.data.country,region:r.data.region,city:r.data.city,latitude:r.data.latitude,longitude:r.data.longitude,confidence:r.data.confidence,summary:r.data.summary,ruled_out:r.data.ruled_out}))).slice(0,6000)}
+
+Reply with ONLY one valid JSON object, no markdown, exactly this shape plus two extra keys "contradictions":["Turkish strings"] and "verification_notes":"Turkish":
+${SCHEMA(alts)}`;
+}
+
+/* ================= İlerleme ================= */
+let STEPS=[];
+function initSteps(list){
+  STEPS=list;$('progress').classList.remove('hidden');renderSteps();
+}
+function renderSteps(){
+  $('steps').innerHTML=STEPS.map(s=>{
+    const ic={wait:'○',run:'◐',ok:'✓',fail:'✕'}[s.st];
+    return '<li class="st-'+s.st+'"><span class="ic">'+ic+'</span><span>'+esc(s.text)+(s.note?' <small class="muted">'+esc(s.note)+'</small>':'')+'</span></li>';
+  }).join('');
+}
+function step(id,st,note){const s=STEPS.find(x=>x.id===id);if(s){s.st=st;if(note!==undefined)s.note=note;renderSteps();}}
+
+/* ================= Ana akış ================= */
+async function reverseGeo(lat,lon){
+  const u='https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=tr&lat='+lat+'&lon='+lon;
+  const r=await fetch(u);if(!r.ok)throw new Error('geokodlama '+r.status);
+  const j=await r.json();
+  return {cc:(j.address?.country_code||'').toUpperCase(),name:j.display_name||'',country:j.address?.country||'',state:j.address?.state||j.address?.region||'',
+          city:j.address?.city||j.address?.town||j.address?.village||j.address?.county||''};
+}
+
+$('go').addEventListener('click',async()=>{
+  if(!S.full)return;
+  const depth=$('depth').value,hint=$('hint').value.trim(),wantAlts=$('alts').checked,doGeo=$('geo').checked;
+  let models=[...document.querySelectorAll('.mdl:checked')].map(c=>c.value);
+  if(!models.length)return showError('En az bir model seç.');
+  if(depth==='fast')models=models.slice(0,1);
+  const judgeModel=$('judge').value;
+  const useEvidence=depth!=='fast'&&!S.remoteOnly||(depth!=='fast'&&S.remoteOnly);
+  const useJudge=depth!=='fast';
+  const btn=$('go');btn.disabled=true;btn.textContent='Taranıyor…';
+
+  initSteps([
+    {id:'exif',text:'Metadata (EXIF) okunuyor',st:'wait'},
+    ...(useEvidence?[{id:'crops',text:'Yakın plan kırpmalar hazırlanıyor',st:'wait'},{id:'evidence',text:'Kanıt çıkarma: OCR, plaka, mimari, bitki, altyapı, gölge',st:'wait'}]:[]),
+    ...models.map(m=>({id:'m:'+m,text:'Konum analizi: '+m,st:'wait'})),
+    ...(useJudge?[{id:'judge',text:'Hakem değerlendirmesi ve çelişki kontrolü',st:'wait'}]:[]),
+    ...(doGeo?[{id:'geo',text:'Koordinatlar harita verisiyle doğrulanıyor',st:'wait'}]:[]),
+  ]);
+  $('result').innerHTML='<h2>Sonuç</h2><p class="muted" style="margin:0">Tarama sürüyor…</p>';
+
+  try{
+    // 1) EXIF
+    step('exif','run');
+    const exifForPrompt=S.exif?{camera:[S.exif.make,S.exif.model].filter(Boolean).join(' ')||undefined,date:S.exif.date,gps:isNum(S.exif.lat)?[+S.exif.lat.toFixed(5),+S.exif.lon.toFixed(5)]:undefined}:null;
+    step('exif','ok',S.exif?(isNum(S.exif.lat)?'GPS bulundu':'GPS yok'):'metadata yok');
+
+    // 2) Kanıt
+    let evidence=null;
+    if(useEvidence){
+      let images=[S.full];
+      step('crops','run');
+      if(!S.remoteOnly){
+        try{images=[S.full,...await makeCrops(S.orig,depth==='max'?3:2,depth==='max'?900:1100)];step('crops','ok',(images.length-1)+' kırpma');}
+        catch(e){step('crops','fail',errMsg(e));}
+      }else step('crops','fail','uzak görsel: kırpma yapılamadı');
+      step('evidence','run');
+      try{
+        evidence=parseJSON(await ask(evidencePrompt(images.length),images,judgeModel));
+        const n=Object.values(evidence).reduce((a,v)=>a+(Array.isArray(v)?v.length:v?1:0),0);
+        step('evidence','ok',n+' kanıt');
+      }catch(e){step('evidence','fail',errMsg(e));}
+    }
+
+    // 3) Modeller (paralel)
+    const settled=await Promise.all(models.map(async m=>{
+      step('m:'+m,'run');
+      try{
+        const t=await ask(locatePrompt(evidence,exifForPrompt,hint,wantAlts),[S.full],m);
+        const d=parseJSON(t);
+        ['latitude','longitude','confidence','radius_km'].forEach(k=>{if(d[k]!=null)d[k]=Number(d[k]);});
+        step('m:'+m,'ok',d.city||d.country||'');
+        return {model:m,data:d};
+      }catch(e){step('m:'+m,'fail',errMsg(e));return null;}
+    }));
+    const results=settled.filter(r=>r&&isNum(r.data.latitude)&&isNum(r.data.longitude));
+    if(!results.length)throw new Error('Hiçbir model geçerli bir konum döndürmedi. Başka model seçmeyi dene.');
+
+    // 4) Hakem
+    let final=null;
+    if(useJudge){
+      step('judge','run');
+      try{
+        final=parseJSON(await ask(judgePrompt(evidence,exifForPrompt,results,hint,wantAlts),[S.full],judgeModel));
+        ['latitude','longitude','confidence','radius_km'].forEach(k=>{if(final[k]!=null)final[k]=Number(final[k]);});
+        if(!isNum(final.latitude)||!isNum(final.longitude))throw new Error('hakem koordinat vermedi');
+        step('judge','ok',final.city||final.country||'');
+      }catch(e){step('judge','fail',errMsg(e)+' (en güvenli model seçildi)');final=null;}
+    }
+    if(!final){final={...results.slice().sort((a,b)=>(b.data.confidence||0)-(a.data.confidence||0))[0].data};}
+
+    // 5) Doğrulama
+    const checks=[];
+    let finalGeo=null,exifGeo=null;
+    const guesses=results.map(r=>[r.data.latitude,r.data.longitude]);
+    let spread=0;
+    for(let i=0;i<guesses.length;i++)for(let j=i+1;j<guesses.length;j++)spread=Math.max(spread,haversine(guesses[i],guesses[j]));
+    results.forEach(r=>r.dist=haversine([r.data.latitude,r.data.longitude],[final.latitude,final.longitude]));
+
+    if(doGeo){
+      step('geo','run');
+      try{
+        finalGeo=await reverseGeo(final.latitude,final.longitude);
+        for(const r of results){await sleep(1100);try{r.geo=await reverseGeo(r.data.latitude,r.data.longitude);}catch{}}
+        if(S.exif&&isNum(S.exif.lat)){await sleep(1100);try{exifGeo=await reverseGeo(S.exif.lat,S.exif.lon);}catch{}}
+        step('geo','ok');
+      }catch(e){step('geo','fail',errMsg(e));}
+    }
+
+    let conf=isNum(final.confidence)?Math.max(0,Math.min(100,final.confidence)):50;
+    if(results.length>1){
+      if(spread<100){checks.push({ok:true,text:'Modeller birbirine '+fmtKm(spread)+' içinde yakınsıyor: güçlü uyum.'});conf=Math.min(99,conf+5);}
+      else if(spread<800)checks.push({ok:true,text:'Modeller arasında en fazla '+fmtKm(spread)+' fark var: orta düzey uyum.'});
+      else{checks.push({ok:false,text:'Modeller '+fmtKm(spread)+' kadar ayrışıyor: tahmin belirsiz.'});conf=Math.max(5,conf-15);}
+    }else checks.push({ok:false,text:'Tek model kullanıldı; çapraz karşılaştırma yapılamadı.'});
+
+    if(finalGeo){
+      if(finalGeo.cc&&final.country_code&&finalGeo.cc===String(final.country_code).toUpperCase())
+        checks.push({ok:true,text:'Koordinat harita verisinde '+finalGeo.country+' içinde çıkıyor, iddia edilen ülkeyle uyumlu.'});
+      else if(finalGeo.cc){
+        checks.push({ok:false,text:'Koordinat harita verisinde '+(finalGeo.country||finalGeo.cc)+' içinde çıkıyor, ancak tahmin '+(final.country||'?')+' diyor. Koordinat ya da ülke yanlış olabilir.'});
+        conf=Math.max(5,conf-15);
+      }else checks.push({ok:false,text:'Koordinat okyanus ya da haritasız bir alana düşüyor olabilir.'});
+    }
+    const ex=S.exif;
+    if(ex&&isNum(ex.lat)){
+      const d=haversine([ex.lat,ex.lon],[final.latitude,final.longitude]);
+      if(d<=Math.max(5,final.radius_km||0)){checks.push({ok:true,text:'EXIF GPS konumu görsel tahminle örtüşüyor ('+fmtKm(d)+').'});conf=Math.max(conf,97);}
+      else checks.push({ok:false,text:'EXIF GPS konumu görsel tahminden '+fmtKm(d)+' uzakta. Metadata düzenlenmiş olabilir ya da fotoğraf başka yerde işlenmiş olabilir.'});
+    }else checks.push({ok:false,text:'EXIF GPS verisi yok (sosyal medya ve mesajlaşma uygulamaları genelde siler).'});
+    if(evidence){
+      const strong=(evidence.texts?.length||0)+(evidence.plates?.length||0)+(evidence.landmarks?.length||0);
+      checks.push({ok:strong>0,text:strong>0?strong+' güçlü kanıt bulundu (okunan metin, plaka ya da simge yapı).':'Okunabilir metin, plaka ya da simge yapı bulunamadı; tahmin genel çevresel ipuçlarına dayanıyor.'});
+    }
+    final.confidence=Math.round(conf);
+
+    const R={final,models:results,evidence,exif:S.exif,exifGeo,finalGeo,checks,spread,depth};
+    render(R);drawOnMap(R);saveHistory(R);
+  }catch(e){
+    showError(errMsg(e));
+  }finally{
+    btn.disabled=false;btn.textContent='Derin taramayı başlat';
   }
 });
 
-/* ---------- Sonuç gösterimi ---------- */
+/* ================= Sonuç gösterimi ================= */
 function showError(msg){
-  $('result').innerHTML = '<h2>Sonuç</h2><div class="err">Hata: '+esc(msg)+
-    '<br>Bir sorun çıktıysa başka bir model dene ya da fotoğrafı küçült.</div>';
+  $('result').innerHTML='<h2>Sonuç</h2><div class="err">Hata: '+esc(msg)+'<br>Başka bir model ya da daha düşük derinlik dene.</div>';
 }
-function render(r){
-  const conf = isNum(r.confidence) ? Math.max(0, Math.min(100, r.confidence)) : 0;
-  const coords = isNum(r.latitude) && isNum(r.longitude) ? r.latitude.toFixed(5)+', '+r.longitude.toFixed(5) : '—';
-  const clues = (r.clues||[]).map(c=>
-    '<div class="clue"><div><strong>'+esc(c.category)+'</strong><br><em>'+esc({high:'güçlü ipucu',medium:'orta ipucu',low:'zayıf ipucu'}[c.weight]||'')+'</em></div><div>'+esc(c.observation)+'</div></div>').join('');
-  const alts = (r.alternatives||[]).map((a,i)=>
-    '<button class="alt" data-i="'+i+'"><span>'+esc(a.place)+'</span><span>%'+esc(a.confidence)+'</span></button>').join('');
-  $('result').innerHTML =
+const EV_LABELS={texts:'Okunan metinler (OCR)',plates:'Plakalar',signs_and_brands:'Tabela ve markalar',landmarks:'Simge yapılar',architecture:'Mimari',vegetation:'Bitki örtüsü',terrain_geology:'Arazi ve jeoloji',roads:'Yol özellikleri',infrastructure:'Altyapı',vehicles:'Araçlar',flags_symbols:'Bayrak ve semboller',other:'Diğer'};
+function fmtItem(x){
+  if(typeof x!=='object'||!x)return esc(x);
+  return Object.entries(x).filter(([,v])=>v!=null&&v!=='').map(([k,v])=>'<em>'+esc(k)+':</em> '+esc(typeof v==='object'?JSON.stringify(v):v)).join(' · ');
+}
+function evidenceHTML(ev){
+  if(!ev)return '';
+  let h='<h3 class="sub">Kanıt dosyası</h3>';
+  Object.keys(EV_LABELS).forEach(k=>{
+    const a=ev[k];if(!Array.isArray(a)||!a.length)return;
+    h+='<details'+(k==='texts'||k==='landmarks'?' open':'')+'><summary>'+EV_LABELS[k]+' ('+a.length+')</summary><ul>'+a.map(x=>'<li>'+fmtItem(x)+'</li>').join('')+'</ul></details>';
+  });
+  if(ev.sun_shadow)h+='<details><summary>Güneş ve gölge analizi</summary><p>'+esc(typeof ev.sun_shadow==='string'?ev.sun_shadow:JSON.stringify(ev.sun_shadow))+'</p></details>';
+  if(ev.weather_climate)h+='<details><summary>Hava ve iklim</summary><p>'+esc(typeof ev.weather_climate==='string'?ev.weather_climate:JSON.stringify(ev.weather_climate))+'</p></details>';
+  return h;
+}
+function render(R){
+  const r=R.final,conf=r.confidence||0;
+  const coords=isNum(r.latitude)?r.latitude.toFixed(5)+', '+r.longitude.toFixed(5):'—';
+  const clues=(r.clues||[]).map(c=>'<div class="clue"><div><strong>'+esc(c.category)+'</strong><br><em>'+esc({high:'güçlü ipucu',medium:'orta ipucu',low:'zayıf ipucu'}[c.weight]||'')+'</em></div><div>'+esc(c.observation)+'</div></div>').join('');
+  const alts=(r.alternatives||[]).map((a,i)=>'<button class="alt" data-i="'+i+'"><span>'+esc(a.place)+'</span><span>%'+esc(a.confidence)+'</span></button>').join('');
+  const checks=(R.checks||[]).map(c=>'<div class="check '+(c.ok?'ok':'bad')+'"><i>'+(c.ok?'✓':'!')+'</i><span>'+esc(c.text)+'</span></div>').join('');
+  const mrows=(R.models||[]).map((m,i)=>'<tr><td><span class="dot" style="background:'+COLORS[(i+1)%COLORS.length]+'"></span>'+esc(m.model)+'</td><td>'+esc([m.data.city,m.data.country].filter(Boolean).join(', '))+'</td><td>%'+esc(m.data.confidence??'?')+'</td><td>'+fmtKm(m.dist||0)+'</td><td>'+esc(m.geo?.country||'—')+'</td></tr>').join('');
+  const ex=R.exif;
+  const exifBlock=ex?'<div class="meta">'+
+    '<div><b>Kamera</b>'+esc([ex.make,ex.model].filter(Boolean).join(' ')||'—')+'</div>'+
+    '<div><b>Çekim tarihi</b>'+esc(ex.date||'—')+'</div>'+
+    '<div><b>EXIF GPS</b>'+(isNum(ex.lat)?esc(ex.lat.toFixed(5)+', '+ex.lon.toFixed(5)):'yok')+'</div>'+
+    (isNum(ex.alt)?'<div><b>Rakım</b>'+Math.round(ex.alt)+' m</div>':'')+'</div>':'';
+  const gmaps='https://www.google.com/maps/@'+r.latitude+','+r.longitude+',17z/data=!3m1!1e3';
+  $('result').innerHTML=
     '<h2>Sonuç</h2>'+
-    '<div class="place"><div class="flag">'+flag(r.country_code)+'</div><div><h3>'+esc([r.city, r.country].filter(Boolean).join(', ')||'Bilinmiyor')+'</h3>'+
-    '<p>'+esc([r.neighborhood, r.region].filter(Boolean).join(' · '))+'</p></div></div>'+
+    '<div class="place"><div class="flag">'+flag(r.country_code)+'</div><div><h3>'+esc([r.city,r.country].filter(Boolean).join(', ')||'Bilinmiyor')+'</h3>'+
+    '<p>'+esc([r.neighborhood,r.region].filter(Boolean).join(' · '))+'</p></div></div>'+
     '<div class="bar" role="img" aria-label="Güven %'+conf+'"><span style="width:'+conf+'%"></span></div>'+
-    '<small>Güven: %'+conf+(isNum(r.radius_km)?' · yaklaşık '+r.radius_km+' km hata payı':'')+'</small>'+
+    '<small>Güven: %'+conf+(isNum(r.radius_km)?' · yaklaşık '+r.radius_km+' km hata payı':'')+' · '+(R.models||[]).length+' model'+(R.evidence?' · kanıt çıkarma':'')+'</small>'+
     '<p>'+esc(r.summary)+'</p>'+
+    (r.reasoning?'<details open><summary>Akıl yürütme</summary><p>'+esc(r.reasoning)+'</p></details>':'')+
     '<div class="meta">'+
       '<div><b>Koordinat</b>'+esc(coords)+'</div>'+
       '<div><b>Trafik yönü</b>'+esc(r.driving_side||'—')+'</div>'+
       '<div><b>İklim</b>'+esc(r.climate||'—')+'</div>'+
       '<div><b>Dil / yazı</b>'+esc(r.language_script||'—')+'</div>'+
       '<div><b>Mevsim / saat</b>'+esc(r.season_time||'—')+'</div>'+
+      (R.finalGeo?'<div><b>Harita adresi</b>'+esc(R.finalGeo.name)+'</div>':'')+
     '</div>'+
-    '<div class="actions">'+
-      '<button class="ghost" id="copy">Koordinatı kopyala</button>'+
-      '<a class="ghost" style="text-decoration:none;border-radius:6px" target="_blank" rel="noopener" href="https://www.google.com/maps?q='+encodeURIComponent(r.latitude+','+r.longitude)+'">Google Haritalar</a>'+
-      '<button class="ghost" id="exp">JSON olarak indir</button>'+
-    '</div>'+
-    (clues ? '<h2 style="margin-top:22px">İpuçları</h2>'+clues : '')+
-    (alts ? '<h2 style="margin-top:22px">Alternatif konumlar</h2><div class="alts">'+alts+'</div>' : '');
+    '<div class="actions"><button class="ghost" id="copy">Koordinatı kopyala</button>'+
+      '<a class="ghost" target="_blank" rel="noopener" href="'+gmaps+'">Google Haritalar (uydu)</a>'+
+      '<a class="ghost" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat='+r.latitude+'&mlon='+r.longitude+'#map=15/'+r.latitude+'/'+r.longitude+'">OpenStreetMap</a>'+
+      '<button class="ghost" id="exp">JSON raporu indir</button></div>'+
+    '<h3 class="sub">Doğrulama</h3>'+checks+
+    ((r.contradictions&&r.contradictions.length)?'<h3 class="sub">Tespit edilen çelişkiler</h3><ul>'+r.contradictions.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>':'')+
+    (r.verification_notes?'<p class="muted">'+esc(r.verification_notes)+'</p>':'')+
+    (mrows?'<h3 class="sub">Model karşılaştırması</h3><div style="overflow-x:auto"><table><tr><th>Model</th><th>Tahmin</th><th>Güven</th><th>Nihai sonuca uzaklık</th><th>Harita ülkesi</th></tr>'+mrows+'</table></div>':'')+
+    (exifBlock?'<h3 class="sub">Metadata</h3>'+exifBlock:'')+
+    evidenceHTML(R.evidence)+
+    (clues?'<h3 class="sub">İpuçları</h3>'+clues:'')+
+    ((r.ruled_out&&r.ruled_out.length)?'<h3 class="sub">Elenen bölgeler</h3><ul>'+r.ruled_out.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
+    (alts?'<h3 class="sub">Alternatif konumlar</h3><div class="alts">'+alts+'</div>':'');
 
-  $('copy')?.addEventListener('click', e=>{
-    navigator.clipboard?.writeText(coords); e.target.textContent = 'Kopyalandı';
+  $('copy')?.addEventListener('click',e=>{navigator.clipboard?.writeText(coords);e.target.textContent='Kopyalandı';});
+  $('exp')?.addEventListener('click',()=>{
+    const b=new Blob([JSON.stringify(R,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='konum-raporu.json';a.click();
   });
-  $('exp')?.addEventListener('click', ()=>{
-    const b = new Blob([JSON.stringify(r,null,2)], {type:'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'konum-tahmini.json'; a.click();
-  });
-  document.querySelectorAll('.alt').forEach(b=>b.addEventListener('click', ()=>{
-    const a = r.alternatives[b.dataset.i];
-    if (isNum(a.latitude) && isNum(a.longitude)) map.flyTo([a.latitude, a.longitude], 9);
+  document.querySelectorAll('.alt').forEach(b=>b.addEventListener('click',()=>{
+    const a=r.alternatives[b.dataset.i];if(isNum(a.latitude)&&isNum(a.longitude))map.flyTo([a.latitude,a.longitude],9);
   }));
 }
 
-/* ---------- Geçmiş (yalnızca bu tarayıcıda) ---------- */
-function getHistory(){ try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch { return []; } }
-function setHistory(h){ try { localStorage.setItem(HKEY, JSON.stringify(h)); } catch {} }
-function saveHistory(r){
-  if (!thumb || !thumb.startsWith('data:')) return;
-  const h = getHistory(); h.unshift({thumb, r, t: Date.now()});
-  setHistory(h.slice(0, 12)); renderHistory();
+/* ================= Geçmiş (yalnızca bu tarayıcıda) ================= */
+const getHistory=()=>{try{return JSON.parse(localStorage.getItem(HKEY))||[];}catch{return [];}};
+const setHistory=h=>{try{localStorage.setItem(HKEY,JSON.stringify(h));}catch{}};
+function saveHistory(R){
+  if(!S.thumb||!S.thumb.startsWith('data:'))return;
+  const slim={...R,models:R.models.map(m=>({model:m.model,data:m.data,dist:m.dist,geo:m.geo}))};
+  const h=getHistory();h.unshift({thumb:S.thumb,R:slim});
+  setHistory(h.slice(0,8));renderHistory();
 }
 function renderHistory(){
-  const h = getHistory(), box = $('hist');
-  if (!h.length){ box.innerHTML = '<small style="color:var(--muted)">Henüz kayıt yok.</small>'; return; }
-  box.innerHTML = h.map((x,i)=>'<button data-i="'+i+'"><img alt="" src="'+x.thumb+'"><span>'+esc(x.r.city||x.r.country||'Bilinmiyor')+'</span></button>').join('');
-  box.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>{
-    const x = getHistory()[b.dataset.i]; last = x.r; render(x.r); drawOnMap(x.r);
+  const h=getHistory(),box=$('hist');
+  if(!h.length){box.innerHTML='<small class="muted">Henüz kayıt yok.</small>';return;}
+  box.innerHTML=h.map((x,i)=>'<button data-i="'+i+'"><img alt="" src="'+x.thumb+'"><span>'+esc(x.R.final.city||x.R.final.country||'Bilinmiyor')+'</span></button>').join('');
+  box.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    const x=getHistory()[b.dataset.i];render(x.R);drawOnMap(x.R);
   }));
 }
-$('clear').addEventListener('click', ()=>{ setHistory([]); renderHistory(); });
+$('clear').addEventListener('click',()=>{setHistory([]);renderHistory();});
 renderHistory();
 </script>
 </body>
