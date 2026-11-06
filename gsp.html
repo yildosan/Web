@@ -1,671 +1,3649 @@
+
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>İzsür – Derin Konum Analizi</title>
+<title>İzsür – Adaptive Memory</title>
+
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
 <style>
-:root{
-  --paper:#EEF1F4; --panel:#FFFFFF; --ink:#14202B; --muted:#5B6B78; --line:#D3DBE2;
-  --teal:#1F6F78; --teal-d:#154E55; --pin:#D6336C; --warn:#B26A00; --ok:#1E7B45;
+:root {
+  --paper:#EEF1F4;
+  --panel:#FFFFFF;
+  --ink:#14202B;
+  --muted:#5B6B78;
+  --line:#D3DBE2;
+  --teal:#1F6F78;
+  --teal-d:#154E55;
+  --pin:#D6336C;
+  --warn:#B26A00;
+  --ok:#1E7B45;
   --head:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
   --body:'IBM Plex Sans','Segoe UI',system-ui,sans-serif;
 }
-*{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--body);
-  background-image:radial-gradient(circle at 20% 10%, rgba(31,111,120,.07) 0 1px, transparent 1px);background-size:22px 22px}
-header{padding:28px 20px 8px;max-width:1240px;margin:0 auto}
-h1{font:800 clamp(34px,6vw,58px)/1 var(--head);margin:0;letter-spacing:-.03em}
-header p{margin:8px 0 0;color:var(--muted);max-width:68ch}
-main{max-width:1240px;margin:0 auto;padding:16px 20px 60px;display:grid;gap:20px;
-  grid-template-columns:minmax(300px,430px) 1fr;align-items:start}
-@media(max-width:880px){main{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
-h2{font:700 18px/1.2 var(--head);margin:0 0 12px}
-h3.sub{font:700 16px var(--head);margin:22px 0 8px}
-.drop{border:2px dashed var(--teal);border-radius:10px;min-height:170px;display:grid;place-items:center;
-  text-align:center;padding:14px;cursor:pointer;color:var(--teal-d);background:#F5FAFA}
-.drop.over{background:#DDF0F1}
-.drop img{max-width:100%;max-height:280px;border-radius:6px;display:block}
-.drop small,.muted{color:var(--muted)}
-label{display:block;font-weight:600;margin:14px 0 5px;font-size:14px}
-label.chk{display:flex;gap:8px;align-items:center;font-weight:500;margin:6px 0}
-input[type=text],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:var(--ink)}
-textarea{resize:vertical;min-height:62px}
-:focus-visible{outline:3px solid var(--pin);outline-offset:2px}
-.row{display:flex;gap:8px}.row>*{flex:1}
-button{font:600 15px var(--body);border:0;border-radius:6px;padding:11px 16px;cursor:pointer}
-.primary{background:var(--teal);color:#fff;width:100%;margin-top:16px}
-.primary:hover{background:var(--teal-d)}.primary:disabled{opacity:.55;cursor:wait}
-.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);padding:7px 11px;font-size:13px}
-.ghost:hover{border-color:var(--teal);color:var(--teal-d)}
-#map{height:420px;border-radius:10px;border:1px solid var(--line);background:#DCE4EA}
-.stack{display:grid;gap:20px}
-.steps{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.steps li{display:flex;gap:10px;align-items:baseline;font-size:14px}
-.steps .ic{width:18px;text-align:center;font-weight:700}
-.st-run .ic{color:var(--warn)}.st-ok .ic{color:var(--ok)}.st-fail .ic{color:#B3261E}.st-wait{color:var(--muted)}
-.place{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.flag{font-size:46px;line-height:1}
-.place h3{font:800 clamp(24px,4vw,34px)/1.1 var(--head);margin:0}
-.place p{margin:2px 0 0;color:var(--muted)}
-.bar{height:10px;background:#E3E9EE;border-radius:99px;overflow:hidden;margin:14px 0 4px}
-.bar span{display:block;height:100%;background:var(--teal);transition:width .6s}
-.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
-.meta div{background:var(--paper);border-radius:6px;padding:9px 11px;overflow-wrap:anywhere}
-.meta b{display:block;font-size:12px;color:var(--muted);font-weight:500}
-.check{display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
-.check:first-of-type{border-top:0}
-.check i{font-style:normal;font-weight:700;width:18px}
-.check.ok i{color:var(--ok)}.check.bad i{color:var(--warn)}
-.clue{padding:10px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:140px 1fr;gap:10px}
-.clue:first-child{border-top:0}.clue strong{font-family:var(--head)}
-.clue em{font-style:normal;color:var(--muted);font-size:13px}
-@media(max-width:520px){.clue{grid-template-columns:1fr;gap:2px}}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:8px 6px;border-top:1px solid var(--line);vertical-align:top}
-th{font-size:12px;color:var(--muted);font-weight:500;border-top:0}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
-details{border-top:1px solid var(--line);padding:8px 0}
-details summary{cursor:pointer;font-weight:600}
-details ul{margin:8px 0 0;padding-left:18px}
-details li{margin:4px 0}
-details li em{color:var(--muted);font-style:normal}
-.alts{display:grid;gap:8px}
-.alt{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);color:var(--ink);padding:10px 12px}
-.alt:hover{border-color:var(--teal)}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.actions a{text-decoration:none;border-radius:6px}
-.err{background:#FDECEC;border:1px solid #E5A5A5;color:#8A1C1C;border-radius:8px;padding:12px}
-.note{font-size:13px;color:var(--muted);border-left:3px solid var(--warn);padding-left:10px;margin-top:14px}
-.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:#DDF0F1;color:var(--teal-d);margin:0 4px 4px 0}
-.hist{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
-.hist button{padding:0;background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden;text-align:left}
-.hist img{width:100%;height:76px;object-fit:cover;display:block}
-.hist span{display:block;padding:5px 8px;font-size:12px;line-height:1.3}
-.hidden{display:none!important}
-.models{display:grid;grid-template-columns:1fr;max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px 10px}
-.exifpin{background:#2457C5;border:2px solid #fff;width:14px;height:14px;border-radius:3px}
-@media(prefers-reduced-motion:reduce){.bar span{transition:none}}
+
+* {box-sizing:border-box}
+html,body {margin:0}
+body {
+  background:var(--paper);
+  color:var(--ink);
+  font:15px/1.55 var(--body);
+  background-image:radial-gradient(circle at 20% 10%,rgba(31,111,120,.07) 0 1px,transparent 1px);
+  background-size:22px 22px;
+}
+
+header {
+  padding:28px 20px 8px;
+  max-width:1240px;
+  margin:auto;
+}
+
+h1 {
+  font:800 clamp(34px,6vw,58px)/1 var(--head);
+  margin:0;
+  letter-spacing:-.03em;
+}
+
+header p {
+  margin:8px 0 0;
+  color:var(--muted);
+  max-width:75ch;
+}
+
+main {
+  max-width:1240px;
+  margin:auto;
+  padding:16px 20px 60px;
+  display:grid;
+  gap:20px;
+  grid-template-columns:minmax(300px,430px) 1fr;
+  align-items:start;
+}
+
+@media(max-width:880px) {
+  main {grid-template-columns:1fr}
+}
+
+.card {
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:16px;
+}
+
+h2 {
+  font:700 18px/1.2 var(--head);
+  margin:0 0 12px;
+}
+
+h3.sub {
+  font:700 16px var(--head);
+  margin:22px 0 8px;
+}
+
+.drop {
+  border:2px dashed var(--teal);
+  border-radius:10px;
+  min-height:170px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:14px;
+  cursor:pointer;
+  color:var(--teal-d);
+  background:#F5FAFA;
+}
+
+.drop.over {background:#DDF0F1}
+
+.drop img {
+  max-width:100%;
+  max-height:280px;
+  border-radius:6px;
+  display:block;
+}
+
+.drop small,.muted {color:var(--muted)}
+
+label {
+  display:block;
+  font-weight:600;
+  margin:14px 0 5px;
+  font-size:14px;
+}
+
+label.chk {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  font-weight:500;
+  margin:6px 0;
+}
+
+input[type=text],select,textarea {
+  width:100%;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  font:inherit;
+  background:#fff;
+  color:var(--ink);
+}
+
+textarea {resize:vertical;min-height:62px}
+
+:focus-visible {
+  outline:3px solid var(--pin);
+  outline-offset:2px;
+}
+
+.row {display:flex;gap:8px}
+.row>* {flex:1}
+
+button {
+  font:600 15px var(--body);
+  border:0;
+  border-radius:6px;
+  padding:11px 16px;
+  cursor:pointer;
+}
+
+.primary {
+  background:var(--teal);
+  color:#fff;
+  width:100%;
+  margin-top:16px;
+}
+
+.primary:hover {background:var(--teal-d)}
+.primary:disabled {opacity:.55;cursor:wait}
+
+.ghost {
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:7px 11px;
+  font-size:13px;
+}
+
+.ghost:hover {
+  border-color:var(--teal);
+  color:var(--teal-d);
+}
+
+#map {
+  height:420px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#DCE4EA;
+}
+
+.stack {display:grid;gap:20px}
+
+.steps {
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:6px;
+}
+
+.steps li {
+  display:flex;
+  gap:10px;
+  align-items:baseline;
+  font-size:14px;
+}
+
+.steps .ic {
+  width:18px;
+  text-align:center;
+  font-weight:700;
+}
+
+.st-run .ic {color:var(--warn)}
+.st-ok .ic {color:var(--ok)}
+.st-fail .ic {color:#B3261E}
+.st-wait {color:var(--muted)}
+
+.place {
+  display:flex;
+  gap:14px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.flag {font-size:46px;line-height:1}
+
+.place h3 {
+  font:800 clamp(24px,4vw,34px)/1.1 var(--head);
+  margin:0;
+}
+
+.place p {margin:2px 0 0;color:var(--muted)}
+
+.bar {
+  height:10px;
+  background:#E3E9EE;
+  border-radius:99px;
+  overflow:hidden;
+  margin:14px 0 4px;
+}
+
+.bar span {
+  display:block;
+  height:100%;
+  background:var(--teal);
+  transition:width .6s;
+}
+
+.meta {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+  margin:14px 0;
+}
+
+.meta div {
+  background:var(--paper);
+  border-radius:6px;
+  padding:9px 11px;
+  overflow-wrap:anywhere;
+}
+
+.meta b {
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+}
+
+.check {
+  display:flex;
+  gap:10px;
+  padding:7px 0;
+  border-top:1px solid var(--line);
+}
+
+.check i {
+  font-style:normal;
+  font-weight:700;
+  width:18px;
+}
+
+.check.ok i {color:var(--ok)}
+.check.bad i {color:var(--warn)}
+
+.clue {
+  padding:10px 0;
+  border-top:1px solid var(--line);
+  display:grid;
+  grid-template-columns:140px 1fr;
+  gap:10px;
+}
+
+.clue:first-child {border-top:0}
+.clue strong {font-family:var(--head)}
+.clue em {font-style:normal;color:var(--muted);font-size:13px}
+
+@media(max-width:520px) {
+  .clue {grid-template-columns:1fr;gap:2px}
+}
+
+table {width:100%;border-collapse:collapse;font-size:14px}
+th,td {
+  text-align:left;
+  padding:8px 6px;
+  border-top:1px solid var(--line);
+  vertical-align:top;
+}
+
+th {
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+  border-top:0;
+}
+
+.dot {
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  margin-right:6px;
+}
+
+details {border-top:1px solid var(--line);padding:8px 0}
+details summary {cursor:pointer;font-weight:600}
+details ul {margin:8px 0 0;padding-left:18px}
+details li {margin:4px 0}
+details li em {color:var(--muted);font-style:normal}
+
+.alts {display:grid;gap:8px}
+
+.alt {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  text-align:left;
+  background:var(--paper);
+  border:1px solid var(--line);
+  color:var(--ink);
+  padding:10px 12px;
+}
+
+.alt:hover {border-color:var(--teal)}
+
+.actions {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.actions a {text-decoration:none;border-radius:6px}
+
+.err {
+  background:#FDECEC;
+  border:1px solid #E5A5A5;
+  color:#8A1C1C;
+  border-radius:8px;
+  padding:12px;
+}
+
+.note {
+  font-size:13px;
+  color:var(--muted);
+  border-left:3px solid var(--warn);
+  padding-left:10px;
+  margin-top:14px;
+}
+
+.badge {
+  display:inline-block;
+  font-size:12px;
+  padding:2px 8px;
+  border-radius:99px;
+  background:#DDF0F1;
+  color:var(--teal-d);
+  margin:0 4px 4px 0;
+}
+
+.hist {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+  gap:10px;
+}
+
+.hist button {
+  padding:0;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  text-align:left;
+}
+
+.hist img {
+  width:100%;
+  height:76px;
+  object-fit:cover;
+  display:block;
+}
+
+.hist span {
+  display:block;
+  padding:5px 8px;
+  font-size:12px;
+  line-height:1.3;
+}
+
+.hidden {display:none!important}
+
+.models {
+  display:grid;
+  grid-template-columns:1fr;
+  max-height:200px;
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:4px 10px;
+}
+
+.exifpin {
+  background:#2457C5;
+  border:2px solid #fff;
+  width:14px;
+  height:14px;
+  border-radius:3px;
+}
+
+/* ADAPTIVE MEMORY */
+
+.learning-panel {
+  margin-top:22px;
+  padding:15px;
+  background:#F0F7F7;
+  border:1px solid #B8D5D7;
+  border-radius:9px;
+}
+
+.learning-panel h3 {
+  font-family:var(--head);
+  margin:0 0 8px;
+}
+
+.learning-panel p {
+  font-size:13px;
+  color:var(--muted);
+}
+
+.learning-stats {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin:12px 0;
+}
+
+.learning-stats div {
+  background:white;
+  border-radius:6px;
+  padding:9px;
+  text-align:center;
+}
+
+.learning-stats b {
+  display:block;
+  font-size:20px;
+  color:var(--teal);
+}
+
+.learning-stats small {
+  color:var(--muted);
+  font-size:11px;
+}
+
+.learning-status {
+  min-height:20px;
+  overflow-wrap:anywhere;
+}
+
+.learning-active {
+  border:2px solid var(--pin)!important;
+  cursor:crosshair;
+}
+
+.memory-list {
+  display:grid;
+  gap:8px;
+  margin-top:12px;
+}
+
+.memory-entry {
+  padding:10px;
+  background:white;
+  border:1px solid var(--line);
+  border-radius:7px;
+  font-size:13px;
+}
+
+.memory-entry strong {display:block}
+.memory-entry small {color:var(--muted)}
+
+.memory-entry button {
+  margin-top:7px;
+}
+
+.learning-controls {
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:10px;
+}
+
+.learning-controls button {flex:1}
+
+@media(prefers-reduced-motion:reduce) {
+  .bar span {transition:none}
+}
 </style>
 </head>
+
 <body>
+
 <header>
   <h1>İzsür</h1>
-  <p>Fotoğraf; EXIF verisi, yakın plan kırpmalar, metin okuma (OCR), birden çok yapay zekâ modeli, hakem değerlendirmesi ve harita doğrulamasıyla çok aşamalı taranır. API anahtarı gerekmez, yapay zekâ puter.js ile çalışır.</p>
+  <p>
+    Fotoğraf; EXIF verisi, yakın plan kırpmalar, OCR,
+    çoklu yapay zekâ modelleri, hakem değerlendirmesi
+    ve harita doğrulamasıyla çok aşamalı taranır.
+    Adaptive Memory sistemi, kullanıcı tarafından doğrulanan
+    örneklerden öğrenir. Puter.js ile API anahtarsız AI erişimi.
+  </p>
 </header>
 
 <main>
-  <section class="card">
-    <h2>Fotoğraf</h2>
-    <div class="drop" id="drop" tabindex="0" role="button" aria-label="Fotoğraf seç veya sürükle">
-      <div id="dropInner"><strong>Fotoğrafı buraya sürükle</strong><br><small>tıkla, yapıştır (Ctrl+V) ya da bağlantı gir</small></div>
+
+<section class="card">
+
+  <h2>Fotoğraf</h2>
+
+  <div class="drop" id="drop" tabindex="0" role="button"
+       aria-label="Fotoğraf seç veya sürükle">
+    <div id="dropInner">
+      <strong>Fotoğrafı buraya sürükle</strong><br>
+      <small>tıkla, yapıştır (Ctrl+V) ya da bağlantı gir</small>
     </div>
-    <input type="file" id="file" accept="image/*" class="hidden">
-    <div id="exifBadges" style="margin-top:8px"></div>
+  </div>
 
-    <label for="url">Görsel bağlantısı (isteğe bağlı)</label>
-    <div class="row"><input type="text" id="url" placeholder="https://…/foto.jpg"><button class="ghost" id="loadUrl" style="flex:0 0 auto">Yükle</button></div>
+  <input type="file" id="file" accept="image/*" class="hidden">
 
-    <label for="depth">Tarama derinliği</label>
-    <select id="depth">
-      <option value="fast">Hızlı: tek model, tek geçiş</option>
-      <option value="deep" selected>Detaylı: kırpmalar + OCR + çoklu model + hakem</option>
-      <option value="max">Maksimum: 3×3 kırpma + tüm modeller + hakem</option>
-    </select>
+  <div id="exifBadges" style="margin-top:8px"></div>
 
-    <label>Karşılaştırılacak modeller</label>
-    <div class="models" id="models"><small class="muted">Modeller yükleniyor…</small></div>
-    <label for="custom">Özel model kimliği (isteğe bağlı)</label>
-    <input type="text" id="custom" placeholder="örn. gpt-5, claude-opus-4-5">
+  <label for="url">Görsel bağlantısı</label>
 
-    <label for="judge">Hakem ve kanıt çıkarma modeli</label>
-    <select id="judge"></select>
+  <div class="row">
+    <input type="text" id="url" placeholder="https://…/foto.jpg">
+    <button class="ghost" id="loadUrl" style="flex:0 0 auto">
+      Yükle
+    </button>
+  </div>
 
-    <label for="hint">Ek bağlam (isteğe bağlı)</label>
-    <textarea id="hint" placeholder="Örn: Avrupa'da bir tatilde çekildi, Mayıs ayı"></textarea>
+  <label for="depth">Tarama derinliği</label>
 
-    <label class="chk"><input type="checkbox" id="alts" checked> Alternatif konumları da listele</label>
-    <label class="chk"><input type="checkbox" id="geo" checked> Koordinatları harita verisiyle doğrula (OpenStreetMap)</label>
+  <select id="depth">
+    <option value="fast">Hızlı: tek model</option>
+    <option value="deep" selected>
+      Detaylı: kırpmalar + OCR + çoklu model + hakem
+    </option>
+    <option value="max">
+      Maksimum: 3×3 kırpma + tüm modeller + hakem
+    </option>
+  </select>
 
-    <button class="primary" id="go" disabled>Derin taramayı başlat</button>
-    <p class="note">Tahminler olasılıksaldır ve yanlış olabilir. Başkasının özel fotoğrafını izni olmadan konumlandırmak için kullanma. Doğrulama adımı yalnızca koordinatları OpenStreetMap'e gönderir, fotoğrafı göndermez.</p>
-  </section>
+  <label>Karşılaştırılacak modeller</label>
 
-  <section class="stack">
-    <div id="map" aria-label="Harita"></div>
-    <div class="card hidden" id="progress"><h2>İlerleme</h2><ul class="steps" id="steps"></ul></div>
-    <div class="card" id="result"><h2>Sonuç</h2><p class="muted" style="margin:0">Henüz analiz yok. Bir fotoğraf seçip taramayı başlat.</p></div>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <h2 style="margin:0">Geçmiş</h2><button class="ghost" id="clear">Temizle</button>
+  <div class="models" id="models">
+    <small class="muted">Modeller yükleniyor…</small>
+  </div>
+
+  <label for="custom">Özel model kimliği</label>
+
+  <input type="text" id="custom"
+         placeholder="örn. gpt-5.4-nano">
+
+  <label for="judge">Hakem modeli</label>
+  <select id="judge"></select>
+
+  <label for="hint">Ek bağlam</label>
+
+  <textarea id="hint"
+    placeholder="Örn: Avrupa'da bir tatilde çekildi, Mayıs ayı"></textarea>
+
+  <label class="chk">
+    <input type="checkbox" id="alts" checked>
+    Alternatif konumları da listele
+  </label>
+
+  <label class="chk">
+    <input type="checkbox" id="geo" checked>
+    Koordinatları OpenStreetMap ile doğrula
+  </label>
+
+  <label class="chk">
+    <input type="checkbox" id="useMemory" checked>
+    Önceki öğrenilmiş örnekleri kullan
+  </label>
+
+  <button class="primary" id="go" disabled>
+    Derin taramayı başlat
+  </button>
+
+  <p class="note">
+    Tahminler olasılıksaldır ve yanlış olabilir.
+    Yalnızca kullanma iznine sahip olduğun fotoğrafları analiz et.
+    Öğrenilen veriler varsayılan olarak bu tarayıcıda saklanır.
+  </p>
+
+</section>
+
+<section class="stack">
+
+  <div id="map" aria-label="Harita"></div>
+
+  <div class="card hidden" id="progress">
+    <h2>İlerleme</h2>
+    <ul class="steps" id="steps"></ul>
+  </div>
+
+  <div class="card" id="result">
+    <h2>Sonuç</h2>
+    <p class="muted" style="margin:0">
+      Henüz analiz yok. Bir fotoğraf seçip taramayı başlat.
+    </p>
+  </div>
+
+  <div class="card">
+
+    <div style="display:flex;justify-content:space-between;
+                align-items:center;margin-bottom:12px">
+      <h2 style="margin:0">Geçmiş</h2>
+      <button class="ghost" id="clear">Temizle</button>
+    </div>
+
+    <div class="hist" id="hist"></div>
+
+  </div>
+
+  <div class="card" id="memoryPanel">
+
+    <h2>🧠 Adaptive Memory</h2>
+
+    <p class="muted">
+      Kullanıcı tarafından doğrulanan konumlar ve
+      geçmiş analizlerden çıkarılan öğrenme verileri.
+    </p>
+
+    <div class="learning-stats">
+
+      <div>
+        <b id="globalCount">0</b>
+        <small>Öğrenilen örnek</small>
       </div>
-      <div class="hist" id="hist"></div>
+
+      <div>
+        <b id="globalError">0 km</b>
+        <small>Ortalama hata</small>
+      </div>
+
+      <div>
+        <b id="globalCountries">0</b>
+        <small>Ülke</small>
+      </div>
+
     </div>
-  </section>
+
+    <div id="memoryList" class="memory-list"></div>
+
+    <div class="learning-controls">
+      <button class="ghost" id="exportMemory">
+        Hafızayı dışa aktar
+      </button>
+
+      <button class="ghost" id="importMemory">
+        Hafıza içe aktar
+      </button>
+
+      <button class="ghost" id="deleteMemory">
+        Hafızayı temizle
+      </button>
+    </div>
+
+    <input type="file" id="memoryFile"
+           accept=".json,application/json" class="hidden">
+
+    <p class="note">
+      Hafıza silinirse öğrenilmiş örnekler geri getirilemez.
+      Önemli verileri düzenli olarak dışa aktar.
+    </p>
+
+  </div>
+
+</section>
+
 </main>
 
 <script src="https://js.puter.com/v2/"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script>
+'use strict';
+
+/* ==========================================
+   TEMEL AYARLAR
+========================================== */
+
 const $ = id => document.getElementById(id);
+
 const HKEY = 'izsur_history_v2';
-const COLORS = ['#D6336C','#2457C5','#E08A00','#7A3FB8','#1E7B45'];
-const S = {orig:null, full:null, thumb:null, exif:null, remoteOnly:false};
+const MEMORY_KEY = 'izsur_adaptive_memory_v1';
 
-/* ================= Yardımcılar ================= */
-const isNum = n => typeof n === 'number' && isFinite(n);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const sleep = ms => new Promise(r=>setTimeout(r,ms));
-const errMsg = e => e?.message || e?.error?.message || (typeof e==='string'?e:JSON.stringify(e)) || 'Bilinmeyen hata';
-function flag(cc){ if(!cc||cc.length!==2) return '🌍'; return String.fromCodePoint(...cc.toUpperCase().split('').map(c=>127397+c.charCodeAt(0))); }
-function haversine(a,b){
-  const R=6371, t=x=>x*Math.PI/180;
-  const dLat=t(b[0]-a[0]), dLon=t(b[1]-a[1]);
-  const h=Math.sin(dLat/2)**2+Math.cos(t(a[0]))*Math.cos(t(b[0]))*Math.sin(dLon/2)**2;
-  return 2*R*Math.asin(Math.sqrt(h));
+const COLORS = [
+  '#D6336C',
+  '#2457C5',
+  '#E08A00',
+  '#7A3FB8',
+  '#1E7B45'
+];
+
+const S = {
+  orig:null,
+  full:null,
+  thumb:null,
+  exif:null,
+  remoteOnly:false
+};
+
+let STEPS = [];
+let currentResult = null;
+let learningPickMode = false;
+let learningMarker = null;
+let selectedActualLocation = null;
+let currentPredictionLayer = null;
+
+const isNum = n =>
+  typeof n === 'number' && Number.isFinite(n);
+
+const esc = s =>
+  String(s ?? '').replace(/[&<>"']/g,c=>({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[c]));
+
+const sleep = ms =>
+  new Promise(resolve=>setTimeout(resolve,ms));
+
+const errMsg = e =>
+  e?.message ||
+  e?.error?.message ||
+  (typeof e === 'string' ? e : 'Bilinmeyen hata');
+
+function flag(cc) {
+  if(!cc || cc.length !== 2) return '🌍';
+
+  return String.fromCodePoint(
+    ...cc.toUpperCase().split('').map(
+      c => 127397 + c.charCodeAt(0)
+    )
+  );
 }
-function fmtKm(k){ return k<1?'<1 km':k<100?k.toFixed(1)+' km':Math.round(k).toLocaleString('tr')+' km'; }
-function resize(src,max,q){
-  return new Promise((res,rej)=>{
-    const img=new Image();
-    img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));
-      const c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q));};
-    img.onerror=()=>rej(new Error('Görsel okunamadı'));img.src=src;
-  });
+
+function haversine(a,b) {
+  const R = 6371;
+  const t = x => x * Math.PI / 180;
+
+  const dLat = t(b[0]-a[0]);
+  const dLon = t(b[1]-a[1]);
+
+  const h =
+    Math.sin(dLat/2)**2 +
+    Math.cos(t(a[0])) *
+    Math.cos(t(b[0])) *
+    Math.sin(dLon/2)**2;
+
+  return 2 * R * Math.asin(Math.sqrt(h));
 }
-function makeCrops(src,n,out){
-  return new Promise((res,rej)=>{
-    const img=new Image();
-    img.onload=()=>{
-      const W=img.width,H=img.height,list=[];
-      const cut=(x,y,w,h)=>{const k=Math.min(1,out/Math.max(w,h));const c=document.createElement('canvas');
-        c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext('2d').drawImage(img,x,y,w,h,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.85);};
-      const cw=W/n,ch=H/n,ov=.1;
-      for(let j=0;j<n;j++)for(let i=0;i<n;i++){
-        const x=Math.max(0,i*cw-cw*ov),y=Math.max(0,j*ch-ch*ov);
-        list.push(cut(x,y,Math.min(W-x,cw*(1+2*ov)),Math.min(H-y,ch*(1+2*ov))));
-      }
-      list.push(cut(W*.25,H*.25,W*.5,H*.5));
-      res(list);
+
+function fmtKm(k) {
+  if(!isNum(k)) return '—';
+
+  return k < 1
+    ? '<1 km'
+    : k < 100
+      ? k.toFixed(1)+' km'
+      : Math.round(k).toLocaleString('tr')+' km';
+}
+
+/* ==========================================
+   GÖRSEL İŞLEME
+========================================== */
+
+function resize(src,max,q) {
+  return new Promise((resolve,reject)=>{
+
+    const img = new Image();
+
+    img.onload = () => {
+      const k = Math.min(
+        1,
+        max / Math.max(img.width,img.height)
+      );
+
+      const c = document.createElement('canvas');
+
+      c.width = Math.round(img.width*k);
+      c.height = Math.round(img.height*k);
+
+      c.getContext('2d').drawImage(
+        img,0,0,c.width,c.height
+      );
+
+      resolve(c.toDataURL('image/jpeg',q));
     };
-    img.onerror=()=>rej(new Error('Görsel işlenemedi'));img.src=src;
+
+    img.onerror = () =>
+      reject(new Error('Görsel okunamadı'));
+
+    img.src = src;
   });
 }
 
-/* ================= EXIF ================= */
-function parseExif(buf){
-  try{
-    const v=new DataView(buf);
-    if(v.getUint16(0)!==0xFFD8) return null;
-    let o=2;
-    while(o<v.byteLength-4){
-      const m=v.getUint16(o),len=v.getUint16(o+2);
-      if(m===0xFFE1&&v.getUint32(o+4)===0x45786966) return readTiff(v,o+10);
+function makeCrops(src,n,out) {
+  return new Promise((resolve,reject)=>{
+
+    const img = new Image();
+
+    img.onload = () => {
+
+      const W = img.width;
+      const H = img.height;
+      const list = [];
+
+      const cut = (x,y,w,h) => {
+
+        const k = Math.min(
+          1,
+          out / Math.max(w,h)
+        );
+
+        const c = document.createElement('canvas');
+
+        c.width = Math.round(w*k);
+        c.height = Math.round(h*k);
+
+        c.getContext('2d').drawImage(
+          img,x,y,w,h,0,0,c.width,c.height
+        );
+
+        return c.toDataURL('image/jpeg',.85);
+      };
+
+      const cw = W/n;
+      const ch = H/n;
+      const ov = .1;
+
+      for(let j=0;j<n;j++) {
+        for(let i=0;i<n;i++) {
+
+          const x = Math.max(0,i*cw-cw*ov);
+          const y = Math.max(0,j*ch-ch*ov);
+
+          list.push(
+            cut(
+              x,
+              y,
+              Math.min(W-x,cw*(1+2*ov)),
+              Math.min(H-y,ch*(1+2*ov))
+            )
+          );
+        }
+      }
+
+      list.push(
+        cut(W*.25,H*.25,W*.5,H*.5)
+      );
+
+      resolve(list);
+    };
+
+    img.onerror = () =>
+      reject(new Error('Görsel işlenemedi'));
+
+    img.src = src;
+  });
+}
+
+/* ==========================================
+   EXIF
+========================================== */
+
+function parseExif(buf) {
+
+  try {
+
+    const v = new DataView(buf);
+
+    if(v.getUint16(0) !== 0xFFD8) return null;
+
+    let o = 2;
+
+    while(o < v.byteLength-4) {
+
+      const m = v.getUint16(o);
+      const len = v.getUint16(o+2);
+
+      if(
+        m === 0xFFE1 &&
+        v.getUint32(o+4) === 0x45786966
+      ) {
+        return readTiff(v,o+10);
+      }
+
       if((m&0xFF00)!==0xFF00) break;
-      o+=2+len;
+
+      o += 2+len;
     }
-  }catch(e){}
+
+  } catch(e) {}
+
   return null;
 }
-function readTiff(v,s){
-  const le=v.getUint16(s)===0x4949;
-  const u16=o=>v.getUint16(o,le),u32=o=>v.getUint32(o,le);
-  const tsz={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};
-  const readIFD=off=>{
-    const tags={},n=u16(s+off);
-    for(let i=0;i<n;i++){
-      const e=s+off+2+i*12,tag=u16(e),type=u16(e+2),cnt=u32(e+4);
-      const size=(tsz[type]||1)*cnt,vo=size>4?s+u32(e+8):e+8;
-      if(type===2){let t='';for(let k=0;k<cnt-1;k++)t+=String.fromCharCode(v.getUint8(vo+k));tags[tag]=t.trim();}
-      else if(type===5){const a=[];for(let k=0;k<cnt;k++){const d=u32(vo+k*8+4);a.push(d?u32(vo+k*8)/d:0);}tags[tag]=a;}
-      else if(type===3) tags[tag]=u16(vo);
-      else if(type===4) tags[tag]=u32(vo);
+
+function readTiff(v,s) {
+
+  const le = v.getUint16(s) === 0x4949;
+
+  const u16 = o => v.getUint16(o,le);
+  const u32 = o => v.getUint32(o,le);
+
+  const tsz = {
+    1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8
+  };
+
+  const readIFD = off => {
+
+    const tags = {};
+    const n = u16(s+off);
+
+    for(let i=0;i<n;i++) {
+
+      const e = s+off+2+i*12;
+
+      const tag = u16(e);
+      const type = u16(e+2);
+      const cnt = u32(e+4);
+
+      const size = (tsz[type]||1)*cnt;
+      const vo = size>4 ? s+u32(e+8) : e+8;
+
+      if(type===2) {
+
+        let t='';
+
+        for(let k=0;k<cnt-1;k++) {
+          t += String.fromCharCode(v.getUint8(vo+k));
+        }
+
+        tags[tag] = t.trim();
+
+      } else if(type===5) {
+
+        const a=[];
+
+        for(let k=0;k<cnt;k++) {
+          const d=u32(vo+k*8+4);
+          a.push(d ? u32(vo+k*8)/d : 0);
+        }
+
+        tags[tag]=a;
+
+      } else if(type===3) {
+
+        tags[tag]=u16(vo);
+
+      } else if(type===4) {
+
+        tags[tag]=u32(vo);
+      }
     }
+
     return tags;
   };
+
   const out={};
+
   const ifd0=readIFD(u32(s+4));
-  out.make=ifd0[0x010F];out.model=ifd0[0x0110];out.software=ifd0[0x0131];
-  if(ifd0[0x8769]){const ex=readIFD(ifd0[0x8769]);out.date=ex[0x9003]||ex[0x9004];}
-  if(ifd0[0x8825]){
+
+  out.make=ifd0[0x010F];
+  out.model=ifd0[0x0110];
+  out.software=ifd0[0x0131];
+
+  if(ifd0[0x8769]) {
+
+    const ex=readIFD(ifd0[0x8769]);
+
+    out.date=ex[0x9003]||ex[0x9004];
+  }
+
+  if(ifd0[0x8825]) {
+
     const g=readIFD(ifd0[0x8825]);
-    const dms=a=>a&&a.length>=3?a[0]+a[1]/60+a[2]/3600:null;
-    let lat=dms(g[2]),lon=dms(g[4]);
-    if(isNum(lat)&&isNum(lon)){
-      if(g[1]==='S')lat=-lat;if(g[3]==='W')lon=-lon;
-      out.lat=lat;out.lon=lon;
-      if(g[6]) out.alt=g[6][0]*(g[5]===1?-1:1);
+
+    const dms=a =>
+      a&&a.length>=3
+        ? a[0]+a[1]/60+a[2]/3600
+        : null;
+
+    let lat=dms(g[2]);
+    let lon=dms(g[4]);
+
+    if(isNum(lat)&&isNum(lon)) {
+
+      if(g[1]==='S') lat=-lat;
+      if(g[3]==='W') lon=-lon;
+
+      out.lat=lat;
+      out.lon=lon;
+
+      if(g[6]) {
+        out.alt=g[6][0]*(g[5]===1?-1:1);
+      }
     }
   }
-  return Object.keys(out).length?out:null;
+
+  return Object.keys(out).length ? out : null;
 }
-function exifBadges(){
-  const e=S.exif,box=$('exifBadges');
-  if(!e){box.innerHTML='<span class="badge" style="background:#EEF1F4;color:#5B6B78">EXIF verisi yok</span>';return;}
+
+function exifBadges() {
+
+  const e=S.exif;
+  const box=$('exifBadges');
+
+  if(!e) {
+    box.innerHTML=
+      '<span class="badge" style="background:#EEF1F4;color:#5B6B78">EXIF verisi yok</span>';
+    return;
+  }
+
   const b=[];
-  if(isNum(e.lat))b.push('GPS konumu var');
-  if(e.make||e.model)b.push([e.make,e.model].filter(Boolean).join(' '));
-  if(e.date)b.push(e.date);
-  box.innerHTML=b.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')||'<span class="badge">EXIF var, konum yok</span>';
+
+  if(isNum(e.lat)) b.push('GPS konumu var');
+
+  if(e.make||e.model) {
+    b.push([e.make,e.model].filter(Boolean).join(' '));
+  }
+
+  if(e.date) b.push(e.date);
+
+  box.innerHTML=b.map(x=>
+    '<span class="badge">'+esc(x)+'</span>'
+  ).join('') ||
+  '<span class="badge">EXIF var, konum yok</span>';
 }
 
-/* ================= Harita ================= */
-const map=L.map('map',{worldCopyJump:true}).setView([30,20],2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; OpenStreetMap'}).addTo(map);
+/* ==========================================
+   HARİTA
+========================================== */
+
+const map=L.map('map',{
+  worldCopyJump:true
+}).setView([30,20],2);
+
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom:18,
+    attribution:'&copy; OpenStreetMap'
+  }
+).addTo(map);
+
 const layer=L.layerGroup().addTo(map);
-function drawOnMap(R){
-  layer.clearLayers();
-  const pts=[],f=R.final;
-  (R.models||[]).forEach((m,i)=>{
-    const d=m.data; if(!isNum(d.latitude)||!isNum(d.longitude))return;
-    pts.push([d.latitude,d.longitude]);
-    L.circleMarker([d.latitude,d.longitude],{radius:7,color:'#fff',weight:2,fillColor:COLORS[(i+1)%COLORS.length],fillOpacity:.95})
-      .addTo(layer).bindTooltip(esc(m.model+': '+(d.city||d.country||'')));
-  });
-  (f.alternatives||[]).forEach(a=>{
-    if(isNum(a.latitude)&&isNum(a.longitude)){pts.push([a.latitude,a.longitude]);
-      L.circleMarker([a.latitude,a.longitude],{radius:5,color:'#1F6F78',weight:2,fillColor:'#fff',fillOpacity:1}).addTo(layer).bindTooltip(esc('Alternatif: '+(a.place||'')));}
-  });
-  if(R.exif&&isNum(R.exif.lat)){
-    pts.push([R.exif.lat,R.exif.lon]);
-    L.marker([R.exif.lat,R.exif.lon],{icon:L.divIcon({className:'',html:'<div class="exifpin"></div>',iconSize:[14,14]})}).addTo(layer).bindTooltip('EXIF GPS konumu');
-  }
-  if(isNum(f.latitude)&&isNum(f.longitude)){
-    const p=[f.latitude,f.longitude];pts.push(p);
-    L.circleMarker(p,{radius:11,color:'#fff',weight:3,fillColor:COLORS[0],fillOpacity:1}).addTo(layer).bindTooltip('Nihai tahmin',{permanent:false});
-    if(isNum(f.radius_km)&&f.radius_km>0)L.circle(p,{radius:f.radius_km*1000,color:'#1F6F78',weight:1.5,fillOpacity:.1}).addTo(layer);
-  }
-  if(pts.length>1)map.fitBounds(pts,{padding:[40,40],maxZoom:12});
-  else if(pts.length)map.setView(pts[0],f.radius_km>200?5:f.radius_km>30?8:11);
-}
 
-/* ================= Görsel yükleme ================= */
-function showPreview(src){$('dropInner').innerHTML='<img alt="Seçilen fotoğraf" src="'+src+'">';$('go').disabled=false;}
-async function loadBlob(blob){
-  const buf=await blob.arrayBuffer();
-  S.exif=parseExif(buf);
-  S.orig=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(new Blob([buf],{type:blob.type||'image/jpeg'}));});
-  S.full=await resize(S.orig,1600,.88);
-  S.thumb=await resize(S.orig,200,.7);
-  S.remoteOnly=false;
-  showPreview(S.full);exifBadges();
-}
-async function handleFile(f){
-  if(!f||!f.type.startsWith('image/'))return;
-  try{await loadBlob(f);}catch(e){showError(errMsg(e));}
-}
-$('drop').addEventListener('click',()=>$('file').click());
-$('drop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click();}});
-$('file').addEventListener('change',e=>handleFile(e.target.files[0]));
-['dragenter','dragover'].forEach(t=>$('drop').addEventListener(t,e=>{e.preventDefault();$('drop').classList.add('over');}));
-['dragleave','drop'].forEach(t=>$('drop').addEventListener(t,e=>{e.preventDefault();$('drop').classList.remove('over');}));
-$('drop').addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
-window.addEventListener('paste',e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it)handleFile(it.getAsFile());});
-$('loadUrl').addEventListener('click',async()=>{
-  const u=$('url').value.trim();
-  if(!/^https?:\/\//i.test(u))return showError('Geçerli bir http(s) bağlantısı gir.');
-  try{const r=await fetch(u);if(!r.ok)throw 0;await loadBlob(await r.blob());}
-  catch{ // CORS engeli: yalnızca bağlantıyı modele ver (kırpma ve EXIF yok)
-    S.orig=S.full=u;S.thumb=u;S.exif=null;S.remoteOnly=true;showPreview(u);exifBadges();
+map.on('click',function(e) {
+
+  if(!learningPickMode) return;
+
+  selectedActualLocation={
+    lat:e.latlng.lat,
+    lon:e.latlng.lng
+  };
+
+  if(learningMarker) {
+    map.removeLayer(learningMarker);
+  }
+
+  learningMarker=L.marker(e.latlng)
+    .addTo(map)
+    .bindPopup('Senin doğruladığın gerçek konum')
+    .openPopup();
+
+  const status=$('learnStatus');
+
+  if(status) {
+    status.textContent=
+      'Seçilen koordinat: '+
+      e.latlng.lat.toFixed(5)+', '+
+      e.latlng.lng.toFixed(5);
   }
 });
 
-/* ================= Yapay zekâ çağrıları ================= */
-function extractText(resp){
-  if(typeof resp==='string')return resp;
-  const c=resp?.message?.content??resp?.text??resp;
-  if(typeof c==='string')return c;
-  if(Array.isArray(c))return c.map(p=>p.text??'').join('');
+function drawOnMap(R) {
+
+  layer.clearLayers();
+
+  const pts=[];
+  const f=R.final;
+
+  (R.models||[]).forEach((m,i)=>{
+
+    const d=m.data;
+
+    if(!isNum(d.latitude)||!isNum(d.longitude)) return;
+
+    pts.push([d.latitude,d.longitude]);
+
+    L.circleMarker(
+      [d.latitude,d.longitude],
+      {
+        radius:7,
+        color:'#fff',
+        weight:2,
+        fillColor:COLORS[(i+1)%COLORS.length],
+        fillOpacity:.95
+      }
+    )
+    .addTo(layer)
+    .bindTooltip(
+      esc(m.model+': '+(d.city||d.country||''))
+    );
+  });
+
+  (f.alternatives||[]).forEach(a=>{
+
+    if(isNum(a.latitude)&&isNum(a.longitude)) {
+
+      pts.push([a.latitude,a.longitude]);
+
+      L.circleMarker(
+        [a.latitude,a.longitude],
+        {
+          radius:5,
+          color:'#1F6F78',
+          weight:2,
+          fillColor:'#fff',
+          fillOpacity:1
+        }
+      )
+      .addTo(layer)
+      .bindTooltip(
+        esc('Alternatif: '+(a.place||''))
+      );
+    }
+  });
+
+  if(R.exif&&isNum(R.exif.lat)) {
+
+    pts.push([R.exif.lat,R.exif.lon]);
+
+    L.marker(
+      [R.exif.lat,R.exif.lon],
+      {
+        icon:L.divIcon({
+          className:'',
+          html:'<div class="exifpin"></div>',
+          iconSize:[14,14]
+        })
+      }
+    )
+    .addTo(layer)
+    .bindTooltip('EXIF GPS konumu');
+  }
+
+  if(isNum(f.latitude)&&isNum(f.longitude)) {
+
+    const p=[f.latitude,f.longitude];
+
+    pts.push(p);
+
+    L.circleMarker(p,{
+      radius:11,
+      color:'#fff',
+      weight:3,
+      fillColor:COLORS[0],
+      fillOpacity:1
+    })
+    .addTo(layer)
+    .bindTooltip('Nihai tahmin');
+
+    if(isNum(f.radius_km)&&f.radius_km>0) {
+
+      L.circle(p,{
+        radius:f.radius_km*1000,
+        color:'#1F6F78',
+        weight:1.5,
+        fillOpacity:.1
+      }).addTo(layer);
+    }
+  }
+
+  if(pts.length>1) {
+    map.fitBounds(pts,{
+      padding:[40,40],
+      maxZoom:12
+    });
+  } else if(pts.length) {
+    map.setView(
+      pts[0],
+      f.radius_km>200 ? 5 :
+      f.radius_km>30 ? 8 : 11
+    );
+  }
+}
+
+/* ==========================================
+   FOTOĞRAF YÜKLEME
+========================================== */
+
+function showPreview(src) {
+
+  $('dropInner').innerHTML=
+    '<img alt="Seçilen fotoğraf" src="'+src+'">';
+
+  $('go').disabled=false;
+}
+
+async function loadBlob(blob) {
+
+  if(!blob.type.startsWith('image/')) {
+    throw new Error('Dosya bir görsel değil.');
+  }
+
+  if(blob.size>20*1024*1024) {
+    throw new Error('Görsel 20 MB sınırını aşıyor.');
+  }
+
+  const buf=await blob.arrayBuffer();
+
+  S.exif=parseExif(buf);
+
+  S.orig=await new Promise(resolve=>{
+
+    const fr=new FileReader();
+
+    fr.onload=()=>resolve(fr.result);
+
+    fr.readAsDataURL(
+      new Blob([buf],{
+        type:blob.type||'image/jpeg'
+      })
+    );
+  });
+
+  S.full=await resize(S.orig,1600,.88);
+  S.thumb=await resize(S.orig,200,.7);
+
+  S.remoteOnly=false;
+
+  showPreview(S.full);
+  exifBadges();
+
+  resetSelection();
+}
+
+function resetSelection() {
+
+  selectedActualLocation=null;
+
+  if(learningMarker) {
+    map.removeLayer(learningMarker);
+    learningMarker=null;
+  }
+
+  learningPickMode=false;
+}
+
+async function handleFile(f) {
+
+  if(!f) return;
+
+  try {
+    await loadBlob(f);
+  } catch(e) {
+    showError(errMsg(e));
+  }
+}
+
+$('drop').addEventListener('click',()=>$('file').click());
+
+$('drop').addEventListener('keydown',e=>{
+
+  if(e.key==='Enter'||e.key===' ') {
+    e.preventDefault();
+    $('file').click();
+  }
+});
+
+$('file').addEventListener('change',e=>
+  handleFile(e.target.files[0])
+);
+
+['dragenter','dragover'].forEach(t=>{
+
+  $('drop').addEventListener(t,e=>{
+
+    e.preventDefault();
+    $('drop').classList.add('over');
+  });
+});
+
+['dragleave','drop'].forEach(t=>{
+
+  $('drop').addEventListener(t,e=>{
+
+    e.preventDefault();
+    $('drop').classList.remove('over');
+  });
+});
+
+$('drop').addEventListener('drop',e=>
+  handleFile(e.dataTransfer.files[0])
+);
+
+window.addEventListener('paste',e=>{
+
+  const it=[...(e.clipboardData?.items||[])]
+    .find(i=>i.type.startsWith('image/'));
+
+  if(it) handleFile(it.getAsFile());
+});
+
+$('loadUrl').addEventListener('click',async()=>{
+
+  const u=$('url').value.trim();
+
+  if(!/^https?:\/\//i.test(u)) {
+    return showError('Geçerli bir http(s) bağlantısı gir.');
+  }
+
+  try {
+
+    const r=await fetch(u);
+
+    if(!r.ok) throw new Error('Görsel indirilemedi.');
+
+    await loadBlob(await r.blob());
+
+  } catch(e) {
+
+    // CORS engelinde bağlantıyı doğrudan modele gönder.
+    S.orig=u;
+    S.full=u;
+    S.thumb=u;
+    S.exif=null;
+    S.remoteOnly=true;
+
+    showPreview(u);
+    exifBadges();
+    resetSelection();
+  }
+});
+
+/* ==========================================
+   ADAPTIVE MEMORY - HAFIZA
+========================================== */
+
+function getLearningMemory() {
+
+  try {
+
+    const data=JSON.parse(
+      localStorage.getItem(MEMORY_KEY)
+    );
+
+    return Array.isArray(data) ? data : [];
+
+  } catch(e) {
+
+    return [];
+  }
+}
+
+function saveLearningMemory(memory) {
+
+  try {
+
+    // En fazla 100 doğrulanmış örnek.
+    localStorage.setItem(
+      MEMORY_KEY,
+      JSON.stringify(memory.slice(0,100))
+    );
+
+    return true;
+
+  } catch(e) {
+
+    console.error('Hafıza kaydedilemedi:',e);
+
+    return false;
+  }
+}
+
+function getLearningStats() {
+
+  const memory=getLearningMemory();
+
+  if(!memory.length) {
+
+    return {
+      count:0,
+      avgError:0,
+      countries:0
+    };
+  }
+
+  const valid=memory.filter(
+    x=>isNum(x.distanceKm)
+  );
+
+  const avgError=valid.length
+    ? valid.reduce((s,x)=>s+x.distanceKm,0)/valid.length
+    : 0;
+
+  const countries=new Set(
+    memory.map(x=>x.actual?.countryCode).filter(Boolean)
+  ).size;
+
+  return {
+    count:memory.length,
+    avgError,
+    countries
+  };
+}
+
+/*
+  Görsel ipuçlarından basit anahtar kelime çıkarımı.
+  Bu bir görsel embedding sistemi değildir.
+  Metin ve kanıt benzerliği üzerinden örnek seçer.
+*/
+
+function normalizeTokens(text) {
+
+  return new Set(
+    String(text||'')
+      .toLocaleLowerCase('tr')
+      .replace(/[^\p{L}\p{N}\s]/gu,' ')
+      .split(/\s+/)
+      .filter(x=>x.length>3)
+  );
+}
+
+function extractClues(R) {
+
+  const clues=[];
+
+  const f=R.final;
+
+  (f.clues||[]).forEach(x=>{
+
+    if(x.observation) clues.push(x.observation);
+  });
+
+  const ev=R.evidence||{};
+
+  const fields=[
+    'texts',
+    'plates',
+    'signs_and_brands',
+    'landmarks',
+    'architecture',
+    'vegetation',
+    'terrain_geology',
+    'roads',
+    'infrastructure',
+    'vehicles',
+    'flags_symbols',
+    'other'
+  ];
+
+  fields.forEach(k=>{
+
+    (ev[k]||[]).forEach(x=>{
+
+      if(typeof x==='string') {
+        clues.push(x);
+      } else if(x) {
+
+        Object.values(x).forEach(v=>{
+
+          if(typeof v==='string'&&v.trim()) {
+            clues.push(v);
+          }
+        });
+      }
+    });
+  });
+
+  return [...new Set(clues)].slice(0,40);
+}
+
+function learningContext(evidence,enabled=true) {
+
+  if(!enabled) return '';
+
+  const memory=getLearningMemory();
+
+  if(!memory.length) return '';
+
+  const currentText=JSON.stringify(evidence||{});
+  const currentTokens=normalizeTokens(currentText);
+
+  const scored=memory.map(item=>{
+
+    const tokens=normalizeTokens(
+      (item.clues||[]).join(' ')
+    );
+
+    let common=0;
+
+    for(const t of currentTokens) {
+      if(tokens.has(t)) common++;
+    }
+
+    const union=new Set([
+      ...currentTokens,
+      ...tokens
+    ]).size;
+
+    const similarity=union ? common/union : 0;
+
+    return {
+      item,
+      similarity
+    };
+  });
+
+  scored.sort((a,b)=>b.similarity-a.similarity);
+
+  // Hem benzer hem de yakın zamanda doğrulanmış örnekleri al.
+  const selected=scored.slice(0,8);
+
+  const examples=selected.map(x=>({
+
+    correct_location:x.item.actual?.label,
+
+    country:x.item.actual?.country,
+
+    coordinates:x.item.actual?.coordinates,
+
+    previous_prediction:x.item.predicted?.label,
+
+    previous_error_km:Math.round(
+      x.item.distanceKm||0
+    ),
+
+    confidence:x.item.predicted?.confidence,
+
+    similarity:Math.round(x.similarity*100),
+
+    visual_clues:x.item.clues
+
+  }));
+
+  return `
+PREVIOUS HUMAN-VERIFIED EXAMPLES:
+
+${JSON.stringify(examples).slice(0,9000)}
+
+LEARNING INSTRUCTIONS:
+
+1. These locations were verified by a human user.
+2. Compare current visual evidence with these examples.
+3. Search for recurring architectural, vegetation,
+   road, language, sign and infrastructure patterns.
+4. Do not assume similar images are from the same place.
+5. Do not blindly copy old coordinates.
+6. A human-verified location is stronger than a previous
+   AI prediction, but only for that specific photograph.
+7. If the new photograph contradicts an old example,
+   prioritize current evidence.
+8. Mention relevant similarities and differences.
+9. Do not increase confidence without real evidence.
+10. Never invent geographical details.
+
+`;
+}
+
+async function saveCorrection(R,label,lat,lon) {
+
+  const f=R.final;
+
+  const distance=haversine(
+    [f.latitude,f.longitude],
+    [lat,lon]
+  );
+
+  let geo=null;
+
+  try {
+    geo=await reverseGeo(lat,lon);
+  } catch(e) {}
+
+  const clues=extractClues(R);
+
+  const entry={
+
+    id:crypto.randomUUID(),
+
+    date:new Date().toISOString(),
+
+    actual:{
+
+      label:label||geo?.name||'Doğrulanmış konum',
+
+      country:geo?.country||'',
+
+      countryCode:geo?.cc||'',
+
+      coordinates:[lat,lon]
+    },
+
+    predicted:{
+
+      label:[f.city,f.country]
+        .filter(Boolean)
+        .join(', '),
+
+      coordinates:[
+        f.latitude,
+        f.longitude
+      ],
+
+      confidence:f.confidence
+    },
+
+    distanceKm:distance,
+
+    clues:clues
+
+  };
+
+  const memory=getLearningMemory();
+
+  // Aynı fotoğrafın aynı konumla tekrar kaydedilmesini önle.
+  const duplicate=memory.some(x=>
+    x.id===entry.id
+  );
+
+  if(duplicate) {
+    throw new Error('Bu örnek zaten kayıtlı.');
+  }
+
+  memory.unshift(entry);
+
+  if(!saveLearningMemory(memory)) {
+    throw new Error(
+      'Tarayıcı hafızası dolu. Eski örnekleri dışa aktarıp temizlemeyi dene.'
+    );
+  }
+
+  return entry;
+}
+
+function updateLearningStats() {
+
+  const stats=getLearningStats();
+
+  if($('globalCount')) {
+    $('globalCount').textContent=stats.count;
+    $('globalError').textContent=
+      stats.avgError.toFixed(1)+' km';
+    $('globalCountries').textContent=
+      stats.countries;
+  }
+
+  if($('learnCount')) {
+    $('learnCount').textContent=stats.count;
+    $('learnError').textContent=
+      stats.avgError.toFixed(1)+' km';
+    $('learnCountries').textContent=
+      stats.countries;
+  }
+}
+
+function renderMemory() {
+
+  const memory=getLearningMemory();
+
+  const box=$('memoryList');
+
+  if(!memory.length) {
+
+    box.innerHTML=
+      '<p class="muted">Henüz öğrenilmiş örnek yok.</p>';
+
+    updateLearningStats();
+    return;
+  }
+
+  box.innerHTML=memory.slice(0,20).map((x,i)=>`
+
+    <div class="memory-entry">
+
+      <strong>${esc(x.actual?.label||'Bilinmeyen konum')}</strong>
+
+      <small>
+        Doğru: ${esc(x.actual?.country||'Ülke bilinmiyor')}
+        · Hata: ${esc(fmtKm(x.distanceKm))}
+      </small>
+
+      <p>
+        AI tahmini:
+        ${esc(x.predicted?.label||'Bilinmiyor')}
+      </p>
+
+      <small>
+        ${esc(new Date(x.date).toLocaleString('tr'))}
+      </small>
+
+      <button class="ghost" data-memory="${esc(x.id)}">
+        Örneği sil
+      </button>
+
+    </div>
+
+  `).join('');
+
+  box.querySelectorAll('[data-memory]').forEach(btn=>{
+
+    btn.addEventListener('click',()=>{
+
+      const id=btn.dataset.memory;
+
+      const updated=getLearningMemory().filter(
+        x=>x.id!==id
+      );
+
+      saveLearningMemory(updated);
+
+      renderMemory();
+    });
+  });
+
+  updateLearningStats();
+}
+
+/* Hafıza dışa aktarma */
+
+$('exportMemory').addEventListener('click',()=>{
+
+  const memory=getLearningMemory();
+
+  const blob=new Blob(
+    [JSON.stringify({
+      application:'Izsur Adaptive Memory',
+      version:1,
+      exportedAt:new Date().toISOString(),
+      examples:memory
+    },null,2)],
+    {type:'application/json'}
+  );
+
+  const a=document.createElement('a');
+
+  a.href=URL.createObjectURL(blob);
+  a.download='izsur-memory-backup.json';
+  a.click();
+
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+
+/* Hafıza içe aktarma */
+
+$('importMemory').addEventListener('click',()=>
+  $('memoryFile').click()
+);
+
+$('memoryFile').addEventListener('change',async e=>{
+
+  const file=e.target.files[0];
+
+  if(!file) return;
+
+  try {
+
+    const data=JSON.parse(await file.text());
+
+    const imported=Array.isArray(data)
+      ? data
+      : data.examples;
+
+    if(!Array.isArray(imported)) {
+      throw new Error('Geçersiz hafıza dosyası.');
+    }
+
+    const current=getLearningMemory();
+
+    const ids=new Set(current.map(x=>x.id));
+
+    const valid=imported.filter(x=>
+
+      x &&
+      typeof x.id==='string' &&
+      x.actual &&
+      Array.isArray(x.actual.coordinates) &&
+      x.actual.coordinates.length===2 &&
+      x.predicted &&
+      isNum(x.actual.coordinates[0]) &&
+      isNum(x.actual.coordinates[1]) &&
+      isNum(x.distanceKm) &&
+      Array.isArray(x.clues)
+
+    );
+
+    let added=0;
+
+    for(const item of valid) {
+
+      if(!ids.has(item.id)) {
+        current.push(item);
+        ids.add(item.id);
+        added++;
+      }
+    }
+
+    saveLearningMemory(current);
+
+    renderMemory();
+
+    alert(added+' yeni örnek içe aktarıldı.');
+
+  } catch(err) {
+
+    alert('İçe aktarma hatası: '+errMsg(err));
+  }
+
+  e.target.value='';
+});
+
+$('deleteMemory').addEventListener('click',()=>{
+
+  if(!confirm(
+    'Tüm öğrenilmiş örnekleri silmek istediğine emin misin?'
+  )) return;
+
+  localStorage.removeItem(MEMORY_KEY);
+
+  renderMemory();
+});
+
+/* ==========================================
+   PUTER AI
+========================================== */
+
+function extractText(resp) {
+
+  if(typeof resp==='string') return resp;
+
+  const c=
+    resp?.message?.content ??
+    resp?.text ??
+    resp;
+
+  if(typeof c==='string') return c;
+
+  if(Array.isArray(c)) {
+
+    return c.map(p=>p.text??'').join('');
+  }
+
   return String(c);
 }
-function repairJSON(s){
-  return s.replace(/[“”]/g,"'")
-    .replace(/:\s*(-?\d+(?:\.\d+)?)\s*-\s*\d+(?:\.\d+)?(\s*[,}\]])/g,': $1$2')
+
+function repairJSON(s) {
+
+  return s
+    .replace(/[“”]/g,'"')
     .replace(/,\s*([}\]])/g,'$1')
     .replace(/"\s*\n\s*"/g,'",\n"')
     .replace(/([}\]])\s*\n\s*(["{\[])/g,'$1,\n$2')
     .replace(/(\d|true|false|null)\s*\n\s*"/g,'$1,\n"');
 }
-function parseJSON(t){
-  const c=t.replace(/```json|```/g,'').trim();
-  const a=c.indexOf('{'),b=c.lastIndexOf('}');
-  if(a<0||b<0)throw new Error('Model geçerli JSON döndürmedi');
+
+function parseJSON(t) {
+
+  const c=t
+    .replace(/```json/gi,'')
+    .replace(/```/g,'')
+    .trim();
+
+  const a=c.indexOf('{');
+  const b=c.lastIndexOf('}');
+
+  if(a<0||b<0) {
+    throw new Error('Model geçerli JSON döndürmedi.');
+  }
+
   const raw=c.slice(a,b+1);
-  try{return JSON.parse(raw);}
-  catch(e1){try{return JSON.parse(repairJSON(raw));}catch(e2){throw e1;}}
+
+  try {
+
+    return JSON.parse(raw);
+
+  } catch(e) {
+
+    return JSON.parse(repairJSON(raw));
+  }
 }
-async function askJSON(prompt,images,model){
+
+async function ask(prompt,images,model) {
+
+  if(!images||!images.length) {
+
+    const response=await puter.ai.chat(
+      prompt,
+      {model:model}
+    );
+
+    return extractText(response);
+  }
+
+  let lastError=null;
+
+  const attempts=[
+    images,
+    images.slice(0,3),
+    images.slice(0,1)
+  ];
+
+  const unique=attempts.filter((a,i)=>
+    a.length>0 &&
+    attempts.findIndex(x=>x.length===a.length)===i
+  );
+
+  for(const imgs of unique) {
+
+    try {
+
+      const media=imgs.length===1
+        ? imgs[0]
+        : imgs;
+
+      // Güncel Puter.js medya parametresi.
+      const response=await puter.ai.chat(
+        prompt,
+        media,
+        false,
+        {model:model}
+      );
+
+      return extractText(response);
+
+    } catch(e) {
+
+      lastError=e;
+    }
+  }
+
+  throw new Error(errMsg(lastError));
+}
+
+async function askJSON(prompt,images,model) {
+
   const t=await ask(prompt,images,model);
-  try{return parseJSON(t);}
-  catch(e){
-    const fixed=await ask('The following text should be ONE valid JSON object but contains syntax errors. Return ONLY the corrected valid JSON object with the same content, no markdown, no commentary:\n'+t.slice(0,12000),[],model);
+
+  try {
+
+    return parseJSON(t);
+
+  } catch(e) {
+
+    const fixed=await ask(
+
+      'The following text should be ONE valid JSON object. '+
+      'Correct syntax errors and return ONLY JSON. '+
+      'Preserve the original content:\n'+
+      t.slice(0,12000),
+
+      [],
+      model
+    );
+
     return parseJSON(fixed);
   }
 }
-async function ask(prompt,images,model){
-  if(!images.length)return extractText(await puter.ai.chat(prompt,{model}));
-  const tries=[images,images.slice(0,3),images.slice(0,1)].filter((a,i,arr)=>i===0||a.length<arr[i-1].length);
-  let last;
-  for(const imgs of tries){
-    try{
-      const r=await puter.ai.chat(prompt,imgs.length===1?imgs[0]:imgs,{model});
-      return extractText(r);
-    }catch(e){last=e;}
-  }
-  throw new Error(errMsg(last));
-}
 
-const SCHEMA=(alts)=>`{
- "country":"","country_code":"","region":"","city":"","neighborhood":"",
- "latitude":0,"longitude":0,"confidence":0,"radius_km":0,
+/* ==========================================
+   ANALİZ PROMPTLARI
+========================================== */
+
+const SCHEMA=alts=>`
+
+{
+ "country":"",
+ "country_code":"",
+ "region":"",
+ "city":"",
+ "neighborhood":"",
+ "latitude":0,
+ "longitude":0,
+ "confidence":0,
+ "radius_km":0,
  "summary":"3-4 sentences in Turkish",
- "reasoning":"step by step deduction in Turkish",
- "driving_side":"unknown","climate":"","language_script":"","season_time":"",
- "clues":[{"category":"Mimari","observation":"Turkish text","weight":"high"}],
- "ruled_out":["Turkish text"],
- "alternatives":${alts?'[{"place":"","latitude":0,"longitude":0,"confidence":0}]':'[]'}
-}
-Rules: the values above are format placeholders only; replace them with your real findings. country_code is ISO-3166 alpha-2. latitude, longitude, confidence (0 to 100) and radius_km (uncertainty in km) must be plain numbers, never ranges or quoted. category must be one of: Mimari, Bitki örtüsü, Tabela ve dil, Yol ve altyapı, Araçlar, Arazi, Güneş ve iklim, Diğer. weight is high, medium or low. driving_side is left, right or unknown. ${alts?'Give 2 to 3 alternatives.':'Leave alternatives empty.'} Do not use double quotes inside string values. Output strictly valid JSON with no comments.`;
-
-function evidencePrompt(nImgs){return `You are a forensic image analyst preparing evidence for photo geolocation.
-You receive ${nImgs} images: the first is the full photo, the others are zoomed crops (grid tiles left-to-right, top-to-bottom, then a centre crop). The crops overlap with the full photo.
-Catalogue EVERYTHING that carries geographic information. Read every piece of visible text literally (OCR) in its original script and give a translation.
-Report only what is really visible. Never identify or describe individual people.
-Reply with ONLY one JSON object, no markdown:
-{"texts":[{"text":"","language":"","where":"","meaning":""}],
- "plates":[{"text":"","format_notes":"","likely_country":""}],
- "signs_and_brands":[{"name":"","type":"","region_hint":""}],
- "landmarks":[{"name":"","confidence":""}],
- "architecture":[{"item":"","style":"","region_hint":""}],
- "vegetation":[{"species_or_type":"","region_hint":""}],
- "terrain_geology":[{"item":"","region_hint":""}],
- "roads":[{"feature":"lane marking colours, kerbs, bollards, road sign shapes","region_hint":""}],
- "infrastructure":[{"item":"poles, power lines, sockets, street lights, hydrants, manholes","region_hint":""}],
- "vehicles":[{"item":"","region_hint":""}],
- "flags_symbols":[{"item":"","region_hint":""}],
- "sun_shadow":"shadow direction/length, sun elevation, hemisphere and time-of-day inference",
- "weather_climate":"","other":[{"item":"","region_hint":""}]}`;}
-
-function locatePrompt(ev,exif,hint,alts){
-  return `You are an expert photo geolocation analyst (GeoGuessr world-champion level).
-Locate where this photo was taken. Use the image plus the structured evidence below (OCR, zoomed-crop findings).
-Weigh strong, specific evidence (readable text, plates, landmarks, road standards, languages) over generic mood. Consider the sun/shadow geometry. Explicitly rule out competing regions.
-Do NOT identify any person. If evidence is thin, lower the confidence and widen radius_km honestly.
-${ev?'EVIDENCE JSON:\n'+JSON.stringify(ev).slice(0,7000)+'\n':''}${exif?'PHOTO METADATA (may be stripped or edited): '+JSON.stringify(exif)+'\n':''}${hint?'User context: '+hint+'\n':''}
-Reply with ONLY one valid JSON object, no markdown, exactly this shape:
-${SCHEMA(alts)}`;
-}
-function judgePrompt(ev,exif,results,hint,alts){
-  return `You are the chief adjudicator for a photo geolocation task. Several analysts independently produced estimates.
-Study the image, the evidence and the analysts' answers. Find contradictions, discard claims not supported by visible evidence, and decide the single most probable location. If analysts disagree, choose by strength of evidence, not by majority alone. State each contradiction you found.
-Do NOT identify any person.
-${ev?'EVIDENCE JSON:\n'+JSON.stringify(ev).slice(0,5000)+'\n':''}${exif?'PHOTO METADATA: '+JSON.stringify(exif)+'\n':''}${hint?'User context: '+hint+'\n':''}
-ANALYST RESULTS:
-${JSON.stringify(results.map(r=>({model:r.model,country:r.data.country,region:r.data.region,city:r.data.city,latitude:r.data.latitude,longitude:r.data.longitude,confidence:r.data.confidence,summary:r.data.summary,ruled_out:r.data.ruled_out}))).slice(0,6000)}
-
-Reply with ONLY one valid JSON object, no markdown, exactly this shape plus two extra keys "contradictions":["Turkish strings"] and "verification_notes":"Turkish":
-${SCHEMA(alts)}`;
+ "reasoning":"Turkish explanation",
+ "driving_side":"unknown",
+ "climate":"",
+ "language_script":"",
+ "season_time":"",
+ "clues":[
+  {
+   "category":"Mimari",
+   "observation":"Turkish text",
+   "weight":"high"
+  }
+ ],
+ "ruled_out":[],
+ "alternatives":${alts
+   ? '[{"place":"","latitude":0,"longitude":0,"confidence":0}]'
+   : '[]'}
 }
 
-/* ================= İlerleme ================= */
-let STEPS=[];
-function initSteps(list){
-  STEPS=list;$('progress').classList.remove('hidden');renderSteps();
+RULES:
+
+- Replace placeholders with findings.
+- country_code must be ISO-3166 alpha-2.
+- Latitude, longitude, confidence and radius_km must be numbers.
+- Confidence must be between 0 and 100.
+- Coordinates must be plausible.
+- Do not invent exact locations.
+- If evidence is weak, widen the uncertainty radius.
+- driving_side: left, right or unknown.
+- Clue categories:
+  Mimari, Bitki örtüsü, Tabela ve dil,
+  Yol ve altyapı, Araçlar, Arazi,
+  Güneş ve iklim, Diğer.
+- weight: high, medium or low.
+- ${alts?'Give 2-3 alternatives.':'Leave alternatives empty.'}
+- Output strictly valid JSON.
+`;
+
+function evidencePrompt(nImgs) {
+
+  return `
+
+You are a forensic image analyst.
+
+You receive ${nImgs} images:
+the first is the full photograph,
+the others are zoomed crops.
+
+Find every visible geographic clue.
+
+Read visible text literally.
+Identify its original language and meaning.
+Report only visible evidence.
+Do not identify people.
+
+Return ONLY JSON:
+
+{
+ "texts":[
+  {
+   "text":"",
+   "language":"",
+   "where":"",
+   "meaning":""
+  }
+ ],
+ "plates":[],
+ "signs_and_brands":[],
+ "landmarks":[],
+ "architecture":[],
+ "vegetation":[],
+ "terrain_geology":[],
+ "roads":[],
+ "infrastructure":[],
+ "vehicles":[],
+ "flags_symbols":[],
+ "sun_shadow":"",
+ "weather_climate":"",
+ "other":[]
 }
-function renderSteps(){
+
+`;
+}
+
+function locatePrompt(ev,exif,hint,alts,learned) {
+
+  return `
+
+You are an expert photo geolocation analyst.
+
+Determine where this photograph was taken.
+
+Use:
+- visual evidence
+- readable text
+- license plate formats
+- architecture
+- vegetation
+- road standards
+- infrastructure
+- sun and shadow geometry
+- climate
+- EXIF metadata
+- previously verified examples
+
+Prioritize specific evidence over generic impressions.
+
+Do not identify any person.
+
+If evidence is weak, reduce confidence.
+
+${ev?'IMAGE EVIDENCE:\n'+JSON.stringify(ev).slice(0,7000)+'\n':''}
+
+${exif?'PHOTO METADATA:\n'+JSON.stringify(exif)+'\n':''}
+
+${hint?'USER CONTEXT:\n'+hint+'\n':''}
+
+${learned||''}
+
+Return ONLY a valid JSON object.
+
+${SCHEMA(alts)}
+
+`;
+}
+
+function judgePrompt(ev,exif,results,hint,alts,learned) {
+
+  return `
+
+You are the chief adjudicator of a photo geolocation system.
+
+Multiple AI models independently estimated the location.
+
+Study their answers and the original photograph.
+
+Your tasks:
+
+1. Find contradictions.
+2. Discard unsupported claims.
+3. Compare the geographical evidence.
+4. Evaluate coordinates.
+5. Decide the most probable location.
+6. Explain why competing locations are less likely.
+
+Do not use majority voting blindly.
+
+Do not identify any person.
+
+${ev?'EVIDENCE:\n'+JSON.stringify(ev).slice(0,5000)+'\n':''}
+
+${exif?'METADATA:\n'+JSON.stringify(exif)+'\n':''}
+
+${hint?'USER CONTEXT:\n'+hint+'\n':''}
+
+${learned||''}
+
+MODEL RESULTS:
+
+${JSON.stringify(
+  results.map(r=>({
+    model:r.model,
+    country:r.data.country,
+    region:r.data.region,
+    city:r.data.city,
+    latitude:r.data.latitude,
+    longitude:r.data.longitude,
+    confidence:r.data.confidence,
+    summary:r.data.summary,
+    ruled_out:r.data.ruled_out
+  }))
+).slice(0,6000)}
+
+Return ONLY JSON with two additional fields:
+
+"contradictions":[],
+"verification_notes":""
+
+${SCHEMA(alts)}
+
+`;
+}
+
+/* ==========================================
+   İLERLEME
+========================================== */
+
+function initSteps(list) {
+
+  STEPS=list;
+
+  $('progress').classList.remove('hidden');
+
+  renderSteps();
+}
+
+function renderSteps() {
+
   $('steps').innerHTML=STEPS.map(s=>{
-    const ic={wait:'○',run:'◐',ok:'✓',fail:'✕'}[s.st];
-    return '<li class="st-'+s.st+'"><span class="ic">'+ic+'</span><span>'+esc(s.text)+(s.note?' <small class="muted">'+esc(s.note)+'</small>':'')+'</span></li>';
+
+    const ic={
+      wait:'○',
+      run:'◐',
+      ok:'✓',
+      fail:'✕'
+    }[s.st];
+
+    return `
+      <li class="st-${s.st}">
+        <span class="ic">${ic}</span>
+        <span>
+          ${esc(s.text)}
+          ${s.note
+            ? '<small class="muted">'+esc(s.note)+'</small>'
+            : ''}
+        </span>
+      </li>
+    `;
+
   }).join('');
 }
-function step(id,st,note){const s=STEPS.find(x=>x.id===id);if(s){s.st=st;if(note!==undefined)s.note=note;renderSteps();}}
 
-/* ================= Ana akış ================= */
-async function reverseGeo(lat,lon){
-  const u='https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=tr&lat='+lat+'&lon='+lon;
-  const r=await fetch(u);if(!r.ok)throw new Error('geokodlama '+r.status);
-  const j=await r.json();
-  return {cc:(j.address?.country_code||'').toUpperCase(),name:j.display_name||'',country:j.address?.country||'',state:j.address?.state||j.address?.region||'',
-          city:j.address?.city||j.address?.town||j.address?.village||j.address?.county||''};
+function step(id,st,note) {
+
+  const s=STEPS.find(x=>x.id===id);
+
+  if(s) {
+    s.st=st;
+    if(note!==undefined) s.note=note;
+    renderSteps();
+  }
 }
 
+/* ==========================================
+   OPENSTREETMAP DOĞRULAMA
+========================================== */
+
+async function reverseGeo(lat,lon) {
+
+  const u=
+    'https://nominatim.openstreetmap.org/reverse?format=jsonv2'+
+    '&zoom=14&accept-language=tr'+
+    '&lat='+encodeURIComponent(lat)+
+    '&lon='+encodeURIComponent(lon);
+
+  const r=await fetch(u);
+
+  if(!r.ok) {
+    throw new Error('Geokodlama HTTP '+r.status);
+  }
+
+  const j=await r.json();
+
+  return {
+
+    cc:(j.address?.country_code||'').toUpperCase(),
+
+    name:j.display_name||'',
+
+    country:j.address?.country||'',
+
+    state:j.address?.state||j.address?.region||'',
+
+    city:
+      j.address?.city||
+      j.address?.town||
+      j.address?.village||
+      j.address?.county||
+      ''
+
+  };
+}
+
+/* ==========================================
+   ANA ANALİZ
+========================================== */
+
 $('go').addEventListener('click',async()=>{
-  if(!S.full)return;
-  const depth=$('depth').value,hint=$('hint').value.trim(),wantAlts=$('alts').checked,doGeo=$('geo').checked;
-  let models=[...document.querySelectorAll('.mdl:checked')].map(c=>c.value);
-  const cm=$('custom').value.trim();if(cm&&!models.includes(cm))models.push(cm);
-  if(!models.length)return showError('En az bir model seç.');
-  if(depth==='fast')models=models.slice(0,1);
+
+  if(!S.full) return;
+
+  const depth=$('depth').value;
+  const hint=$('hint').value.trim();
+  const wantAlts=$('alts').checked;
+  const doGeo=$('geo').checked;
+  const useMemory=$('useMemory').checked;
+
+  let models=[
+    ...document.querySelectorAll('.mdl:checked')
+  ].map(c=>c.value);
+
+  const cm=$('custom').value.trim();
+
+  if(cm&&!models.includes(cm)) {
+    models.push(cm);
+  }
+
+  if(!models.length) {
+    return showError('En az bir model seç.');
+  }
+
+  if(depth==='fast') {
+    models=models.slice(0,1);
+  }
+
   const judgeModel=$('judge').value;
-  const useEvidence=depth!=='fast'&&!S.remoteOnly||(depth!=='fast'&&S.remoteOnly);
+
+  const useEvidence=depth!=='fast';
   const useJudge=depth!=='fast';
-  const btn=$('go');btn.disabled=true;btn.textContent='Taranıyor…';
+
+  const btn=$('go');
+
+  btn.disabled=true;
+  btn.textContent='Taranıyor…';
+
+  currentResult=null;
 
   initSteps([
+
     {id:'exif',text:'Metadata (EXIF) okunuyor',st:'wait'},
-    ...(useEvidence?[{id:'crops',text:'Yakın plan kırpmalar hazırlanıyor',st:'wait'},{id:'evidence',text:'Kanıt çıkarma: OCR, plaka, mimari, bitki, altyapı, gölge',st:'wait'}]:[]),
-    ...models.map(m=>({id:'m:'+m,text:'Konum analizi: '+m,st:'wait'})),
-    ...(useJudge?[{id:'judge',text:'Hakem değerlendirmesi ve çelişki kontrolü',st:'wait'}]:[]),
-    ...(doGeo?[{id:'geo',text:'Koordinatlar harita verisiyle doğrulanıyor',st:'wait'}]:[]),
+
+    ...(useMemory
+      ? [{id:'memory',text:'Öğrenilmiş örnekler hazırlanıyor',st:'wait'}]
+      : []),
+
+    ...(useEvidence
+      ? [
+        {id:'crops',text:'Yakın plan kırpmalar hazırlanıyor',st:'wait'},
+        {id:'evidence',text:'OCR ve görsel kanıt çıkarımı',st:'wait'}
+      ]
+      : []),
+
+    ...models.map(m=>({
+      id:'m:'+m,
+      text:'Konum analizi: '+m,
+      st:'wait'
+    })),
+
+    ...(useJudge
+      ? [{
+        id:'judge',
+        text:'Hakem değerlendirmesi',
+        st:'wait'
+      }]
+      : []),
+
+    ...(doGeo
+      ? [{
+        id:'geo',
+        text:'OpenStreetMap doğrulaması',
+        st:'wait'
+      }]
+      : [])
+
   ]);
-  $('result').innerHTML='<h2>Sonuç</h2><p class="muted" style="margin:0">Tarama sürüyor…</p>';
 
-  try{
-    // 1) EXIF
+  $('result').innerHTML=
+    '<h2>Sonuç</h2><p class="muted">Tarama sürüyor…</p>';
+
+  try {
+
+    /* 1. EXIF */
+
     step('exif','run');
-    const exifForPrompt=S.exif?{camera:[S.exif.make,S.exif.model].filter(Boolean).join(' ')||undefined,date:S.exif.date,gps:isNum(S.exif.lat)?[+S.exif.lat.toFixed(5),+S.exif.lon.toFixed(5)]:undefined}:null;
-    step('exif','ok',S.exif?(isNum(S.exif.lat)?'GPS bulundu':'GPS yok'):'metadata yok');
 
-    // 2) Kanıt
+    const exifForPrompt=S.exif
+      ? {
+        camera:[
+          S.exif.make,
+          S.exif.model
+        ].filter(Boolean).join(' ')||undefined,
+
+        date:S.exif.date,
+
+        gps:isNum(S.exif.lat)
+          ? [
+            +S.exif.lat.toFixed(5),
+            +S.exif.lon.toFixed(5)
+          ]
+          : undefined
+      }
+      : null;
+
+    step(
+      'exif',
+      'ok',
+      S.exif
+        ? (isNum(S.exif.lat)?'GPS bulundu':'GPS yok')
+        : 'Metadata yok'
+    );
+
+    /* 2. HAFIZA */
+
+    let learned='';
+
+    if(useMemory) {
+
+      step('memory','run');
+
+      learned=learningContext(null,true);
+
+      step(
+        'memory',
+        'ok',
+        getLearningMemory().length+' kayıt incelendi'
+      );
+    }
+
+    /* 3. GÖRSEL KANIT */
+
     let evidence=null;
-    if(useEvidence){
-      let images=[S.full];
+    let images=[S.full];
+
+    if(useEvidence) {
+
       step('crops','run');
-      if(!S.remoteOnly){
-        try{images=[S.full,...await makeCrops(S.orig,depth==='max'?3:2,depth==='max'?900:1100)];step('crops','ok',(images.length-1)+' kırpma');}
-        catch(e){step('crops','fail',errMsg(e));}
-      }else step('crops','fail','uzak görsel: kırpma yapılamadı');
+
+      if(!S.remoteOnly) {
+
+        try {
+
+          images=[
+            S.full,
+            ...await makeCrops(
+              S.orig,
+              depth==='max'?3:2,
+              depth==='max'?900:1100
+            )
+          ];
+
+          step('crops','ok',(images.length-1)+' kırpma');
+
+        } catch(e) {
+
+          step('crops','fail',errMsg(e));
+        }
+
+      } else {
+
+        step('crops','fail','Uzak görsel: kırpma yapılamadı');
+      }
+
       step('evidence','run');
-      try{
-        evidence=await askJSON(evidencePrompt(images.length),images,judgeModel);
-        const n=Object.values(evidence).reduce((a,v)=>a+(Array.isArray(v)?v.length:v?1:0),0);
+
+      try {
+
+        evidence=await askJSON(
+          evidencePrompt(images.length),
+          images,
+          judgeModel
+        );
+
+        const n=Object.values(evidence).reduce(
+          (a,v)=>a+(Array.isArray(v)?v.length:v?1:0),
+          0
+        );
+
         step('evidence','ok',n+' kanıt');
-      }catch(e){step('evidence','fail',errMsg(e));}
+
+      } catch(e) {
+
+        step('evidence','fail',errMsg(e));
+      }
     }
 
-    // 3) Modeller (paralel)
-    const settled=await Promise.all(models.map(async m=>{
-      step('m:'+m,'run');
-      try{
-        const d=await askJSON(locatePrompt(evidence,exifForPrompt,hint,wantAlts),[S.full],m);
-        ['latitude','longitude','confidence','radius_km'].forEach(k=>{if(d[k]!=null)d[k]=Number(d[k]);});
-        step('m:'+m,'ok',d.city||d.country||'');
-        return {model:m,data:d};
-      }catch(e){step('m:'+m,'fail',errMsg(e));return null;}
-    }));
-    const results=settled.filter(r=>r&&isNum(r.data.latitude)&&isNum(r.data.longitude));
-    if(!results.length)throw new Error('Hiçbir model geçerli bir konum döndürmedi. Başka model seçmeyi dene.');
+    // Kanıt çıktıktan sonra benzer örnekleri yeniden seç.
+    if(useMemory&&evidence) {
 
-    // 4) Hakem
+      learned=learningContext(evidence,true);
+    }
+
+    /* 4. MODELLER */
+
+    const settled=await Promise.all(
+
+      models.map(async m=>{
+
+        step('m:'+m,'run');
+
+        try {
+
+          const d=await askJSON(
+
+            locatePrompt(
+              evidence,
+              exifForPrompt,
+              hint,
+              wantAlts,
+              learned
+            ),
+
+            [S.full],
+            m
+          );
+
+          [
+            'latitude',
+            'longitude',
+            'confidence',
+            'radius_km'
+          ].forEach(k=>{
+
+            if(d[k]!=null) {
+              d[k]=Number(d[k]);
+            }
+          });
+
+          if(
+            !isNum(d.latitude)||
+            !isNum(d.longitude)||
+            Math.abs(d.latitude)>90||
+            Math.abs(d.longitude)>180
+          ) {
+            throw new Error('Geçersiz koordinatlar');
+          }
+
+          step(
+            'm:'+m,
+            'ok',
+            d.city||d.country||''
+          );
+
+          return {
+            model:m,
+            data:d
+          };
+
+        } catch(e) {
+
+          step('m:'+m,'fail',errMsg(e));
+
+          return null;
+        }
+      })
+    );
+
+    const results=settled.filter(Boolean);
+
+    if(!results.length) {
+      throw new Error(
+        'Hiçbir model geçerli konum döndürmedi. Başka model seç.'
+      );
+    }
+
+    /* 5. HAKEM */
+
     let final=null;
-    if(useJudge){
+
+    if(useJudge) {
+
       step('judge','run');
-      try{
-        final=await askJSON(judgePrompt(evidence,exifForPrompt,results,hint,wantAlts),[S.full],judgeModel);
-        ['latitude','longitude','confidence','radius_km'].forEach(k=>{if(final[k]!=null)final[k]=Number(final[k]);});
-        if(!isNum(final.latitude)||!isNum(final.longitude))throw new Error('hakem koordinat vermedi');
+
+      try {
+
+        final=await askJSON(
+
+          judgePrompt(
+            evidence,
+            exifForPrompt,
+            results,
+            hint,
+            wantAlts,
+            learned
+          ),
+
+          [S.full],
+          judgeModel
+        );
+
+        [
+          'latitude',
+          'longitude',
+          'confidence',
+          'radius_km'
+        ].forEach(k=>{
+
+          if(final[k]!=null) {
+            final[k]=Number(final[k]);
+          }
+        });
+
+        if(
+          !isNum(final.latitude)||
+          !isNum(final.longitude)||
+          Math.abs(final.latitude)>90||
+          Math.abs(final.longitude)>180
+        ) {
+          throw new Error('Hakem geçerli koordinat vermedi');
+        }
+
         step('judge','ok',final.city||final.country||'');
-      }catch(e){step('judge','fail',errMsg(e)+' (en güvenli model seçildi)');final=null;}
-    }
-    if(!final){final={...results.slice().sort((a,b)=>(b.data.confidence||0)-(a.data.confidence||0))[0].data};}
 
-    // 5) Doğrulama
+      } catch(e) {
+
+        step('judge','fail',errMsg(e));
+        final=null;
+      }
+    }
+
+    if(!final) {
+
+      final={
+        ...results.slice().sort(
+          (a,b)=>
+            (b.data.confidence||0)-
+            (a.data.confidence||0)
+        )[0].data
+      };
+    }
+
+    /* 6. DOĞRULAMA */
+
     const checks=[];
-    let finalGeo=null,exifGeo=null;
-    const guesses=results.map(r=>[r.data.latitude,r.data.longitude]);
+
+    let finalGeo=null;
+    let exifGeo=null;
+
+    const guesses=results.map(r=>[
+      r.data.latitude,
+      r.data.longitude
+    ]);
+
     let spread=0;
-    for(let i=0;i<guesses.length;i++)for(let j=i+1;j<guesses.length;j++)spread=Math.max(spread,haversine(guesses[i],guesses[j]));
-    results.forEach(r=>r.dist=haversine([r.data.latitude,r.data.longitude],[final.latitude,final.longitude]));
 
-    if(doGeo){
+    for(let i=0;i<guesses.length;i++) {
+      for(let j=i+1;j<guesses.length;j++) {
+
+        spread=Math.max(
+          spread,
+          haversine(guesses[i],guesses[j])
+        );
+      }
+    }
+
+    results.forEach(r=>{
+
+      r.dist=haversine(
+        [r.data.latitude,r.data.longitude],
+        [final.latitude,final.longitude]
+      );
+    });
+
+    if(doGeo) {
+
       step('geo','run');
-      try{
-        finalGeo=await reverseGeo(final.latitude,final.longitude);
-        for(const r of results){await sleep(1100);try{r.geo=await reverseGeo(r.data.latitude,r.data.longitude);}catch{}}
-        if(S.exif&&isNum(S.exif.lat)){await sleep(1100);try{exifGeo=await reverseGeo(S.exif.lat,S.exif.lon);}catch{}}
+
+      try {
+
+        finalGeo=await reverseGeo(
+          final.latitude,
+          final.longitude
+        );
+
+        for(const r of results) {
+
+          await sleep(1100);
+
+          try {
+
+            r.geo=await reverseGeo(
+              r.data.latitude,
+              r.data.longitude
+            );
+
+          } catch(e) {}
+        }
+
+        if(S.exif&&isNum(S.exif.lat)) {
+
+          await sleep(1100);
+
+          try {
+
+            exifGeo=await reverseGeo(
+              S.exif.lat,
+              S.exif.lon
+            );
+
+          } catch(e) {}
+        }
+
         step('geo','ok');
-      }catch(e){step('geo','fail',errMsg(e));}
+
+      } catch(e) {
+
+        step('geo','fail',errMsg(e));
+      }
     }
 
-    let conf=isNum(final.confidence)?Math.max(0,Math.min(100,final.confidence)):50;
-    if(results.length>1){
-      if(spread<100){checks.push({ok:true,text:'Modeller birbirine '+fmtKm(spread)+' içinde yakınsıyor: güçlü uyum.'});conf=Math.min(99,conf+5);}
-      else if(spread<800)checks.push({ok:true,text:'Modeller arasında en fazla '+fmtKm(spread)+' fark var: orta düzey uyum.'});
-      else{checks.push({ok:false,text:'Modeller '+fmtKm(spread)+' kadar ayrışıyor: tahmin belirsiz.'});conf=Math.max(5,conf-15);}
-    }else checks.push({ok:false,text:'Tek model kullanıldı; çapraz karşılaştırma yapılamadı.'});
+    /* 7. GÜVEN DEĞERLENDİRMESİ */
 
-    if(finalGeo){
-      if(finalGeo.cc&&final.country_code&&finalGeo.cc===String(final.country_code).toUpperCase())
-        checks.push({ok:true,text:'Koordinat harita verisinde '+finalGeo.country+' içinde çıkıyor, iddia edilen ülkeyle uyumlu.'});
-      else if(finalGeo.cc){
-        checks.push({ok:false,text:'Koordinat harita verisinde '+(finalGeo.country||finalGeo.cc)+' içinde çıkıyor, ancak tahmin '+(final.country||'?')+' diyor. Koordinat ya da ülke yanlış olabilir.'});
+    let conf=isNum(final.confidence)
+      ? Math.max(0,Math.min(100,final.confidence))
+      : 50;
+
+    if(results.length>1) {
+
+      if(spread<100) {
+
+        checks.push({
+          ok:true,
+          text:'Modeller birbirine '+fmtKm(spread)+' içinde yakın.'
+        });
+
+        conf=Math.min(99,conf+5);
+
+      } else if(spread<800) {
+
+        checks.push({
+          ok:true,
+          text:'Modeller arasında en fazla '+fmtKm(spread)+' fark var.'
+        });
+
+      } else {
+
+        checks.push({
+          ok:false,
+          text:'Modeller '+fmtKm(spread)+' kadar ayrışıyor.'
+        });
+
         conf=Math.max(5,conf-15);
-      }else checks.push({ok:false,text:'Koordinat okyanus ya da haritasız bir alana düşüyor olabilir.'});
+      }
+
+    } else {
+
+      checks.push({
+        ok:false,
+        text:'Tek model kullanıldı; çapraz karşılaştırma yok.'
+      });
     }
-    const ex=S.exif;
-    if(ex&&isNum(ex.lat)){
-      const d=haversine([ex.lat,ex.lon],[final.latitude,final.longitude]);
-      if(d<=Math.max(5,final.radius_km||0)){checks.push({ok:true,text:'EXIF GPS konumu görsel tahminle örtüşüyor ('+fmtKm(d)+').'});conf=Math.max(conf,97);}
-      else checks.push({ok:false,text:'EXIF GPS konumu görsel tahminden '+fmtKm(d)+' uzakta. Metadata düzenlenmiş olabilir ya da fotoğraf başka yerde işlenmiş olabilir.'});
-    }else checks.push({ok:false,text:'EXIF GPS verisi yok (sosyal medya ve mesajlaşma uygulamaları genelde siler).'});
-    if(evidence){
-      const strong=(evidence.texts?.length||0)+(evidence.plates?.length||0)+(evidence.landmarks?.length||0);
-      checks.push({ok:strong>0,text:strong>0?strong+' güçlü kanıt bulundu (okunan metin, plaka ya da simge yapı).':'Okunabilir metin, plaka ya da simge yapı bulunamadı; tahmin genel çevresel ipuçlarına dayanıyor.'});
+
+    if(finalGeo) {
+
+      if(
+        finalGeo.cc&&
+        final.country_code&&
+        finalGeo.cc===String(final.country_code).toUpperCase()
+      ) {
+
+        checks.push({
+          ok:true,
+          text:'Harita ülkesi tahmin edilen ülkeyle uyumlu.'
+        });
+
+      } else if(finalGeo.cc) {
+
+        checks.push({
+          ok:false,
+          text:'Koordinat haritada '+finalGeo.country+
+            ' içinde görünüyor; tahmin '+final.country+' diyor.'
+        });
+
+        conf=Math.max(5,conf-15);
+
+      } else {
+
+        checks.push({
+          ok:false,
+          text:'Koordinat haritada doğrulanamadı.'
+        });
+      }
     }
+
+    if(S.exif&&isNum(S.exif.lat)) {
+
+      const d=haversine(
+        [S.exif.lat,S.exif.lon],
+        [final.latitude,final.longitude]
+      );
+
+      if(d<=Math.max(5,final.radius_km||0)) {
+
+        checks.push({
+          ok:true,
+          text:'EXIF GPS konumu görsel tahminle örtüşüyor ('+fmtKm(d)+').'
+        });
+
+        conf=Math.max(conf,97);
+
+      } else {
+
+        checks.push({
+          ok:false,
+          text:'EXIF GPS konumu tahminden '+fmtKm(d)+' uzakta.'
+        });
+      }
+
+    } else {
+
+      checks.push({
+        ok:false,
+        text:'EXIF GPS verisi yok.'
+      });
+    }
+
+    if(evidence) {
+
+      const strong=
+        (evidence.texts?.length||0)+
+        (evidence.plates?.length||0)+
+        (evidence.landmarks?.length||0);
+
+      checks.push({
+        ok:strong>0,
+        text:strong>0
+          ? strong+' güçlü kanıt bulundu.'
+          : 'Güçlü okunabilir kanıt bulunamadı.'
+      });
+    }
+
     final.confidence=Math.round(conf);
 
-    const R={final,models:results,evidence,exif:S.exif,exifGeo,finalGeo,checks,spread,depth};
-    render(R);drawOnMap(R);saveHistory(R);
-  }catch(e){
+    /* 8. SONUÇ */
+
+    const R={
+
+      final,
+      models:results,
+      evidence,
+      exif:S.exif,
+      exifGeo,
+      finalGeo,
+      checks,
+      spread,
+      depth,
+
+      learnedExamples:useMemory
+        ? getLearningMemory().length
+        : 0
+
+    };
+
+    currentResult=R;
+
+    render(R);
+    drawOnMap(R);
+    saveHistory(R);
+
+  } catch(e) {
+
     showError(errMsg(e));
-  }finally{
-    btn.disabled=false;btn.textContent='Derin taramayı başlat';
+
+  } finally {
+
+    btn.disabled=false;
+    btn.textContent='Derin taramayı başlat';
   }
 });
 
-/* ================= Sonuç gösterimi ================= */
-function showError(msg){
-  $('result').innerHTML='<h2>Sonuç</h2><div class="err">Hata: '+esc(msg)+'<br>Başka bir model ya da daha düşük derinlik dene.</div>';
+/* ==========================================
+   HATA GÖSTERİMİ
+========================================== */
+
+function showError(msg) {
+
+  $('result').innerHTML=`
+    <h2>Sonuç</h2>
+    <div class="err">
+      Hata: ${esc(msg)}
+      <br>
+      Başka model ya da daha düşük tarama derinliği dene.
+    </div>
+  `;
 }
-const EV_LABELS={texts:'Okunan metinler (OCR)',plates:'Plakalar',signs_and_brands:'Tabela ve markalar',landmarks:'Simge yapılar',architecture:'Mimari',vegetation:'Bitki örtüsü',terrain_geology:'Arazi ve jeoloji',roads:'Yol özellikleri',infrastructure:'Altyapı',vehicles:'Araçlar',flags_symbols:'Bayrak ve semboller',other:'Diğer'};
-function fmtItem(x){
-  if(typeof x!=='object'||!x)return esc(x);
-  return Object.entries(x).filter(([,v])=>v!=null&&v!=='').map(([k,v])=>'<em>'+esc(k)+':</em> '+esc(typeof v==='object'?JSON.stringify(v):v)).join(' · ');
+
+/* ==========================================
+   SONUÇ GÖRÜNTÜLEME
+========================================== */
+
+const EV_LABELS={
+
+  texts:'Okunan metinler (OCR)',
+  plates:'Plakalar',
+  signs_and_brands:'Tabela ve markalar',
+  landmarks:'Simge yapılar',
+  architecture:'Mimari',
+  vegetation:'Bitki örtüsü',
+  terrain_geology:'Arazi ve jeoloji',
+  roads:'Yol özellikleri',
+  infrastructure:'Altyapı',
+  vehicles:'Araçlar',
+  flags_symbols:'Bayrak ve semboller',
+  other:'Diğer'
+};
+
+function fmtItem(x) {
+
+  if(typeof x!=='object'||!x) return esc(x);
+
+  return Object.entries(x)
+    .filter(([,v])=>v!=null&&v!=='')
+    .map(([k,v])=>
+      '<em>'+esc(k)+':</em> '+
+      esc(typeof v==='object'?JSON.stringify(v):v)
+    )
+    .join(' · ');
 }
-function evidenceHTML(ev){
-  if(!ev)return '';
+
+function evidenceHTML(ev) {
+
+  if(!ev) return '';
+
   let h='<h3 class="sub">Kanıt dosyası</h3>';
+
   Object.keys(EV_LABELS).forEach(k=>{
-    const a=ev[k];if(!Array.isArray(a)||!a.length)return;
-    h+='<details'+(k==='texts'||k==='landmarks'?' open':'')+'><summary>'+EV_LABELS[k]+' ('+a.length+')</summary><ul>'+a.map(x=>'<li>'+fmtItem(x)+'</li>').join('')+'</ul></details>';
+
+    const a=ev[k];
+
+    if(!Array.isArray(a)||!a.length) return;
+
+    h+=`
+      <details ${k==='texts'||k==='landmarks'?'open':''}>
+        <summary>${EV_LABELS[k]} (${a.length})</summary>
+        <ul>
+          ${a.map(x=>'<li>'+fmtItem(x)+'</li>').join('')}
+        </ul>
+      </details>
+    `;
   });
-  if(ev.sun_shadow)h+='<details><summary>Güneş ve gölge analizi</summary><p>'+esc(typeof ev.sun_shadow==='string'?ev.sun_shadow:JSON.stringify(ev.sun_shadow))+'</p></details>';
-  if(ev.weather_climate)h+='<details><summary>Hava ve iklim</summary><p>'+esc(typeof ev.weather_climate==='string'?ev.weather_climate:JSON.stringify(ev.weather_climate))+'</p></details>';
+
+  if(ev.sun_shadow) {
+
+    h+=`
+      <details>
+        <summary>Güneş ve gölge analizi</summary>
+        <p>${esc(ev.sun_shadow)}</p>
+      </details>
+    `;
+  }
+
+  if(ev.weather_climate) {
+
+    h+=`
+      <details>
+        <summary>Hava ve iklim</summary>
+        <p>${esc(ev.weather_climate)}</p>
+      </details>
+    `;
+  }
+
   return h;
 }
-function render(R){
-  const r=R.final,conf=r.confidence||0;
-  const coords=isNum(r.latitude)?r.latitude.toFixed(5)+', '+r.longitude.toFixed(5):'—';
-  const clues=(r.clues||[]).map(c=>'<div class="clue"><div><strong>'+esc(c.category)+'</strong><br><em>'+esc({high:'güçlü ipucu',medium:'orta ipucu',low:'zayıf ipucu'}[c.weight]||'')+'</em></div><div>'+esc(c.observation)+'</div></div>').join('');
-  const alts=(r.alternatives||[]).map((a,i)=>'<button class="alt" data-i="'+i+'"><span>'+esc(a.place)+'</span><span>%'+esc(a.confidence)+'</span></button>').join('');
-  const checks=(R.checks||[]).map(c=>'<div class="check '+(c.ok?'ok':'bad')+'"><i>'+(c.ok?'✓':'!')+'</i><span>'+esc(c.text)+'</span></div>').join('');
-  const mrows=(R.models||[]).map((m,i)=>'<tr><td><span class="dot" style="background:'+COLORS[(i+1)%COLORS.length]+'"></span>'+esc(m.model)+'</td><td>'+esc([m.data.city,m.data.country].filter(Boolean).join(', '))+'</td><td>%'+esc(m.data.confidence??'?')+'</td><td>'+fmtKm(m.dist||0)+'</td><td>'+esc(m.geo?.country||'—')+'</td></tr>').join('');
+
+function render(R) {
+
+  const r=R.final;
+  const conf=r.confidence||0;
+
+  const coords=isNum(r.latitude)
+    ? r.latitude.toFixed(5)+', '+r.longitude.toFixed(5)
+    : '—';
+
+  const clues=(r.clues||[]).map(c=>`
+
+    <div class="clue">
+
+      <div>
+        <strong>${esc(c.category)}</strong>
+        <br>
+        <em>
+          ${esc({
+            high:'güçlü ipucu',
+            medium:'orta ipucu',
+            low:'zayıf ipucu'
+          }[c.weight]||'')}
+        </em>
+      </div>
+
+      <div>${esc(c.observation)}</div>
+
+    </div>
+
+  `).join('');
+
+  const alts=(r.alternatives||[]).map((a,i)=>`
+
+    <button class="alt" data-i="${i}">
+      <span>${esc(a.place)}</span>
+      <span>%${esc(a.confidence)}</span>
+    </button>
+
+  `).join('');
+
+  const checks=(R.checks||[]).map(c=>`
+
+    <div class="check ${c.ok?'ok':'bad'}">
+      <i>${c.ok?'✓':'!'}</i>
+      <span>${esc(c.text)}</span>
+    </div>
+
+  `).join('');
+
+  const mrows=(R.models||[]).map((m,i)=>`
+
+    <tr>
+
+      <td>
+        <span class="dot"
+          style="background:${COLORS[(i+1)%COLORS.length]}">
+        </span>
+        ${esc(m.model)}
+      </td>
+
+      <td>
+        ${esc([
+          m.data.city,
+          m.data.country
+        ].filter(Boolean).join(', '))}
+      </td>
+
+      <td>%${esc(m.data.confidence??'?')}</td>
+
+      <td>${fmtKm(m.dist||0)}</td>
+
+      <td>${esc(m.geo?.country||'—')}</td>
+
+    </tr>
+
+  `).join('');
+
   const ex=R.exif;
-  const exifBlock=ex?'<div class="meta">'+
-    '<div><b>Kamera</b>'+esc([ex.make,ex.model].filter(Boolean).join(' ')||'—')+'</div>'+
-    '<div><b>Çekim tarihi</b>'+esc(ex.date||'—')+'</div>'+
-    '<div><b>EXIF GPS</b>'+(isNum(ex.lat)?esc(ex.lat.toFixed(5)+', '+ex.lon.toFixed(5)):'yok')+'</div>'+
-    (isNum(ex.alt)?'<div><b>Rakım</b>'+Math.round(ex.alt)+' m</div>':'')+'</div>':'';
-  const gmaps='https://www.google.com/maps/@'+r.latitude+','+r.longitude+',17z/data=!3m1!1e3';
-  $('result').innerHTML=
-    '<h2>Sonuç</h2>'+
-    '<div class="place"><div class="flag">'+flag(r.country_code)+'</div><div><h3>'+esc([r.city,r.country].filter(Boolean).join(', ')||'Bilinmiyor')+'</h3>'+
-    '<p>'+esc([r.neighborhood,r.region].filter(Boolean).join(' · '))+'</p></div></div>'+
-    '<div class="bar" role="img" aria-label="Güven %'+conf+'"><span style="width:'+conf+'%"></span></div>'+
-    '<small>Güven: %'+conf+(isNum(r.radius_km)?' · yaklaşık '+r.radius_km+' km hata payı':'')+' · '+(R.models||[]).length+' model'+(R.evidence?' · kanıt çıkarma':'')+'</small>'+
-    '<p>'+esc(r.summary)+'</p>'+
-    (r.reasoning?'<details open><summary>Akıl yürütme</summary><p>'+esc(r.reasoning)+'</p></details>':'')+
-    '<div class="meta">'+
-      '<div><b>Koordinat</b>'+esc(coords)+'</div>'+
-      '<div><b>Trafik yönü</b>'+esc(r.driving_side||'—')+'</div>'+
-      '<div><b>İklim</b>'+esc(r.climate||'—')+'</div>'+
-      '<div><b>Dil / yazı</b>'+esc(r.language_script||'—')+'</div>'+
-      '<div><b>Mevsim / saat</b>'+esc(r.season_time||'—')+'</div>'+
-      (R.finalGeo?'<div><b>Harita adresi</b>'+esc(R.finalGeo.name)+'</div>':'')+
-    '</div>'+
-    '<div class="actions"><button class="ghost" id="copy">Koordinatı kopyala</button>'+
-      '<a class="ghost" target="_blank" rel="noopener" href="'+gmaps+'">Google Haritalar (uydu)</a>'+
-      '<a class="ghost" target="_blank" rel="noopener" href="https://www.openstreetmap.org/?mlat='+r.latitude+'&mlon='+r.longitude+'#map=15/'+r.latitude+'/'+r.longitude+'">OpenStreetMap</a>'+
-      '<button class="ghost" id="exp">JSON raporu indir</button></div>'+
-    '<h3 class="sub">Doğrulama</h3>'+checks+
-    ((r.contradictions&&r.contradictions.length)?'<h3 class="sub">Tespit edilen çelişkiler</h3><ul>'+r.contradictions.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>':'')+
-    (r.verification_notes?'<p class="muted">'+esc(r.verification_notes)+'</p>':'')+
-    (mrows?'<h3 class="sub">Model karşılaştırması</h3><div style="overflow-x:auto"><table><tr><th>Model</th><th>Tahmin</th><th>Güven</th><th>Nihai sonuca uzaklık</th><th>Harita ülkesi</th></tr>'+mrows+'</table></div>':'')+
-    (exifBlock?'<h3 class="sub">Metadata</h3>'+exifBlock:'')+
-    evidenceHTML(R.evidence)+
-    (clues?'<h3 class="sub">İpuçları</h3>'+clues:'')+
-    ((r.ruled_out&&r.ruled_out.length)?'<h3 class="sub">Elenen bölgeler</h3><ul>'+r.ruled_out.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+
-    (alts?'<h3 class="sub">Alternatif konumlar</h3><div class="alts">'+alts+'</div>':'');
 
-  $('copy')?.addEventListener('click',e=>{navigator.clipboard?.writeText(coords);e.target.textContent='Kopyalandı';});
-  $('exp')?.addEventListener('click',()=>{
-    const b=new Blob([JSON.stringify(R,null,2)],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='konum-raporu.json';a.click();
+  const exifBlock=ex
+    ? `
+      <div class="meta">
+
+        <div>
+          <b>Kamera</b>
+          ${esc([ex.make,ex.model].filter(Boolean).join(' ')||'—')}
+        </div>
+
+        <div>
+          <b>Çekim tarihi</b>
+          ${esc(ex.date||'—')}
+        </div>
+
+        <div>
+          <b>EXIF GPS</b>
+          ${isNum(ex.lat)
+            ? esc(ex.lat.toFixed(5)+', '+ex.lon.toFixed(5))
+            : 'yok'}
+        </div>
+
+        ${isNum(ex.alt)
+          ? '<div><b>Rakım</b>'+Math.round(ex.alt)+' m</div>'
+          : ''}
+
+      </div>
+    `
+    : '';
+
+  const gmaps=
+    'https://www.google.com/maps/@'+
+    r.latitude+','+r.longitude+',17z/data=!3m1!1e3';
+
+  $('result').innerHTML=`
+
+    <h2>Sonuç</h2>
+
+    <div class="place">
+
+      <div class="flag">${flag(r.country_code)}</div>
+
+      <div>
+
+        <h3>
+          ${esc(
+            [r.city,r.country]
+            .filter(Boolean)
+            .join(', ')||'Bilinmiyor'
+          )}
+        </h3>
+
+        <p>
+          ${esc(
+            [r.neighborhood,r.region]
+            .filter(Boolean)
+            .join(' · ')
+          )}
+        </p>
+
+      </div>
+
+    </div>
+
+    <div class="bar" role="img"
+         aria-label="Güven yüzde ${conf}">
+      <span style="width:${conf}%"></span>
+    </div>
+
+    <small>
+      Güven: %${conf}
+      · yaklaşık ${esc(r.radius_km||'?')} km hata payı
+      · ${R.models.length} model
+      ${R.evidence?' · kanıt çıkarma':''}
+    </small>
+
+    <p>${esc(r.summary)}</p>
+
+    ${r.reasoning
+      ? `
+        <details open>
+          <summary>Akıl yürütme</summary>
+          <p>${esc(r.reasoning)}</p>
+        </details>
+      `
+      : ''}
+
+    <div class="meta">
+
+      <div>
+        <b>Koordinat</b>
+        ${esc(coords)}
+      </div>
+
+      <div>
+        <b>Trafik yönü</b>
+        ${esc(r.driving_side||'—')}
+      </div>
+
+      <div>
+        <b>İklim</b>
+        ${esc(r.climate||'—')}
+      </div>
+
+      <div>
+        <b>Dil / yazı</b>
+        ${esc(r.language_script||'—')}
+      </div>
+
+      <div>
+        <b>Mevsim / saat</b>
+        ${esc(r.season_time||'—')}
+      </div>
+
+      ${R.finalGeo
+        ? `
+          <div>
+            <b>Harita adresi</b>
+            ${esc(R.finalGeo.name)}
+          </div>
+        `
+        : ''}
+
+    </div>
+
+    <div class="actions">
+
+      <button class="ghost" id="copy">
+        Koordinatı kopyala
+      </button>
+
+      <a class="ghost" target="_blank" rel="noopener"
+         href="${gmaps}">
+        Google Haritalar
+      </a>
+
+      <a class="ghost" target="_blank" rel="noopener"
+         href="https://www.openstreetmap.org/?mlat=${r.latitude}&mlon=${r.longitude}#map=15/${r.latitude}/${r.longitude}">
+        OpenStreetMap
+      </a>
+
+      <button class="ghost" id="exp">
+        JSON raporu indir
+      </button>
+
+    </div>
+
+    <h3 class="sub">Doğrulama</h3>
+
+    ${checks}
+
+    ${(r.contradictions&&r.contradictions.length)
+      ? `
+        <h3 class="sub">Tespit edilen çelişkiler</h3>
+        <ul>
+          ${r.contradictions.map(c=>'<li>'+esc(c)+'</li>').join('')}
+        </ul>
+      `
+      : ''}
+
+    ${r.verification_notes
+      ? '<p class="muted">'+esc(r.verification_notes)+'</p>'
+      : ''}
+
+    <h3 class="sub">Model karşılaştırması</h3>
+
+    <div style="overflow-x:auto">
+
+      <table>
+
+        <tr>
+          <th>Model</th>
+          <th>Tahmin</th>
+          <th>Güven</th>
+          <th>Uzaklık</th>
+          <th>Harita ülkesi</th>
+        </tr>
+
+        ${mrows}
+
+      </table>
+
+    </div>
+
+    ${exifBlock
+      ? '<h3 class="sub">Metadata</h3>'+exifBlock
+      : ''}
+
+    ${evidenceHTML(R.evidence)}
+
+    ${clues
+      ? '<h3 class="sub">İpuçları</h3>'+clues
+      : ''}
+
+    ${(r.ruled_out&&r.ruled_out.length)
+      ? `
+        <h3 class="sub">Elenen bölgeler</h3>
+        <ul>
+          ${r.ruled_out.map(x=>'<li>'+esc(x)+'</li>').join('')}
+        </ul>
+      `
+      : ''}
+
+    ${alts
+      ? `
+        <h3 class="sub">Alternatif konumlar</h3>
+        <div class="alts">${alts}</div>
+      `
+      : ''}
+
+    <div class="learning-panel">
+
+      <h3>🧠 İzsür Adaptive Memory</h3>
+
+      <p>
+        Bu fotoğrafın gerçek konumunu işaretleyerek
+        sistemin gelecekteki analizlerini geliştirebilirsin.
+      </p>
+
+      <div class="learning-stats">
+
+        <div>
+          <b id="learnCount">0</b>
+          <small>Öğrenilen örnek</small>
+        </div>
+
+        <div>
+          <b id="learnError">0 km</b>
+          <small>Ortalama hata</small>
+        </div>
+
+        <div>
+          <b id="learnCountries">0</b>
+          <small>Ülke</small>
+        </div>
+
+      </div>
+
+      <label for="learnLabel">
+        Gerçek konumun adı
+      </label>
+
+      <input type="text" id="learnLabel"
+        placeholder="Örn: Kayseri, Cumhuriyet Meydanı">
+
+      <button class="ghost" id="learnPick">
+        Haritada doğru konumu işaretle
+      </button>
+
+      <p class="learning-status" id="learnStatus">
+        Henüz gerçek konum seçilmedi.
+      </p>
+
+      <button class="primary" id="learnSave">
+        Bu örnekten öğren
+      </button>
+
+    </div>
+
+  `;
+
+  /* Koordinat kopyalama */
+
+  $('copy')?.addEventListener('click',async e=>{
+
+    try {
+
+      await navigator.clipboard.writeText(coords);
+
+      e.target.textContent='Kopyalandı';
+
+    } catch(err) {
+
+      e.target.textContent='Kopyalanamadı';
+    }
   });
-  document.querySelectorAll('.alt').forEach(b=>b.addEventListener('click',()=>{
-    const a=r.alternatives[b.dataset.i];if(isNum(a.latitude)&&isNum(a.longitude))map.flyTo([a.latitude,a.longitude],9);
-  }));
+
+  /* JSON raporu */
+
+  $('exp')?.addEventListener('click',()=>{
+
+    const b=new Blob(
+      [JSON.stringify(R,null,2)],
+      {type:'application/json'}
+    );
+
+    const a=document.createElement('a');
+
+    a.href=URL.createObjectURL(b);
+    a.download='konum-raporu.json';
+    a.click();
+
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  });
+
+  /* Alternatif konumlar */
+
+  document.querySelectorAll('.alt').forEach(b=>{
+
+    b.addEventListener('click',()=>{
+
+      const a=r.alternatives[b.dataset.i];
+
+      if(isNum(a.latitude)&&isNum(a.longitude)) {
+
+        map.flyTo(
+          [a.latitude,a.longitude],
+          9
+        );
+      }
+    });
+  });
+
+  /* Öğrenme paneli */
+
+  updateLearningStats();
+
+  $('learnPick')?.addEventListener('click',()=>{
+
+    learningPickMode=!learningPickMode;
+
+    $('learnPick').textContent=learningPickMode
+      ? 'Konum seçimini iptal et'
+      : 'Haritada doğru konumu işaretle';
+
+    $('map').classList.toggle(
+      'learning-active',
+      learningPickMode
+    );
+
+    $('learnStatus').textContent=learningPickMode
+      ? 'Haritada fotoğrafın gerçek konumuna tıkla.'
+      : 'Konum seçimi iptal edildi.';
+  });
+
+  $('learnSave')?.addEventListener('click',async()=>{
+
+    if(!currentResult) return;
+
+    if(!selectedActualLocation) {
+
+      $('learnStatus').textContent=
+        'Önce haritadan gerçek konumu seçmelisin.';
+
+      return;
+    }
+
+    const btn=$('learnSave');
+
+    btn.disabled=true;
+    btn.textContent='Kaydediliyor…';
+
+    try {
+
+      const label=$('learnLabel').value.trim();
+
+      const entry=await saveCorrection(
+        currentResult,
+        label,
+        selectedActualLocation.lat,
+        selectedActualLocation.lon
+      );
+
+      learningPickMode=false;
+
+      $('map').classList.remove('learning-active');
+
+      $('learnStatus').textContent=
+        '✓ Öğrenildi! Gerçek konum ile AI tahmini arasındaki fark: '+
+        fmtKm(entry.distanceKm)+
+        '. Örnek kalıcı hafızaya kaydedildi.';
+
+      btn.textContent='Öğrenildi';
+
+      updateLearningStats();
+      renderMemory();
+
+    } catch(e) {
+
+      $('learnStatus').textContent=
+        'Hata: '+errMsg(e);
+
+      btn.disabled=false;
+      btn.textContent='Bu örnekten öğren';
+    }
+  });
 }
 
-/* ================= Geçmiş (yalnızca bu tarayıcıda) ================= */
-const getHistory=()=>{try{return JSON.parse(localStorage.getItem(HKEY))||[];}catch{return [];}};
-const setHistory=h=>{try{localStorage.setItem(HKEY,JSON.stringify(h));}catch{}};
-function saveHistory(R){
-  if(!S.thumb||!S.thumb.startsWith('data:'))return;
-  const slim={...R,models:R.models.map(m=>({model:m.model,data:m.data,dist:m.dist,geo:m.geo}))};
-  const h=getHistory();h.unshift({thumb:S.thumb,R:slim});
-  setHistory(h.slice(0,8));renderHistory();
+/* ==========================================
+   GEÇMİŞ
+========================================== */
+
+const getHistory=()=>{
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(HKEY)
+    )||[];
+
+  } catch {
+
+    return [];
+  }
+};
+
+const setHistory=h=>{
+
+  try {
+
+    localStorage.setItem(
+      HKEY,
+      JSON.stringify(h)
+    );
+
+  } catch(e) {
+
+    console.warn('Geçmiş kaydedilemedi.',e);
+  }
+};
+
+function saveHistory(R) {
+
+  if(!S.thumb||!S.thumb.startsWith('data:')) return;
+
+  const slim={
+
+    ...R,
+
+    models:R.models.map(m=>({
+      model:m.model,
+      data:m.data,
+      dist:m.dist,
+      geo:m.geo
+    }))
+  };
+
+  const h=getHistory();
+
+  h.unshift({
+    thumb:S.thumb,
+    R:slim
+  });
+
+  setHistory(h.slice(0,8));
+
+  renderHistory();
 }
-function renderHistory(){
-  const h=getHistory(),box=$('hist');
-  if(!h.length){box.innerHTML='<small class="muted">Henüz kayıt yok.</small>';return;}
-  box.innerHTML=h.map((x,i)=>'<button data-i="'+i+'"><img alt="" src="'+x.thumb+'"><span>'+esc(x.R.final.city||x.R.final.country||'Bilinmiyor')+'</span></button>').join('');
-  box.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-    const x=getHistory()[b.dataset.i];render(x.R);drawOnMap(x.R);
-  }));
+
+function renderHistory() {
+
+  const h=getHistory();
+  const box=$('hist');
+
+  if(!h.length) {
+
+    box.innerHTML=
+      '<small class="muted">Henüz kayıt yok.</small>';
+
+    return;
+  }
+
+  box.innerHTML=h.map((x,i)=>`
+
+    <button data-i="${i}">
+
+      <img alt="" src="${x.thumb}">
+
+      <span>
+        ${esc(
+          x.R.final.city||
+          x.R.final.country||
+          'Bilinmiyor'
+        )}
+      </span>
+
+    </button>
+
+  `).join('');
+
+  box.querySelectorAll('button').forEach(b=>{
+
+    b.addEventListener('click',()=>{
+
+      const x=getHistory()[b.dataset.i];
+
+      if(!x) return;
+
+      currentResult=x.R;
+
+      resetSelection();
+
+      render(x.R);
+      drawOnMap(x.R);
+
+      $('result').scrollIntoView({
+        behavior:'smooth',
+        block:'start'
+      });
+    });
+  });
 }
-$('clear').addEventListener('click',()=>{setHistory([]);renderHistory();});
-async function loadModels(){
+
+$('clear').addEventListener('click',()=>{
+
+  if(!confirm('Analiz geçmişi silinsin mi?')) return;
+
+  setHistory([]);
+
+  renderHistory();
+});
+
+/* ==========================================
+   MODEL LİSTESİ
+========================================== */
+
+async function loadModels() {
+
   let ids=[];
-  try{const l=await puter.ai.listModels();ids=(l||[]).map(m=>typeof m==='string'?m:(m.id||m.name)).filter(Boolean);}catch(e){}
-  const ok=/(gpt-4o|gpt-4\.1|gpt-5|claude|gemini|grok-4|pixtral|vision|-vl)/i,bad=/(embed|audio|tts|realtime|transcribe|moderation|image|search|codex|instruct-)/i;
-  let list=[...new Set(ids)].filter(i=>!i.includes(':')&&!i.includes('/')&&ok.test(i)&&!bad.test(i));
-  if(!list.length)list=['gpt-4o','gpt-5-nano','claude-sonnet-4-5','gemini-2.5-flash'];
-  const pick=re=>list.filter(i=>re.test(i)).sort().reverse()[0];
-  const defaults=[list.includes('gpt-4o')?'gpt-4o':pick(/^gpt-/),pick(/claude.*sonnet/),pick(/gemini.*flash/)].filter(Boolean);
-  list=[...defaults,...list.filter(i=>!defaults.includes(i)).sort()].slice(0,40);
+
+  try {
+
+    const l=await puter.ai.listModels();
+
+    ids=(l||[])
+      .map(m=>
+        typeof m==='string'
+          ? m
+          : (m.id||m.name)
+      )
+      .filter(Boolean);
+
+  } catch(e) {
+
+    console.error('Model listesi alınamadı:',e);
+  }
+
+  const ok=/(gpt-4o|gpt-4\.1|gpt-5|gpt-6|claude|gemini|grok|pixtral|vision|-vl)/i;
+
+  const bad=/(embed|audio|tts|realtime|transcribe|moderation|image|search|codex|instruct-)/i;
+
+  let list=[...new Set(ids)].filter(i=>
+    ok.test(i)&&!bad.test(i)
+  );
+
+  if(!list.length) {
+
+    list=[
+      'gpt-4o',
+      'gpt-5-nano',
+      'claude-sonnet-4-5',
+      'gemini-2.5-flash'
+    ];
+  }
+
+  const pick=re=>
+    list.filter(i=>re.test(i))
+      .sort()
+      .reverse()[0];
+
+  const defaults=[
+
+    list.includes('gpt-4o')
+      ? 'gpt-4o'
+      : pick(/^gpt-/),
+
+    pick(/claude.*sonnet/),
+
+    pick(/gemini.*flash/)
+
+  ].filter(Boolean);
+
+  list=[
+    ...defaults,
+    ...list.filter(i=>!defaults.includes(i)).sort()
+  ].slice(0,40);
+
   const on=defaults.slice(0,2);
-  $('models').innerHTML=list.map(i=>'<label class="chk"><input type="checkbox" class="mdl" value="'+esc(i)+'"'+(on.includes(i)?' checked':'')+'> '+esc(i)+'</label>').join('');
-  $('judge').innerHTML=list.map(i=>'<option value="'+esc(i)+'">'+esc(i)+'</option>').join('');
-  if(defaults[0])$('judge').value=defaults[0];
+
+  $('models').innerHTML=list.map(i=>`
+
+    <label class="chk">
+
+      <input type="checkbox"
+        class="mdl"
+        value="${esc(i)}"
+        ${on.includes(i)?'checked':''}>
+
+      ${esc(i)}
+
+    </label>
+
+  `).join('');
+
+  $('judge').innerHTML=list.map(i=>`
+
+    <option value="${esc(i)}">
+      ${esc(i)}
+    </option>
+
+  `).join('');
+
+  if(defaults[0]) {
+    $('judge').value=defaults[0];
+  }
 }
+
+/* ==========================================
+   BAŞLANGIÇ
+========================================== */
+
 loadModels();
+
 renderHistory();
+
+renderMemory();
+
 </script>
+
 </body>
 </html>
