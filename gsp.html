@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>İzsür – Adaptive Memory</title>
+<title>İzsür – Adaptive Visual Intelligence</title>
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -50,7 +50,7 @@ h1 {
 header p {
   margin:8px 0 0;
   color:var(--muted);
-  max-width:75ch;
+  max-width:80ch;
 }
 
 main {
@@ -72,6 +72,7 @@ main {
   border:1px solid var(--line);
   border-radius:10px;
   padding:16px;
+  min-width:0;
 }
 
 h2 {
@@ -98,14 +99,7 @@ h3.sub {
 }
 
 .drop.over {background:#DDF0F1}
-
-.drop img {
-  max-width:100%;
-  max-height:280px;
-  border-radius:6px;
-  display:block;
-}
-
+.drop img {max-width:100%;max-height:280px;border-radius:6px;display:block}
 .drop small,.muted {color:var(--muted)}
 
 label {
@@ -169,10 +163,7 @@ button {
   font-size:13px;
 }
 
-.ghost:hover {
-  border-color:var(--teal);
-  color:var(--teal-d);
-}
+.ghost:hover {border-color:var(--teal);color:var(--teal-d)}
 
 #map {
   height:420px;
@@ -198,24 +189,13 @@ button {
   font-size:14px;
 }
 
-.steps .ic {
-  width:18px;
-  text-align:center;
-  font-weight:700;
-}
-
+.steps .ic {width:18px;text-align:center;font-weight:700}
 .st-run .ic {color:var(--warn)}
 .st-ok .ic {color:var(--ok)}
 .st-fail .ic {color:#B3261E}
 .st-wait {color:var(--muted)}
 
-.place {
-  display:flex;
-  gap:14px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
+.place {display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .flag {font-size:46px;line-height:1}
 
 .place h3 {
@@ -254,12 +234,7 @@ button {
   overflow-wrap:anywhere;
 }
 
-.meta b {
-  display:block;
-  font-size:12px;
-  color:var(--muted);
-  font-weight:500;
-}
+.meta b {display:block;font-size:12px;color:var(--muted);font-weight:500}
 
 .check {
   display:flex;
@@ -268,12 +243,7 @@ button {
   border-top:1px solid var(--line);
 }
 
-.check i {
-  font-style:normal;
-  font-weight:700;
-  width:18px;
-}
-
+.check i {font-style:normal;font-weight:700;width:18px}
 .check.ok i {color:var(--ok)}
 .check.bad i {color:var(--warn)}
 
@@ -337,14 +307,7 @@ details li em {color:var(--muted);font-style:normal}
 }
 
 .alt:hover {border-color:var(--teal)}
-
-.actions {
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-
+.actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .actions a {text-decoration:none;border-radius:6px}
 
 .err {
@@ -388,20 +351,8 @@ details li em {color:var(--muted);font-style:normal}
   text-align:left;
 }
 
-.hist img {
-  width:100%;
-  height:76px;
-  object-fit:cover;
-  display:block;
-}
-
-.hist span {
-  display:block;
-  padding:5px 8px;
-  font-size:12px;
-  line-height:1.3;
-}
-
+.hist img {width:100%;height:76px;object-fit:cover;display:block}
+.hist span {display:block;padding:5px 8px;font-size:12px;line-height:1.3}
 .hidden {display:none!important}
 
 .models {
@@ -422,7 +373,7 @@ details li em {color:var(--muted);font-style:normal}
   border-radius:3px;
 }
 
-/* ADAPTIVE MEMORY */
+/* Adaptive Memory */
 
 .learning-panel {
   margin-top:22px;
@@ -432,15 +383,8 @@ details li em {color:var(--muted);font-style:normal}
   border-radius:9px;
 }
 
-.learning-panel h3 {
-  font-family:var(--head);
-  margin:0 0 8px;
-}
-
-.learning-panel p {
-  font-size:13px;
-  color:var(--muted);
-}
+.learning-panel h3 {font-family:var(--head);margin:0 0 8px}
+.learning-panel p {font-size:13px;color:var(--muted)}
 
 .learning-stats {
   display:grid;
@@ -456,32 +400,13 @@ details li em {color:var(--muted);font-style:normal}
   text-align:center;
 }
 
-.learning-stats b {
-  display:block;
-  font-size:20px;
-  color:var(--teal);
-}
+.learning-stats b {display:block;font-size:20px;color:var(--teal)}
+.learning-stats small {color:var(--muted);font-size:11px}
+.learning-status {min-height:20px;overflow-wrap:anywhere}
 
-.learning-stats small {
-  color:var(--muted);
-  font-size:11px;
-}
+.learning-active {border:2px solid var(--pin)!important;cursor:crosshair}
 
-.learning-status {
-  min-height:20px;
-  overflow-wrap:anywhere;
-}
-
-.learning-active {
-  border:2px solid var(--pin)!important;
-  cursor:crosshair;
-}
-
-.memory-list {
-  display:grid;
-  gap:8px;
-  margin-top:12px;
-}
+.memory-list {display:grid;gap:8px;margin-top:12px}
 
 .memory-entry {
   padding:10px;
@@ -493,19 +418,58 @@ details li em {color:var(--muted);font-style:normal}
 
 .memory-entry strong {display:block}
 .memory-entry small {color:var(--muted)}
+.memory-entry button {margin-top:7px}
 
-.memory-entry button {
-  margin-top:7px;
+.learning-controls {display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.learning-controls button {flex:1}
+
+/* Visual matching */
+
+.visual-panel {
+  margin-top:18px;
+  padding:14px;
+  background:#F4F7FB;
+  border:1px solid #CAD7E4;
+  border-radius:9px;
 }
 
-.learning-controls {
-  display:flex;
-  flex-wrap:wrap;
-  gap:7px;
+.visual-panel h3 {font:700 16px var(--head);margin:0 0 7px}
+.visual-status {font-size:13px;color:var(--muted);min-height:20px}
+
+.visual-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.visual-card {
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  min-width:0;
+}
+
+.visual-card img {
+  width:100%;
+  height:110px;
+  object-fit:cover;
+  display:block;
+  background:#e5e9ed;
+}
+
+.visual-card .vc-body {padding:9px}
+.visual-card strong {display:block;font-size:13px}
+.visual-card small {display:block;color:var(--muted);font-size:12px}
+.visual-score {font:800 20px var(--head);color:var(--teal);margin:4px 0}
+.visual-card button {margin-top:7px;width:100%}
+
+.visual-disclaimer {
+  color:var(--muted);
+  font-size:12px;
   margin-top:10px;
 }
-
-.learning-controls button {flex:1}
 
 @media(prefers-reduced-motion:reduce) {
   .bar span {transition:none}
@@ -518,11 +482,10 @@ details li em {color:var(--muted);font-style:normal}
 <header>
   <h1>İzsür</h1>
   <p>
-    Fotoğraf; EXIF verisi, yakın plan kırpmalar, OCR,
-    çoklu yapay zekâ modelleri, hakem değerlendirmesi
-    ve harita doğrulamasıyla çok aşamalı taranır.
-    Adaptive Memory sistemi, kullanıcı tarafından doğrulanan
-    örneklerden öğrenir. Puter.js ile API anahtarsız AI erişimi.
+    EXIF, yakın plan kırpmalar, OCR, çoklu yapay zekâ modelleri,
+    hakem değerlendirmesi, OpenStreetMap ve KartaView görsel eşleştirmesi.
+    Adaptive Memory, kullanıcı tarafından doğrulanan örnekleri gelecekteki
+    analizlerde kullanır. Puter.js ile AI erişimi.
   </p>
 </header>
 
@@ -548,41 +511,30 @@ details li em {color:var(--muted);font-style:normal}
 
   <div class="row">
     <input type="text" id="url" placeholder="https://…/foto.jpg">
-    <button class="ghost" id="loadUrl" style="flex:0 0 auto">
-      Yükle
-    </button>
+    <button class="ghost" id="loadUrl" style="flex:0 0 auto">Yükle</button>
   </div>
 
   <label for="depth">Tarama derinliği</label>
 
   <select id="depth">
     <option value="fast">Hızlı: tek model</option>
-    <option value="deep" selected>
-      Detaylı: kırpmalar + OCR + çoklu model + hakem
-    </option>
-    <option value="max">
-      Maksimum: 3×3 kırpma + tüm modeller + hakem
-    </option>
+    <option value="deep" selected>Detaylı: kırpmalar + OCR + çoklu model + hakem</option>
+    <option value="max">Maksimum: 3×3 kırpma + tüm modeller + hakem</option>
   </select>
 
   <label>Karşılaştırılacak modeller</label>
-
   <div class="models" id="models">
     <small class="muted">Modeller yükleniyor…</small>
   </div>
 
   <label for="custom">Özel model kimliği</label>
-
-  <input type="text" id="custom"
-         placeholder="örn. gpt-5.4-nano">
+  <input type="text" id="custom" placeholder="Puter.js model kimliği">
 
   <label for="judge">Hakem modeli</label>
   <select id="judge"></select>
 
   <label for="hint">Ek bağlam</label>
-
-  <textarea id="hint"
-    placeholder="Örn: Avrupa'da bir tatilde çekildi, Mayıs ayı"></textarea>
+  <textarea id="hint" placeholder="Örn: Avrupa'da bir tatilde çekildi, Mayıs ayı"></textarea>
 
   <label class="chk">
     <input type="checkbox" id="alts" checked>
@@ -599,14 +551,25 @@ details li em {color:var(--muted);font-style:normal}
     Önceki öğrenilmiş örnekleri kullan
   </label>
 
-  <button class="primary" id="go" disabled>
-    Derin taramayı başlat
-  </button>
+  <label class="chk">
+    <input type="checkbox" id="visualMatch" checked>
+    KartaView ile görsel eşleştirme yap
+  </label>
+
+  <label for="visualRadius">Görsel arama yarıçapı</label>
+  <select id="visualRadius">
+    <option value="300">300 metre – yakın eşleşme</option>
+    <option value="1000" selected>1 kilometre – dengeli</option>
+    <option value="3000">3 kilometre – geniş arama</option>
+  </select>
+
+  <button class="primary" id="go" disabled>Derin taramayı başlat</button>
 
   <p class="note">
-    Tahminler olasılıksaldır ve yanlış olabilir.
+    Tahminler olasılıksaldır ve yanlış olabilir. Görsel eşleştirme yalnızca
+    aday koordinatların çevresinde mevcut KartaView fotoğraflarını arar.
+    Fotoğraf bulunmaması konumun yanlış olduğu anlamına gelmez.
     Yalnızca kullanma iznine sahip olduğun fotoğrafları analiz et.
-    Öğrenilen veriler varsayılan olarak bu tarayıcıda saklanır.
   </p>
 
 </section>
@@ -620,6 +583,16 @@ details li em {color:var(--muted);font-style:normal}
     <ul class="steps" id="steps"></ul>
   </div>
 
+  <div class="card hidden" id="visualResults">
+    <h2>Görsel eşleştirme</h2>
+    <p class="visual-status" id="visualStatus">Henüz eşleştirme yapılmadı.</p>
+    <div id="visualGrid" class="visual-grid"></div>
+    <p class="visual-disclaimer">
+      Benzerlik puanı, AI modelinin iki görüntü arasındaki görsel benzerlik
+      değerlendirmesidir. Konumun doğru olduğuna dair kesin olasılık değildir.
+    </p>
+  </div>
+
   <div class="card" id="result">
     <h2>Sonuç</h2>
     <p class="muted" style="margin:0">
@@ -628,73 +601,43 @@ details li em {color:var(--muted);font-style:normal}
   </div>
 
   <div class="card">
-
-    <div style="display:flex;justify-content:space-between;
-                align-items:center;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <h2 style="margin:0">Geçmiş</h2>
       <button class="ghost" id="clear">Temizle</button>
     </div>
-
     <div class="hist" id="hist"></div>
-
   </div>
 
   <div class="card" id="memoryPanel">
-
     <h2>🧠 Adaptive Memory</h2>
-
     <p class="muted">
-      Kullanıcı tarafından doğrulanan konumlar ve
-      geçmiş analizlerden çıkarılan öğrenme verileri.
+      Kullanıcı tarafından doğrulanan konumlar ve geçmiş analizlerden
+      çıkarılan öğrenme verileri.
     </p>
 
     <div class="learning-stats">
-
-      <div>
-        <b id="globalCount">0</b>
-        <small>Öğrenilen örnek</small>
-      </div>
-
-      <div>
-        <b id="globalError">0 km</b>
-        <small>Ortalama hata</small>
-      </div>
-
-      <div>
-        <b id="globalCountries">0</b>
-        <small>Ülke</small>
-      </div>
-
+      <div><b id="globalCount">0</b><small>Öğrenilen örnek</small></div>
+      <div><b id="globalError">0 km</b><small>Ortalama hata</small></div>
+      <div><b id="globalCountries">0</b><small>Ülke</small></div>
     </div>
 
     <div id="memoryList" class="memory-list"></div>
 
     <div class="learning-controls">
-      <button class="ghost" id="exportMemory">
-        Hafızayı dışa aktar
-      </button>
-
-      <button class="ghost" id="importMemory">
-        Hafıza içe aktar
-      </button>
-
-      <button class="ghost" id="deleteMemory">
-        Hafızayı temizle
-      </button>
+      <button class="ghost" id="exportMemory">Hafızayı dışa aktar</button>
+      <button class="ghost" id="importMemory">Hafıza içe aktar</button>
+      <button class="ghost" id="deleteMemory">Hafızayı temizle</button>
     </div>
 
-    <input type="file" id="memoryFile"
-           accept=".json,application/json" class="hidden">
+    <input type="file" id="memoryFile" accept=".json,application/json" class="hidden">
 
     <p class="note">
-      Hafıza silinirse öğrenilmiş örnekler geri getirilemez.
-      Önemli verileri düzenli olarak dışa aktar.
+      Bu sistem model ağırlıklarını eğitmez. Doğrulanmış örnekleri yerel hafızada
+      tutar ve sonraki AI istemlerine bağlam olarak ekler.
     </p>
-
   </div>
 
 </section>
-
 </main>
 
 <script src="https://js.puter.com/v2/"></script>
@@ -711,6 +654,8 @@ const $ = id => document.getElementById(id);
 
 const HKEY = 'izsur_history_v2';
 const MEMORY_KEY = 'izsur_adaptive_memory_v1';
+
+const KARTAVIEW_API = 'https://api.openstreetcam.org/2.0/photo/';
 
 const COLORS = [
   '#D6336C',
@@ -733,7 +678,9 @@ let currentResult = null;
 let learningPickMode = false;
 let learningMarker = null;
 let selectedActualLocation = null;
-let currentPredictionLayer = null;
+
+let visualMarkers = [];
+let visualCandidates = [];
 
 const isNum = n =>
   typeof n === 'number' && Number.isFinite(n);
@@ -783,12 +730,18 @@ function haversine(a,b) {
 
 function fmtKm(k) {
   if(!isNum(k)) return '—';
-
   return k < 1
-    ? '<1 km'
+    ? Math.round(k*1000)+' m'
     : k < 100
       ? k.toFixed(1)+' km'
       : Math.round(k).toLocaleString('tr')+' km';
+}
+
+function safeCoords(lat,lon) {
+  return isNum(Number(lat)) &&
+    isNum(Number(lon)) &&
+    Math.abs(Number(lat))<=90 &&
+    Math.abs(Number(lon))<=180;
 }
 
 /* ==========================================
@@ -801,26 +754,18 @@ function resize(src,max,q) {
     const img = new Image();
 
     img.onload = () => {
-      const k = Math.min(
-        1,
-        max / Math.max(img.width,img.height)
-      );
-
+      const k = Math.min(1,max/Math.max(img.width,img.height));
       const c = document.createElement('canvas');
 
       c.width = Math.round(img.width*k);
       c.height = Math.round(img.height*k);
 
-      c.getContext('2d').drawImage(
-        img,0,0,c.width,c.height
-      );
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
 
       resolve(c.toDataURL('image/jpeg',q));
     };
 
-    img.onerror = () =>
-      reject(new Error('Görsel okunamadı'));
-
+    img.onerror = () => reject(new Error('Görsel okunamadı'));
     img.src = src;
   });
 }
@@ -831,22 +776,15 @@ function makeCrops(src,n,out) {
     const img = new Image();
 
     img.onload = () => {
+      const W=img.width,H=img.height;
+      const list=[];
 
-      const W = img.width;
-      const H = img.height;
-      const list = [];
+      const cut=(x,y,w,h)=>{
+        const k=Math.min(1,out/Math.max(w,h));
+        const c=document.createElement('canvas');
 
-      const cut = (x,y,w,h) => {
-
-        const k = Math.min(
-          1,
-          out / Math.max(w,h)
-        );
-
-        const c = document.createElement('canvas');
-
-        c.width = Math.round(w*k);
-        c.height = Math.round(h*k);
+        c.width=Math.round(w*k);
+        c.height=Math.round(h*k);
 
         c.getContext('2d').drawImage(
           img,x,y,w,h,0,0,c.width,c.height
@@ -855,38 +793,27 @@ function makeCrops(src,n,out) {
         return c.toDataURL('image/jpeg',.85);
       };
 
-      const cw = W/n;
-      const ch = H/n;
-      const ov = .1;
+      const cw=W/n,ch=H/n,ov=.1;
 
       for(let j=0;j<n;j++) {
         for(let i=0;i<n;i++) {
+          const x=Math.max(0,i*cw-cw*ov);
+          const y=Math.max(0,j*ch-ch*ov);
 
-          const x = Math.max(0,i*cw-cw*ov);
-          const y = Math.max(0,j*ch-ch*ov);
-
-          list.push(
-            cut(
-              x,
-              y,
-              Math.min(W-x,cw*(1+2*ov)),
-              Math.min(H-y,ch*(1+2*ov))
-            )
-          );
+          list.push(cut(
+            x,y,
+            Math.min(W-x,cw*(1+2*ov)),
+            Math.min(H-y,ch*(1+2*ov))
+          ));
         }
       }
 
-      list.push(
-        cut(W*.25,H*.25,W*.5,H*.5)
-      );
-
+      list.push(cut(W*.25,H*.25,W*.5,H*.5));
       resolve(list);
     };
 
-    img.onerror = () =>
-      reject(new Error('Görsel işlenemedi'));
-
-    img.src = src;
+    img.onerror=()=>reject(new Error('Görsel işlenemedi'));
+    img.src=src;
   });
 }
 
@@ -895,91 +822,60 @@ function makeCrops(src,n,out) {
 ========================================== */
 
 function parseExif(buf) {
-
   try {
+    const v=new DataView(buf);
+    if(v.getUint16(0)!==0xFFD8) return null;
 
-    const v = new DataView(buf);
+    let o=2;
 
-    if(v.getUint16(0) !== 0xFFD8) return null;
+    while(o<v.byteLength-4) {
+      const m=v.getUint16(o);
+      const len=v.getUint16(o+2);
 
-    let o = 2;
-
-    while(o < v.byteLength-4) {
-
-      const m = v.getUint16(o);
-      const len = v.getUint16(o+2);
-
-      if(
-        m === 0xFFE1 &&
-        v.getUint32(o+4) === 0x45786966
-      ) {
+      if(m===0xFFE1&&v.getUint32(o+4)===0x45786966) {
         return readTiff(v,o+10);
       }
 
       if((m&0xFF00)!==0xFF00) break;
-
-      o += 2+len;
+      o+=2+len;
     }
-
   } catch(e) {}
 
   return null;
 }
 
 function readTiff(v,s) {
+  const le=v.getUint16(s)===0x4949;
+  const u16=o=>v.getUint16(o,le);
+  const u32=o=>v.getUint32(o,le);
+  const tsz={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};
 
-  const le = v.getUint16(s) === 0x4949;
-
-  const u16 = o => v.getUint16(o,le);
-  const u32 = o => v.getUint32(o,le);
-
-  const tsz = {
-    1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8
-  };
-
-  const readIFD = off => {
-
-    const tags = {};
-    const n = u16(s+off);
+  const readIFD=off=>{
+    const tags={};
+    const n=u16(s+off);
 
     for(let i=0;i<n;i++) {
-
-      const e = s+off+2+i*12;
-
-      const tag = u16(e);
-      const type = u16(e+2);
-      const cnt = u32(e+4);
-
-      const size = (tsz[type]||1)*cnt;
-      const vo = size>4 ? s+u32(e+8) : e+8;
+      const e=s+off+2+i*12;
+      const tag=u16(e);
+      const type=u16(e+2);
+      const cnt=u32(e+4);
+      const size=(tsz[type]||1)*cnt;
+      const vo=size>4?s+u32(e+8):e+8;
 
       if(type===2) {
-
         let t='';
-
-        for(let k=0;k<cnt-1;k++) {
-          t += String.fromCharCode(v.getUint8(vo+k));
-        }
-
-        tags[tag] = t.trim();
-
+        for(let k=0;k<cnt-1;k++) t+=String.fromCharCode(v.getUint8(vo+k));
+        tags[tag]=t.trim();
       } else if(type===5) {
-
         const a=[];
-
         for(let k=0;k<cnt;k++) {
           const d=u32(vo+k*8+4);
-          a.push(d ? u32(vo+k*8)/d : 0);
+          a.push(d?u32(vo+k*8)/d:0);
         }
-
         tags[tag]=a;
-
       } else if(type===3) {
-
         tags[tag]=u16(vo);
-
       } else if(type===4) {
-
         tags[tag]=u32(vo);
       }
     }
@@ -988,7 +884,6 @@ function readTiff(v,s) {
   };
 
   const out={};
-
   const ifd0=readIFD(u32(s+4));
 
   out.make=ifd0[0x010F];
@@ -996,88 +891,66 @@ function readTiff(v,s) {
   out.software=ifd0[0x0131];
 
   if(ifd0[0x8769]) {
-
     const ex=readIFD(ifd0[0x8769]);
-
     out.date=ex[0x9003]||ex[0x9004];
   }
 
   if(ifd0[0x8825]) {
-
     const g=readIFD(ifd0[0x8825]);
 
-    const dms=a =>
-      a&&a.length>=3
-        ? a[0]+a[1]/60+a[2]/3600
-        : null;
+    const dms=a=>a&&a.length>=3
+      ? a[0]+a[1]/60+a[2]/3600
+      : null;
 
     let lat=dms(g[2]);
     let lon=dms(g[4]);
 
     if(isNum(lat)&&isNum(lon)) {
-
       if(g[1]==='S') lat=-lat;
       if(g[3]==='W') lon=-lon;
-
       out.lat=lat;
       out.lon=lon;
 
-      if(g[6]) {
-        out.alt=g[6][0]*(g[5]===1?-1:1);
-      }
+      if(g[6]) out.alt=g[6][0]*(g[5]===1?-1:1);
     }
   }
 
-  return Object.keys(out).length ? out : null;
+  return Object.keys(out).length?out:null;
 }
 
 function exifBadges() {
-
   const e=S.exif;
   const box=$('exifBadges');
 
   if(!e) {
-    box.innerHTML=
-      '<span class="badge" style="background:#EEF1F4;color:#5B6B78">EXIF verisi yok</span>';
+    box.innerHTML='<span class="badge" style="background:#EEF1F4;color:#5B6B78">EXIF verisi yok</span>';
     return;
   }
 
   const b=[];
-
   if(isNum(e.lat)) b.push('GPS konumu var');
-
-  if(e.make||e.model) {
-    b.push([e.make,e.model].filter(Boolean).join(' '));
-  }
-
+  if(e.make||e.model) b.push([e.make,e.model].filter(Boolean).join(' '));
   if(e.date) b.push(e.date);
 
-  box.innerHTML=b.map(x=>
-    '<span class="badge">'+esc(x)+'</span>'
-  ).join('') ||
-  '<span class="badge">EXIF var, konum yok</span>';
+  box.innerHTML=b.map(x=>'<span class="badge">'+esc(x)+'</span>').join('')
+    ||'<span class="badge">EXIF var, konum yok</span>';
 }
 
 /* ==========================================
    HARİTA
 ========================================== */
 
-const map=L.map('map',{
-  worldCopyJump:true
-}).setView([30,20],2);
+const map=L.map('map',{worldCopyJump:true}).setView([30,20],2);
 
-L.tileLayer(
-  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  {
-    maxZoom:18,
-    attribution:'&copy; OpenStreetMap'
-  }
-).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:18,
+  attribution:'&copy; OpenStreetMap'
+}).addTo(map);
 
 const layer=L.layerGroup().addTo(map);
+const visualLayer=L.layerGroup().addTo(map);
 
 map.on('click',function(e) {
-
   if(!learningPickMode) return;
 
   selectedActualLocation={
@@ -1085,9 +958,7 @@ map.on('click',function(e) {
     lon:e.latlng.lng
   };
 
-  if(learningMarker) {
-    map.removeLayer(learningMarker);
-  }
+  if(learningMarker) map.removeLayer(learningMarker);
 
   learningMarker=L.marker(e.latlng)
     .addTo(map)
@@ -1097,89 +968,69 @@ map.on('click',function(e) {
   const status=$('learnStatus');
 
   if(status) {
-    status.textContent=
-      'Seçilen koordinat: '+
-      e.latlng.lat.toFixed(5)+', '+
-      e.latlng.lng.toFixed(5);
+    status.textContent='Seçilen koordinat: '+
+      e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5);
   }
 });
 
-function drawOnMap(R) {
+function clearVisualMarkers() {
+  visualLayer.clearLayers();
+  visualMarkers=[];
+}
 
+function drawOnMap(R) {
   layer.clearLayers();
 
   const pts=[];
   const f=R.final;
 
   (R.models||[]).forEach((m,i)=>{
-
     const d=m.data;
-
-    if(!isNum(d.latitude)||!isNum(d.longitude)) return;
+    if(!safeCoords(d.latitude,d.longitude)) return;
 
     pts.push([d.latitude,d.longitude]);
 
-    L.circleMarker(
-      [d.latitude,d.longitude],
-      {
-        radius:7,
-        color:'#fff',
-        weight:2,
-        fillColor:COLORS[(i+1)%COLORS.length],
-        fillOpacity:.95
-      }
-    )
-    .addTo(layer)
-    .bindTooltip(
+    L.circleMarker([d.latitude,d.longitude],{
+      radius:7,
+      color:'#fff',
+      weight:2,
+      fillColor:COLORS[(i+1)%COLORS.length],
+      fillOpacity:.95
+    }).addTo(layer).bindTooltip(
       esc(m.model+': '+(d.city||d.country||''))
     );
   });
 
   (f.alternatives||[]).forEach(a=>{
+    if(!safeCoords(a.latitude,a.longitude)) return;
 
-    if(isNum(a.latitude)&&isNum(a.longitude)) {
+    pts.push([a.latitude,a.longitude]);
 
-      pts.push([a.latitude,a.longitude]);
-
-      L.circleMarker(
-        [a.latitude,a.longitude],
-        {
-          radius:5,
-          color:'#1F6F78',
-          weight:2,
-          fillColor:'#fff',
-          fillOpacity:1
-        }
-      )
-      .addTo(layer)
-      .bindTooltip(
-        esc('Alternatif: '+(a.place||''))
-      );
-    }
+    L.circleMarker([a.latitude,a.longitude],{
+      radius:5,
+      color:'#1F6F78',
+      weight:2,
+      fillColor:'#fff',
+      fillOpacity:1
+    }).addTo(layer).bindTooltip(
+      esc('Alternatif: '+(a.place||''))
+    );
   });
 
-  if(R.exif&&isNum(R.exif.lat)) {
-
+  if(R.exif&&safeCoords(R.exif.lat,R.exif.lon)) {
     pts.push([R.exif.lat,R.exif.lon]);
 
-    L.marker(
-      [R.exif.lat,R.exif.lon],
-      {
-        icon:L.divIcon({
-          className:'',
-          html:'<div class="exifpin"></div>',
-          iconSize:[14,14]
-        })
-      }
-    )
-    .addTo(layer)
-    .bindTooltip('EXIF GPS konumu');
+    L.marker([R.exif.lat,R.exif.lon],{
+      icon:L.divIcon({
+        className:'',
+        html:'<div class="exifpin"></div>',
+        iconSize:[14,14]
+      })
+    }).addTo(layer).bindTooltip('EXIF GPS konumu');
   }
 
-  if(isNum(f.latitude)&&isNum(f.longitude)) {
-
+  if(safeCoords(f.latitude,f.longitude)) {
     const p=[f.latitude,f.longitude];
-
     pts.push(p);
 
     L.circleMarker(p,{
@@ -1188,12 +1039,9 @@ function drawOnMap(R) {
       weight:3,
       fillColor:COLORS[0],
       fillOpacity:1
-    })
-    .addTo(layer)
-    .bindTooltip('Nihai tahmin');
+    }).addTo(layer).bindTooltip('Nihai tahmin');
 
     if(isNum(f.radius_km)&&f.radius_km>0) {
-
       L.circle(p,{
         radius:f.radius_km*1000,
         color:'#1F6F78',
@@ -1204,16 +1052,9 @@ function drawOnMap(R) {
   }
 
   if(pts.length>1) {
-    map.fitBounds(pts,{
-      padding:[40,40],
-      maxZoom:12
-    });
+    map.fitBounds(pts,{padding:[40,40],maxZoom:12});
   } else if(pts.length) {
-    map.setView(
-      pts[0],
-      f.radius_km>200 ? 5 :
-      f.radius_km>30 ? 8 : 11
-    );
+    map.setView(pts[0],f.radius_km>200?5:f.radius_km>30?8:11);
   }
 }
 
@@ -1222,53 +1063,35 @@ function drawOnMap(R) {
 ========================================== */
 
 function showPreview(src) {
-
-  $('dropInner').innerHTML=
-    '<img alt="Seçilen fotoğraf" src="'+src+'">';
-
+  $('dropInner').innerHTML='<img alt="Seçilen fotoğraf" src="'+esc(src)+'">';
   $('go').disabled=false;
 }
 
 async function loadBlob(blob) {
-
-  if(!blob.type.startsWith('image/')) {
-    throw new Error('Dosya bir görsel değil.');
-  }
-
-  if(blob.size>20*1024*1024) {
-    throw new Error('Görsel 20 MB sınırını aşıyor.');
-  }
+  if(!blob.type.startsWith('image/')) throw new Error('Dosya bir görsel değil.');
+  if(blob.size>20*1024*1024) throw new Error('Görsel 20 MB sınırını aşıyor.');
 
   const buf=await blob.arrayBuffer();
-
   S.exif=parseExif(buf);
 
   S.orig=await new Promise(resolve=>{
-
     const fr=new FileReader();
-
     fr.onload=()=>resolve(fr.result);
-
-    fr.readAsDataURL(
-      new Blob([buf],{
-        type:blob.type||'image/jpeg'
-      })
-    );
+    fr.readAsDataURL(new Blob([buf],{type:blob.type||'image/jpeg'}));
   });
 
   S.full=await resize(S.orig,1600,.88);
   S.thumb=await resize(S.orig,200,.7);
-
   S.remoteOnly=false;
 
   showPreview(S.full);
   exifBadges();
-
   resetSelection();
+  $('visualResults').classList.add('hidden');
+  clearVisualMarkers();
 }
 
 function resetSelection() {
-
   selectedActualLocation=null;
 
   if(learningMarker) {
@@ -1277,12 +1100,11 @@ function resetSelection() {
   }
 
   learningPickMode=false;
+  $('map').classList.remove('learning-active');
 }
 
 async function handleFile(f) {
-
   if(!f) return;
-
   try {
     await loadBlob(f);
   } catch(e) {
@@ -1293,49 +1115,36 @@ async function handleFile(f) {
 $('drop').addEventListener('click',()=>$('file').click());
 
 $('drop').addEventListener('keydown',e=>{
-
   if(e.key==='Enter'||e.key===' ') {
     e.preventDefault();
     $('file').click();
   }
 });
 
-$('file').addEventListener('change',e=>
-  handleFile(e.target.files[0])
-);
+$('file').addEventListener('change',e=>handleFile(e.target.files[0]));
 
 ['dragenter','dragover'].forEach(t=>{
-
   $('drop').addEventListener(t,e=>{
-
     e.preventDefault();
     $('drop').classList.add('over');
   });
 });
 
 ['dragleave','drop'].forEach(t=>{
-
   $('drop').addEventListener(t,e=>{
-
     e.preventDefault();
     $('drop').classList.remove('over');
   });
 });
 
-$('drop').addEventListener('drop',e=>
-  handleFile(e.dataTransfer.files[0])
-);
+$('drop').addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
 
 window.addEventListener('paste',e=>{
-
-  const it=[...(e.clipboardData?.items||[])]
-    .find(i=>i.type.startsWith('image/'));
-
+  const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));
   if(it) handleFile(it.getAsFile());
 });
 
 $('loadUrl').addEventListener('click',async()=>{
-
   const u=$('url').value.trim();
 
   if(!/^https?:\/\//i.test(u)) {
@@ -1343,16 +1152,10 @@ $('loadUrl').addEventListener('click',async()=>{
   }
 
   try {
-
     const r=await fetch(u);
-
     if(!r.ok) throw new Error('Görsel indirilemedi.');
-
     await loadBlob(await r.blob());
-
   } catch(e) {
-
-    // CORS engelinde bağlantıyı doğrudan modele gönder.
     S.orig=u;
     S.full=u;
     S.thumb=u;
@@ -1366,62 +1169,34 @@ $('loadUrl').addEventListener('click',async()=>{
 });
 
 /* ==========================================
-   ADAPTIVE MEMORY - HAFIZA
+   ADAPTIVE MEMORY
 ========================================== */
 
 function getLearningMemory() {
-
   try {
-
-    const data=JSON.parse(
-      localStorage.getItem(MEMORY_KEY)
-    );
-
-    return Array.isArray(data) ? data : [];
-
+    const data=JSON.parse(localStorage.getItem(MEMORY_KEY));
+    return Array.isArray(data)?data:[];
   } catch(e) {
-
     return [];
   }
 }
 
 function saveLearningMemory(memory) {
-
   try {
-
-    // En fazla 100 doğrulanmış örnek.
-    localStorage.setItem(
-      MEMORY_KEY,
-      JSON.stringify(memory.slice(0,100))
-    );
-
+    localStorage.setItem(MEMORY_KEY,JSON.stringify(memory.slice(0,100)));
     return true;
-
   } catch(e) {
-
     console.error('Hafıza kaydedilemedi:',e);
-
     return false;
   }
 }
 
 function getLearningStats() {
-
   const memory=getLearningMemory();
 
-  if(!memory.length) {
+  if(!memory.length) return {count:0,avgError:0,countries:0};
 
-    return {
-      count:0,
-      avgError:0,
-      countries:0
-    };
-  }
-
-  const valid=memory.filter(
-    x=>isNum(x.distanceKm)
-  );
-
+  const valid=memory.filter(x=>isNum(x.distanceKm));
   const avgError=valid.length
     ? valid.reduce((s,x)=>s+x.distanceKm,0)/valid.length
     : 0;
@@ -1430,21 +1205,10 @@ function getLearningStats() {
     memory.map(x=>x.actual?.countryCode).filter(Boolean)
   ).size;
 
-  return {
-    count:memory.length,
-    avgError,
-    countries
-  };
+  return {count:memory.length,avgError,countries};
 }
 
-/*
-  Görsel ipuçlarından basit anahtar kelime çıkarımı.
-  Bu bir görsel embedding sistemi değildir.
-  Metin ve kanıt benzerliği üzerinden örnek seçer.
-*/
-
 function normalizeTokens(text) {
-
   return new Set(
     String(text||'')
       .toLocaleLowerCase('tr')
@@ -1455,46 +1219,26 @@ function normalizeTokens(text) {
 }
 
 function extractClues(R) {
-
   const clues=[];
-
   const f=R.final;
 
   (f.clues||[]).forEach(x=>{
-
     if(x.observation) clues.push(x.observation);
   });
 
   const ev=R.evidence||{};
-
   const fields=[
-    'texts',
-    'plates',
-    'signs_and_brands',
-    'landmarks',
-    'architecture',
-    'vegetation',
-    'terrain_geology',
-    'roads',
-    'infrastructure',
-    'vehicles',
-    'flags_symbols',
-    'other'
+    'texts','plates','signs_and_brands','landmarks',
+    'architecture','vegetation','terrain_geology',
+    'roads','infrastructure','vehicles','flags_symbols','other'
   ];
 
   fields.forEach(k=>{
-
     (ev[k]||[]).forEach(x=>{
-
-      if(typeof x==='string') {
-        clues.push(x);
-      } else if(x) {
-
+      if(typeof x==='string') clues.push(x);
+      else if(x) {
         Object.values(x).forEach(v=>{
-
-          if(typeof v==='string'&&v.trim()) {
-            clues.push(v);
-          }
+          if(typeof v==='string'&&v.trim()) clues.push(v);
         });
       }
     });
@@ -1504,94 +1248,52 @@ function extractClues(R) {
 }
 
 function learningContext(evidence,enabled=true) {
-
   if(!enabled) return '';
 
   const memory=getLearningMemory();
-
   if(!memory.length) return '';
 
-  const currentText=JSON.stringify(evidence||{});
-  const currentTokens=normalizeTokens(currentText);
+  const currentTokens=normalizeTokens(JSON.stringify(evidence||{}));
 
   const scored=memory.map(item=>{
-
-    const tokens=normalizeTokens(
-      (item.clues||[]).join(' ')
-    );
-
+    const tokens=normalizeTokens((item.clues||[]).join(' '));
     let common=0;
 
-    for(const t of currentTokens) {
-      if(tokens.has(t)) common++;
-    }
+    for(const t of currentTokens) if(tokens.has(t)) common++;
 
-    const union=new Set([
-      ...currentTokens,
-      ...tokens
-    ]).size;
-
-    const similarity=union ? common/union : 0;
+    const union=new Set([...currentTokens,...tokens]).size;
 
     return {
       item,
-      similarity
+      similarity:union?common/union:0
     };
   });
 
   scored.sort((a,b)=>b.similarity-a.similarity);
 
-  // Hem benzer hem de yakın zamanda doğrulanmış örnekleri al.
-  const selected=scored.slice(0,8);
-
-  const examples=selected.map(x=>({
-
+  const examples=scored.slice(0,5).map(x=>({
     correct_location:x.item.actual?.label,
-
     country:x.item.actual?.country,
-
     coordinates:x.item.actual?.coordinates,
-
     previous_prediction:x.item.predicted?.label,
-
-    previous_error_km:Math.round(
-      x.item.distanceKm||0
-    ),
-
-    confidence:x.item.predicted?.confidence,
-
+    previous_error_km:Math.round(x.item.distanceKm||0),
     similarity:Math.round(x.similarity*100),
-
     visual_clues:x.item.clues
-
   }));
 
   return `
 PREVIOUS HUMAN-VERIFIED EXAMPLES:
+${JSON.stringify(examples).slice(0,7000)}
 
-${JSON.stringify(examples).slice(0,9000)}
-
-LEARNING INSTRUCTIONS:
-
-1. These locations were verified by a human user.
-2. Compare current visual evidence with these examples.
-3. Search for recurring architectural, vegetation,
-   road, language, sign and infrastructure patterns.
-4. Do not assume similar images are from the same place.
-5. Do not blindly copy old coordinates.
-6. A human-verified location is stronger than a previous
-   AI prediction, but only for that specific photograph.
-7. If the new photograph contradicts an old example,
-   prioritize current evidence.
-8. Mention relevant similarities and differences.
-9. Do not increase confidence without real evidence.
-10. Never invent geographical details.
-
+Use these only as contextual examples.
+Do not copy their coordinates.
+Do not assume similar images are the same location.
+Prefer current photograph evidence.
+Do not invent geographical facts.
 `;
 }
 
 async function saveCorrection(R,label,lat,lon) {
-
   const f=R.final;
 
   const distance=haversine(
@@ -1605,143 +1307,89 @@ async function saveCorrection(R,label,lat,lon) {
     geo=await reverseGeo(lat,lon);
   } catch(e) {}
 
-  const clues=extractClues(R);
-
   const entry={
-
     id:crypto.randomUUID(),
-
     date:new Date().toISOString(),
 
     actual:{
-
       label:label||geo?.name||'Doğrulanmış konum',
-
       country:geo?.country||'',
-
       countryCode:geo?.cc||'',
-
       coordinates:[lat,lon]
     },
 
     predicted:{
-
-      label:[f.city,f.country]
-        .filter(Boolean)
-        .join(', '),
-
-      coordinates:[
-        f.latitude,
-        f.longitude
-      ],
-
+      label:[f.city,f.country].filter(Boolean).join(', '),
+      coordinates:[f.latitude,f.longitude],
       confidence:f.confidence
     },
 
     distanceKm:distance,
-
-    clues:clues
-
+    clues:extractClues(R)
   };
 
   const memory=getLearningMemory();
 
-  // Aynı fotoğrafın aynı konumla tekrar kaydedilmesini önle.
   const duplicate=memory.some(x=>
-    x.id===entry.id
+    haversine(
+      x.actual?.coordinates||[999,999],
+      [lat,lon]
+    )<.02 &&
+    x.date &&
+    Math.abs(new Date(x.date)-new Date())<60000
   );
 
-  if(duplicate) {
-    throw new Error('Bu örnek zaten kayıtlı.');
-  }
+  if(duplicate) throw new Error('Benzer örnek az önce kaydedilmiş.');
 
   memory.unshift(entry);
 
   if(!saveLearningMemory(memory)) {
-    throw new Error(
-      'Tarayıcı hafızası dolu. Eski örnekleri dışa aktarıp temizlemeyi dene.'
-    );
+    throw new Error('Tarayıcı hafızası dolu. Önce yedek alıp eski örnekleri temizle.');
   }
 
   return entry;
 }
 
 function updateLearningStats() {
-
   const stats=getLearningStats();
 
   if($('globalCount')) {
     $('globalCount').textContent=stats.count;
-    $('globalError').textContent=
-      stats.avgError.toFixed(1)+' km';
-    $('globalCountries').textContent=
-      stats.countries;
+    $('globalError').textContent=stats.avgError.toFixed(1)+' km';
+    $('globalCountries').textContent=stats.countries;
   }
 
   if($('learnCount')) {
     $('learnCount').textContent=stats.count;
-    $('learnError').textContent=
-      stats.avgError.toFixed(1)+' km';
-    $('learnCountries').textContent=
-      stats.countries;
+    $('learnError').textContent=stats.avgError.toFixed(1)+' km';
+    $('learnCountries').textContent=stats.countries;
   }
 }
 
 function renderMemory() {
-
   const memory=getLearningMemory();
-
   const box=$('memoryList');
 
   if(!memory.length) {
-
-    box.innerHTML=
-      '<p class="muted">Henüz öğrenilmiş örnek yok.</p>';
-
+    box.innerHTML='<p class="muted">Henüz öğrenilmiş örnek yok.</p>';
     updateLearningStats();
     return;
   }
 
-  box.innerHTML=memory.slice(0,20).map((x,i)=>`
-
+  box.innerHTML=memory.slice(0,20).map(x=>`
     <div class="memory-entry">
-
       <strong>${esc(x.actual?.label||'Bilinmeyen konum')}</strong>
-
-      <small>
-        Doğru: ${esc(x.actual?.country||'Ülke bilinmiyor')}
-        · Hata: ${esc(fmtKm(x.distanceKm))}
-      </small>
-
-      <p>
-        AI tahmini:
-        ${esc(x.predicted?.label||'Bilinmiyor')}
-      </p>
-
-      <small>
-        ${esc(new Date(x.date).toLocaleString('tr'))}
-      </small>
-
-      <button class="ghost" data-memory="${esc(x.id)}">
-        Örneği sil
-      </button>
-
+      <small>Doğru: ${esc(x.actual?.country||'Ülke bilinmiyor')} · Hata: ${esc(fmtKm(x.distanceKm))}</small>
+      <p>AI tahmini: ${esc(x.predicted?.label||'Bilinmiyor')}</p>
+      <small>${esc(new Date(x.date).toLocaleString('tr'))}</small>
+      <button class="ghost" data-memory="${esc(x.id)}">Örneği sil</button>
     </div>
-
   `).join('');
 
   box.querySelectorAll('[data-memory]').forEach(btn=>{
-
     btn.addEventListener('click',()=>{
-
-      const id=btn.dataset.memory;
-
-      const updated=getLearningMemory().filter(
-        x=>x.id!==id
-      );
-
+      const updated=getLearningMemory().filter(x=>x.id!==btn.dataset.memory);
       saveLearningMemory(updated);
-
       renderMemory();
     });
   });
@@ -1749,78 +1397,51 @@ function renderMemory() {
   updateLearningStats();
 }
 
-/* Hafıza dışa aktarma */
-
 $('exportMemory').addEventListener('click',()=>{
-
-  const memory=getLearningMemory();
-
-  const blob=new Blob(
-    [JSON.stringify({
-      application:'Izsur Adaptive Memory',
-      version:1,
-      exportedAt:new Date().toISOString(),
-      examples:memory
-    },null,2)],
-    {type:'application/json'}
-  );
+  const blob=new Blob([JSON.stringify({
+    application:'Izsur Adaptive Memory',
+    version:1,
+    exportedAt:new Date().toISOString(),
+    examples:getLearningMemory()
+  },null,2)],{type:'application/json'});
 
   const a=document.createElement('a');
-
   a.href=URL.createObjectURL(blob);
   a.download='izsur-memory-backup.json';
   a.click();
-
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 });
 
-/* Hafıza içe aktarma */
-
-$('importMemory').addEventListener('click',()=>
-  $('memoryFile').click()
-);
+$('importMemory').addEventListener('click',()=>$('memoryFile').click());
 
 $('memoryFile').addEventListener('change',async e=>{
-
   const file=e.target.files[0];
-
   if(!file) return;
 
   try {
-
     const data=JSON.parse(await file.text());
+    const imported=Array.isArray(data)?data:data.examples;
 
-    const imported=Array.isArray(data)
-      ? data
-      : data.examples;
-
-    if(!Array.isArray(imported)) {
-      throw new Error('Geçersiz hafıza dosyası.');
-    }
+    if(!Array.isArray(imported)) throw new Error('Geçersiz hafıza dosyası.');
 
     const current=getLearningMemory();
-
     const ids=new Set(current.map(x=>x.id));
 
     const valid=imported.filter(x=>
-
       x &&
       typeof x.id==='string' &&
       x.actual &&
       Array.isArray(x.actual.coordinates) &&
       x.actual.coordinates.length===2 &&
       x.predicted &&
-      isNum(x.actual.coordinates[0]) &&
-      isNum(x.actual.coordinates[1]) &&
+      safeCoords(...x.actual.coordinates) &&
       isNum(x.distanceKm) &&
       Array.isArray(x.clues)
-
     );
 
     let added=0;
 
     for(const item of valid) {
-
       if(!ids.has(item.id)) {
         current.push(item);
         ids.add(item.id);
@@ -1829,13 +1450,10 @@ $('memoryFile').addEventListener('change',async e=>{
     }
 
     saveLearningMemory(current);
-
     renderMemory();
-
     alert(added+' yeni örnek içe aktarıldı.');
 
   } catch(err) {
-
     alert('İçe aktarma hatası: '+errMsg(err));
   }
 
@@ -1843,13 +1461,8 @@ $('memoryFile').addEventListener('change',async e=>{
 });
 
 $('deleteMemory').addEventListener('click',()=>{
-
-  if(!confirm(
-    'Tüm öğrenilmiş örnekleri silmek istediğine emin misin?'
-  )) return;
-
+  if(!confirm('Tüm öğrenilmiş örnekleri silmek istediğine emin misin?')) return;
   localStorage.removeItem(MEMORY_KEY);
-
   renderMemory();
 });
 
@@ -1858,69 +1471,29 @@ $('deleteMemory').addEventListener('click',()=>{
 ========================================== */
 
 function extractText(resp) {
-
   if(typeof resp==='string') return resp;
 
-  const c=
-    resp?.message?.content ??
-    resp?.text ??
-    resp;
+  const c=resp?.message?.content??resp?.text??resp;
 
   if(typeof c==='string') return c;
-
-  if(Array.isArray(c)) {
-
-    return c.map(p=>p.text??'').join('');
-  }
+  if(Array.isArray(c)) return c.map(p=>p.text??'').join('');
 
   return String(c);
 }
 
-function repairJSON(s) {
-
-  return s
-    .replace(/[“”]/g,'"')
-    .replace(/,\s*([}\]])/g,'$1')
-    .replace(/"\s*\n\s*"/g,'",\n"')
-    .replace(/([}\]])\s*\n\s*(["{\[])/g,'$1,\n$2')
-    .replace(/(\d|true|false|null)\s*\n\s*"/g,'$1,\n"');
-}
-
 function parseJSON(t) {
-
-  const c=t
-    .replace(/```json/gi,'')
-    .replace(/```/g,'')
-    .trim();
-
+  const c=t.replace(/```json/gi,'').replace(/```/g,'').trim();
   const a=c.indexOf('{');
   const b=c.lastIndexOf('}');
 
-  if(a<0||b<0) {
-    throw new Error('Model geçerli JSON döndürmedi.');
-  }
+  if(a<0||b<0) throw new Error('Model geçerli JSON döndürmedi.');
 
-  const raw=c.slice(a,b+1);
-
-  try {
-
-    return JSON.parse(raw);
-
-  } catch(e) {
-
-    return JSON.parse(repairJSON(raw));
-  }
+  return JSON.parse(c.slice(a,b+1));
 }
 
 async function ask(prompt,images,model) {
-
   if(!images||!images.length) {
-
-    const response=await puter.ai.chat(
-      prompt,
-      {model:model}
-    );
-
+    const response=await puter.ai.chat(prompt,{model});
     return extractText(response);
   }
 
@@ -1933,30 +1506,22 @@ async function ask(prompt,images,model) {
   ];
 
   const unique=attempts.filter((a,i)=>
-    a.length>0 &&
-    attempts.findIndex(x=>x.length===a.length)===i
+    a.length>0 && attempts.findIndex(x=>x.length===a.length)===i
   );
 
   for(const imgs of unique) {
-
     try {
+      const media=imgs.length===1?imgs[0]:imgs;
 
-      const media=imgs.length===1
-        ? imgs[0]
-        : imgs;
-
-      // Güncel Puter.js medya parametresi.
       const response=await puter.ai.chat(
         prompt,
         media,
         false,
-        {model:model}
+        {model}
       );
 
       return extractText(response);
-
     } catch(e) {
-
       lastError=e;
     }
   }
@@ -1965,22 +1530,13 @@ async function ask(prompt,images,model) {
 }
 
 async function askJSON(prompt,images,model) {
-
   const t=await ask(prompt,images,model);
 
   try {
-
     return parseJSON(t);
-
   } catch(e) {
-
     const fixed=await ask(
-
-      'The following text should be ONE valid JSON object. '+
-      'Correct syntax errors and return ONLY JSON. '+
-      'Preserve the original content:\n'+
-      t.slice(0,12000),
-
+      'Correct this into one valid JSON object. Return ONLY JSON. Preserve the data:\n'+t.slice(0,12000),
       [],
       model
     );
@@ -1993,8 +1549,8 @@ async function askJSON(prompt,images,model) {
    ANALİZ PROMPTLARI
 ========================================== */
 
-const SCHEMA=alts=>`
-
+function schema(alts) {
+  return `
 {
  "country":"",
  "country_code":"",
@@ -2024,29 +1580,21 @@ const SCHEMA=alts=>`
    : '[]'}
 }
 
-RULES:
-
-- Replace placeholders with findings.
+Rules:
 - country_code must be ISO-3166 alpha-2.
 - Latitude, longitude, confidence and radius_km must be numbers.
-- Confidence must be between 0 and 100.
-- Coordinates must be plausible.
+- Confidence must be 0-100.
 - Do not invent exact locations.
-- If evidence is weak, widen the uncertainty radius.
+- If evidence is weak, widen uncertainty radius.
 - driving_side: left, right or unknown.
-- Clue categories:
-  Mimari, Bitki örtüsü, Tabela ve dil,
-  Yol ve altyapı, Araçlar, Arazi,
-  Güneş ve iklim, Diğer.
-- weight: high, medium or low.
+- Clue weight: high, medium or low.
 - ${alts?'Give 2-3 alternatives.':'Leave alternatives empty.'}
 - Output strictly valid JSON.
 `;
+}
 
 function evidencePrompt(nImgs) {
-
   return `
-
 You are a forensic image analyst.
 
 You receive ${nImgs} images:
@@ -2054,23 +1602,14 @@ the first is the full photograph,
 the others are zoomed crops.
 
 Find every visible geographic clue.
-
 Read visible text literally.
 Identify its original language and meaning.
 Report only visible evidence.
 Do not identify people.
 
 Return ONLY JSON:
-
 {
- "texts":[
-  {
-   "text":"",
-   "language":"",
-   "where":"",
-   "meaning":""
-  }
- ],
+ "texts":[{"text":"","language":"","where":"","meaning":""}],
  "plates":[],
  "signs_and_brands":[],
  "landmarks":[],
@@ -2085,14 +1624,11 @@ Return ONLY JSON:
  "weather_climate":"",
  "other":[]
 }
-
 `;
 }
 
 function locatePrompt(ev,exif,hint,alts,learned) {
-
   return `
-
 You are an expert photo geolocation analyst.
 
 Determine where this photograph was taken.
@@ -2108,83 +1644,63 @@ Use:
 - sun and shadow geometry
 - climate
 - EXIF metadata
-- previously verified examples
+- previous human-verified examples
 
 Prioritize specific evidence over generic impressions.
-
-Do not identify any person.
-
+Do not identify people.
 If evidence is weak, reduce confidence.
 
 ${ev?'IMAGE EVIDENCE:\n'+JSON.stringify(ev).slice(0,7000)+'\n':''}
-
 ${exif?'PHOTO METADATA:\n'+JSON.stringify(exif)+'\n':''}
-
 ${hint?'USER CONTEXT:\n'+hint+'\n':''}
-
 ${learned||''}
 
 Return ONLY a valid JSON object.
-
-${SCHEMA(alts)}
-
+${schema(alts)}
 `;
 }
 
 function judgePrompt(ev,exif,results,hint,alts,learned) {
-
   return `
-
 You are the chief adjudicator of a photo geolocation system.
 
 Multiple AI models independently estimated the location.
-
 Study their answers and the original photograph.
 
-Your tasks:
-
+Tasks:
 1. Find contradictions.
 2. Discard unsupported claims.
-3. Compare the geographical evidence.
+3. Compare geographical evidence.
 4. Evaluate coordinates.
 5. Decide the most probable location.
 6. Explain why competing locations are less likely.
 
 Do not use majority voting blindly.
-
 Do not identify any person.
 
 ${ev?'EVIDENCE:\n'+JSON.stringify(ev).slice(0,5000)+'\n':''}
-
 ${exif?'METADATA:\n'+JSON.stringify(exif)+'\n':''}
-
 ${hint?'USER CONTEXT:\n'+hint+'\n':''}
-
 ${learned||''}
 
 MODEL RESULTS:
-
-${JSON.stringify(
-  results.map(r=>({
-    model:r.model,
-    country:r.data.country,
-    region:r.data.region,
-    city:r.data.city,
-    latitude:r.data.latitude,
-    longitude:r.data.longitude,
-    confidence:r.data.confidence,
-    summary:r.data.summary,
-    ruled_out:r.data.ruled_out
-  }))
-).slice(0,6000)}
+${JSON.stringify(results.map(r=>({
+  model:r.model,
+  country:r.data.country,
+  region:r.data.region,
+  city:r.data.city,
+  latitude:r.data.latitude,
+  longitude:r.data.longitude,
+  confidence:r.data.confidence,
+  summary:r.data.summary,
+  ruled_out:r.data.ruled_out
+}))).slice(0,6000)}
 
 Return ONLY JSON with two additional fields:
-
-"contradictions":[],
+"contradictions":[]
 "verification_notes":""
 
-${SCHEMA(alts)}
-
+${schema(alts)}
 `;
 }
 
@@ -2193,44 +1709,29 @@ ${SCHEMA(alts)}
 ========================================== */
 
 function initSteps(list) {
-
   STEPS=list;
-
   $('progress').classList.remove('hidden');
-
   renderSteps();
 }
 
 function renderSteps() {
-
   $('steps').innerHTML=STEPS.map(s=>{
-
-    const ic={
-      wait:'○',
-      run:'◐',
-      ok:'✓',
-      fail:'✕'
-    }[s.st];
+    const ic={wait:'○',run:'◐',ok:'✓',fail:'✕'}[s.st];
 
     return `
       <li class="st-${s.st}">
         <span class="ic">${ic}</span>
         <span>
           ${esc(s.text)}
-          ${s.note
-            ? '<small class="muted">'+esc(s.note)+'</small>'
-            : ''}
+          ${s.note?'<small class="muted">'+esc(s.note)+'</small>':''}
         </span>
       </li>
     `;
-
   }).join('');
 }
 
 function step(id,st,note) {
-
   const s=STEPS.find(x=>x.id===id);
-
   if(s) {
     s.st=st;
     if(note!==undefined) s.note=note;
@@ -2239,43 +1740,401 @@ function step(id,st,note) {
 }
 
 /* ==========================================
-   OPENSTREETMAP DOĞRULAMA
+   OPENSTREETMAP
 ========================================== */
 
 async function reverseGeo(lat,lon) {
-
-  const u=
-    'https://nominatim.openstreetmap.org/reverse?format=jsonv2'+
+  const u='https://nominatim.openstreetmap.org/reverse?format=jsonv2'+
     '&zoom=14&accept-language=tr'+
     '&lat='+encodeURIComponent(lat)+
     '&lon='+encodeURIComponent(lon);
 
   const r=await fetch(u);
-
-  if(!r.ok) {
-    throw new Error('Geokodlama HTTP '+r.status);
-  }
+  if(!r.ok) throw new Error('Geokodlama HTTP '+r.status);
 
   const j=await r.json();
 
   return {
-
     cc:(j.address?.country_code||'').toUpperCase(),
-
     name:j.display_name||'',
-
     country:j.address?.country||'',
-
     state:j.address?.state||j.address?.region||'',
-
-    city:
-      j.address?.city||
-      j.address?.town||
-      j.address?.village||
-      j.address?.county||
-      ''
-
+    city:j.address?.city||j.address?.town||j.address?.village||j.address?.county||''
   };
+}
+
+/* ==========================================
+   KARTAVIEW GÖRSEL EŞLEŞTİRME
+========================================== */
+
+/*
+  Bu fonksiyon önce AI tahmin koordinatlarının çevresinde
+  KartaView fotoğraflarını arar.
+
+  KartaView API erişimi, CORS veya endpoint politikaları
+  nedeniyle tarayıcıdan başarısız olabilir. Böyle bir durumda
+  ana analiz akışı kesilmez.
+*/
+
+function getKartaViewImageUrl(photo) {
+  const raw=
+    photo.fileurlProc||
+    photo.fileurl||
+    photo.fileUrl||
+    photo.fileurlTh||
+    photo.filepath||
+    photo.filePath;
+
+  if(!raw) return null;
+
+  try {
+    return new URL(raw,'https://api.openstreetcam.org/').href;
+  } catch(e) {
+    return null;
+  }
+}
+
+async function fetchKartaViewPhotos(lat,lon,radius) {
+  const params=new URLSearchParams({
+    lat:String(lat),
+    lng:String(lon),
+    radius:String(Math.min(500,radius)),
+    zoomLevel:'18',
+    join:'sequence',
+    orderBy:'id',
+    orderDirection:'desc'
+  });
+
+  const url=KARTAVIEW_API+'?'+params.toString();
+
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),18000);
+
+  try {
+    const response=await fetch(url,{
+      method:'GET',
+      headers:{'Accept':'application/json'},
+      signal:controller.signal
+    });
+
+    if(!response.ok) {
+      throw new Error('KartaView HTTP '+response.status);
+    }
+
+    const json=await response.json();
+
+    if(json.status&&json.status.apiCode&&json.status.apiCode!==600) {
+      throw new Error(json.status.apiMessage||'KartaView API erişim hatası');
+    }
+
+    const data=json.result?.data||json.data||[];
+
+    if(!Array.isArray(data)) return [];
+
+    return data.map(p=>{
+      const lat2=Number(p.lat??p.latitude);
+      const lon2=Number(p.lng??p.lon??p.longitude);
+
+      return {
+        id:String(p.id??p.photoId??p.sequenceId??Math.random()),
+        lat:lat2,
+        lon:lon2,
+        heading:p.heading,
+        date:p.shotDate||p.dateAdded||p.dateProcessed||'',
+        sequenceId:p.sequence?.id||p.sequenceId||'',
+        imageUrl:getKartaViewImageUrl(p),
+        source:p
+      };
+    }).filter(p=>
+      p.imageUrl&&safeCoords(p.lat,p.lon)
+    );
+
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function getCandidateCenters(R) {
+  const list=[];
+  const add=(lat,lon,label)=>{
+    if(!safeCoords(lat,lon)) return;
+
+    const exists=list.some(p=>
+      haversine([p.lat,p.lon],[Number(lat),Number(lon)])<.15
+    );
+
+    if(!exists) list.push({
+      lat:Number(lat),
+      lon:Number(lon),
+      label
+    });
+  };
+
+  add(R.final.latitude,R.final.longitude,'Nihai tahmin');
+
+  (R.models||[])
+    .slice()
+    .sort((a,b)=>(b.data.confidence||0)-(a.data.confidence||0))
+    .slice(0,2)
+    .forEach(m=>{
+      add(
+        m.data.latitude,
+        m.data.longitude,
+        'Model: '+m.model
+      );
+    });
+
+  return list.slice(0,3);
+}
+
+function normalizeKartaViewResults(results) {
+  const seen=new Set();
+  const out=[];
+
+  for(const p of results) {
+    if(!p.imageUrl) continue;
+
+    const key=p.id+'|'+p.imageUrl;
+    if(seen.has(key)) continue;
+
+    seen.add(key);
+    out.push(p);
+  }
+
+  return out;
+}
+
+async function compareImagesWithAI(originalUrl,referenceUrl,model) {
+  const prompt=`
+You are comparing two photographs for visual geolocation verification.
+
+IMAGE 1 is the user's original photograph.
+IMAGE 2 is a public KartaView street-level reference photograph
+with known coordinates.
+
+Compare only visible, meaningful features:
+- building shapes and facade details
+- road geometry and lane markings
+- signs and readable text
+- street furniture
+- vegetation
+- terrain and skyline
+- distinctive landmarks
+- perspective and camera angle
+
+Do not claim that two photographs show the same place
+only because both look like generic streets.
+
+A high score requires multiple distinctive matching features.
+A low score is appropriate when they merely share a generic scene.
+
+Return ONLY valid JSON:
+{
+ "similarity_score": 0,
+ "same_location_likelihood": "low",
+ "matching_features": [],
+ "contradicting_features": [],
+ "explanation": "",
+ "visual_match": false
+}
+
+similarity_score is a visual similarity score from 0 to 100.
+It is NOT a calibrated probability that the location is correct.
+Use "high" only when several distinctive features agree.
+`;
+
+  const response=await puter.ai.chat(
+    prompt,
+    [originalUrl,referenceUrl],
+    false,
+    {model}
+  );
+
+  const result=parseJSON(extractText(response));
+
+  result.similarity_score=Math.max(
+    0,
+    Math.min(100,Number(result.similarity_score)||0)
+  );
+
+  return result;
+}
+
+async function runVisualMatching(R,model,radius) {
+  const panel=$('visualResults');
+  const status=$('visualStatus');
+  const grid=$('visualGrid');
+
+  panel.classList.remove('hidden');
+  grid.innerHTML='';
+  clearVisualMarkers();
+
+  status.textContent='Aday konumlar çevresinde KartaView fotoğrafları aranıyor…';
+
+  const centers=getCandidateCenters(R);
+
+  if(!centers.length) {
+    status.textContent='Geçerli aday koordinat bulunamadı.';
+    return [];
+  }
+
+  const all=[];
+
+  for(const center of centers) {
+    try {
+      const photos=await fetchKartaViewPhotos(
+        center.lat,
+        center.lon,
+        radius
+      );
+
+      photos.forEach(p=>{
+        p.searchCenter=center.label;
+        all.push(p);
+      });
+
+    } catch(e) {
+      console.warn('KartaView arama hatası:',e);
+    }
+
+    await sleep(350);
+  }
+
+  const candidates=normalizeKartaViewResults(all)
+    .map(p=>({
+      ...p,
+      distanceKm:haversine(
+        [R.final.latitude,R.final.longitude],
+        [p.lat,p.lon]
+      )
+    }))
+    .sort((a,b)=>a.distanceKm-b.distanceKm)
+    .slice(0,5);
+
+  if(!candidates.length) {
+    status.textContent=
+      'KartaView üzerinde bu aday koordinatların çevresinde erişilebilir fotoğraf bulunamadı. '+
+      'Bu durum tahminin yanlış olduğunu göstermez.';
+
+    return [];
+  }
+
+  status.textContent=
+    candidates.length+' referans fotoğraf bulundu. Görsel karşılaştırma yapılıyor…';
+
+  const results=[];
+
+  for(let i=0;i<candidates.length;i++) {
+    const p=candidates[i];
+
+    try {
+      const comparison=await compareImagesWithAI(
+        S.full,
+        p.imageUrl,
+        model
+      );
+
+      const item={
+        ...p,
+        comparison
+      };
+
+      results.push(item);
+      renderVisualCards(results);
+
+      if(safeCoords(p.lat,p.lon)) {
+        const marker=L.circleMarker([p.lat,p.lon],{
+          radius:8,
+          color:'#fff',
+          weight:2,
+          fillColor:'#7A3FB8',
+          fillOpacity:.95
+        }).addTo(visualLayer);
+
+        marker.bindPopup(
+          'KartaView referansı<br>'+
+          'Görsel benzerlik: '+comparison.similarity_score+'/100'
+        );
+
+        visualMarkers.push(marker);
+      }
+
+    } catch(e) {
+      results.push({
+        ...p,
+        comparison:null,
+        error:errMsg(e)
+      });
+
+      renderVisualCards(results);
+    }
+
+    await sleep(250);
+  }
+
+  results.sort((a,b)=>
+    (b.comparison?.similarity_score||0)-
+    (a.comparison?.similarity_score||0)
+  );
+
+  status.textContent=
+    results.filter(x=>x.comparison).length+
+    ' fotoğraf karşılaştırıldı. En iyi görsel eşleşme üstte gösteriliyor.';
+
+  renderVisualCards(results);
+
+  return results;
+}
+
+function renderVisualCards(results) {
+  const grid=$('visualGrid');
+
+  grid.innerHTML=results.map((p,i)=>{
+    const c=p.comparison;
+    const score=c?c.similarity_score:null;
+
+    return `
+      <div class="visual-card">
+        <img
+          src="${esc(p.imageUrl)}"
+          alt="KartaView referans fotoğrafı"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          onerror="this.style.opacity='.25';this.alt='Fotoğraf yüklenemedi'">
+
+        <div class="vc-body">
+          <strong>${c?'Görsel benzerlik':'Karşılaştırma başarısız'}</strong>
+
+          ${c
+            ? `<div class="visual-score">${score}/100</div>`
+            : '<small>'+esc(p.error||'Model karşılaştırması yapılamadı')+'</small>'}
+
+          <small>${esc(fmtKm(p.distanceKm))} · tahmin noktasına uzaklık</small>
+          <small>${esc(p.date||'Çekim tarihi bilinmiyor')}</small>
+
+          ${c
+            ? `<small>${esc(c.same_location_likelihood||'Belirsiz')} benzerlik değerlendirmesi</small>`
+            : ''}
+
+          <button class="ghost" data-visual="${i}">Haritada göster</button>
+
+          ${c&&c.explanation
+            ? `<details><summary>Karşılaştırma ayrıntısı</summary><p>${esc(c.explanation)}</p></details>`
+            : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('[data-visual]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const p=results[Number(btn.dataset.visual)];
+
+      if(!p||!safeCoords(p.lat,p.lon)) return;
+
+      map.flyTo([p.lat,p.lon],17);
+    });
+  });
 }
 
 /* ==========================================
@@ -2283,7 +2142,6 @@ async function reverseGeo(lat,lon) {
 ========================================== */
 
 $('go').addEventListener('click',async()=>{
-
   if(!S.full) return;
 
   const depth=$('depth').value;
@@ -2291,109 +2149,69 @@ $('go').addEventListener('click',async()=>{
   const wantAlts=$('alts').checked;
   const doGeo=$('geo').checked;
   const useMemory=$('useMemory').checked;
+  const doVisual=$('visualMatch').checked;
 
   let models=[
     ...document.querySelectorAll('.mdl:checked')
   ].map(c=>c.value);
 
-  const cm=$('custom').value.trim();
+  const custom=$('custom').value.trim();
+  if(custom&&!models.includes(custom)) models.push(custom);
 
-  if(cm&&!models.includes(cm)) {
-    models.push(cm);
-  }
+  if(!models.length) return showError('En az bir model seç.');
 
-  if(!models.length) {
-    return showError('En az bir model seç.');
-  }
-
-  if(depth==='fast') {
-    models=models.slice(0,1);
-  }
+  if(depth==='fast') models=models.slice(0,1);
 
   const judgeModel=$('judge').value;
-
   const useEvidence=depth!=='fast';
   const useJudge=depth!=='fast';
 
   const btn=$('go');
-
   btn.disabled=true;
   btn.textContent='Taranıyor…';
 
   currentResult=null;
+  $('visualResults').classList.add('hidden');
+  $('visualGrid').innerHTML='';
+  clearVisualMarkers();
 
   initSteps([
-
     {id:'exif',text:'Metadata (EXIF) okunuyor',st:'wait'},
 
-    ...(useMemory
-      ? [{id:'memory',text:'Öğrenilmiş örnekler hazırlanıyor',st:'wait'}]
-      : []),
+    ...(useMemory?[{id:'memory',text:'Öğrenilmiş örnekler hazırlanıyor',st:'wait'}]:[]),
 
-    ...(useEvidence
-      ? [
-        {id:'crops',text:'Yakın plan kırpmalar hazırlanıyor',st:'wait'},
-        {id:'evidence',text:'OCR ve görsel kanıt çıkarımı',st:'wait'}
-      ]
-      : []),
+    ...(useEvidence?[
+      {id:'crops',text:'Yakın plan kırpmalar hazırlanıyor',st:'wait'},
+      {id:'evidence',text:'OCR ve görsel kanıt çıkarımı',st:'wait'}
+    ]:[]),
 
-    ...models.map(m=>({
-      id:'m:'+m,
-      text:'Konum analizi: '+m,
-      st:'wait'
-    })),
+    ...models.map(m=>({id:'m:'+m,text:'Konum analizi: '+m,st:'wait'})),
 
-    ...(useJudge
-      ? [{
-        id:'judge',
-        text:'Hakem değerlendirmesi',
-        st:'wait'
-      }]
-      : []),
+    ...(useJudge?[{id:'judge',text:'Hakem değerlendirmesi',st:'wait'}]:[]),
 
-    ...(doGeo
-      ? [{
-        id:'geo',
-        text:'OpenStreetMap doğrulaması',
-        st:'wait'
-      }]
-      : [])
+    ...(doGeo?[{id:'geo',text:'OpenStreetMap doğrulaması',st:'wait'}]:[]),
 
+    ...(doVisual?[{id:'visual',text:'KartaView görsel eşleştirmesi',st:'wait'}]:[])
   ]);
 
-  $('result').innerHTML=
-    '<h2>Sonuç</h2><p class="muted">Tarama sürüyor…</p>';
+  $('result').innerHTML='<h2>Sonuç</h2><p class="muted">Tarama sürüyor…</p>';
 
   try {
-
     /* 1. EXIF */
 
     step('exif','run');
 
-    const exifForPrompt=S.exif
-      ? {
-        camera:[
-          S.exif.make,
-          S.exif.model
-        ].filter(Boolean).join(' ')||undefined,
+    const exifForPrompt=S.exif?{
+      camera:[S.exif.make,S.exif.model].filter(Boolean).join(' ')||undefined,
+      date:S.exif.date,
+      gps:safeCoords(S.exif.lat,S.exif.lon)
+        ? [+S.exif.lat.toFixed(5),+S.exif.lon.toFixed(5)]
+        : undefined
+    }:null;
 
-        date:S.exif.date,
-
-        gps:isNum(S.exif.lat)
-          ? [
-            +S.exif.lat.toFixed(5),
-            +S.exif.lon.toFixed(5)
-          ]
-          : undefined
-      }
-      : null;
-
-    step(
-      'exif',
-      'ok',
-      S.exif
-        ? (isNum(S.exif.lat)?'GPS bulundu':'GPS yok')
-        : 'Metadata yok'
+    step('exif','ok',S.exif
+      ? (safeCoords(S.exif.lat,S.exif.lon)?'GPS bulundu':'GPS yok')
+      : 'Metadata yok'
     );
 
     /* 2. HAFIZA */
@@ -2401,16 +2219,9 @@ $('go').addEventListener('click',async()=>{
     let learned='';
 
     if(useMemory) {
-
       step('memory','run');
-
       learned=learningContext(null,true);
-
-      step(
-        'memory',
-        'ok',
-        getLearningMemory().length+' kayıt incelendi'
-      );
+      step('memory','ok',getLearningMemory().length+' kayıt incelendi');
     }
 
     /* 3. GÖRSEL KANIT */
@@ -2419,13 +2230,10 @@ $('go').addEventListener('click',async()=>{
     let images=[S.full];
 
     if(useEvidence) {
-
       step('crops','run');
 
       if(!S.remoteOnly) {
-
         try {
-
           images=[
             S.full,
             ...await makeCrops(
@@ -2436,21 +2244,16 @@ $('go').addEventListener('click',async()=>{
           ];
 
           step('crops','ok',(images.length-1)+' kırpma');
-
         } catch(e) {
-
           step('crops','fail',errMsg(e));
         }
-
       } else {
-
         step('crops','fail','Uzak görsel: kırpma yapılamadı');
       }
 
       step('evidence','run');
 
       try {
-
         evidence=await askJSON(
           evidencePrompt(images.length),
           images,
@@ -2463,90 +2266,47 @@ $('go').addEventListener('click',async()=>{
         );
 
         step('evidence','ok',n+' kanıt');
-
       } catch(e) {
-
         step('evidence','fail',errMsg(e));
       }
     }
 
-    // Kanıt çıktıktan sonra benzer örnekleri yeniden seç.
-    if(useMemory&&evidence) {
-
-      learned=learningContext(evidence,true);
-    }
+    if(useMemory&&evidence) learned=learningContext(evidence,true);
 
     /* 4. MODELLER */
 
-    const settled=await Promise.all(
+    const settled=await Promise.all(models.map(async m=>{
+      step('m:'+m,'run');
 
-      models.map(async m=>{
+      try {
+        const d=await askJSON(
+          locatePrompt(evidence,exifForPrompt,hint,wantAlts,learned),
+          [S.full],
+          m
+        );
 
-        step('m:'+m,'run');
+        ['latitude','longitude','confidence','radius_km'].forEach(k=>{
+          if(d[k]!=null) d[k]=Number(d[k]);
+        });
 
-        try {
-
-          const d=await askJSON(
-
-            locatePrompt(
-              evidence,
-              exifForPrompt,
-              hint,
-              wantAlts,
-              learned
-            ),
-
-            [S.full],
-            m
-          );
-
-          [
-            'latitude',
-            'longitude',
-            'confidence',
-            'radius_km'
-          ].forEach(k=>{
-
-            if(d[k]!=null) {
-              d[k]=Number(d[k]);
-            }
-          });
-
-          if(
-            !isNum(d.latitude)||
-            !isNum(d.longitude)||
-            Math.abs(d.latitude)>90||
-            Math.abs(d.longitude)>180
-          ) {
-            throw new Error('Geçersiz koordinatlar');
-          }
-
-          step(
-            'm:'+m,
-            'ok',
-            d.city||d.country||''
-          );
-
-          return {
-            model:m,
-            data:d
-          };
-
-        } catch(e) {
-
-          step('m:'+m,'fail',errMsg(e));
-
-          return null;
+        if(!safeCoords(d.latitude,d.longitude)) {
+          throw new Error('Geçersiz koordinatlar');
         }
-      })
-    );
+
+        step('m:'+m,'ok',d.city||d.country||'');
+
+        return {model:m,data:d};
+
+      } catch(e) {
+        step('m:'+m,'fail',errMsg(e));
+        return null;
+      }
+    }));
 
     const results=settled.filter(Boolean);
 
     if(!results.length) {
-      throw new Error(
-        'Hiçbir model geçerli konum döndürmedi. Başka model seç.'
-      );
+      throw new Error('Hiçbir model geçerli konum döndürmedi. Başka model seç.');
     }
 
     /* 5. HAKEM */
@@ -2554,63 +2314,34 @@ $('go').addEventListener('click',async()=>{
     let final=null;
 
     if(useJudge) {
-
       step('judge','run');
 
       try {
-
         final=await askJSON(
-
-          judgePrompt(
-            evidence,
-            exifForPrompt,
-            results,
-            hint,
-            wantAlts,
-            learned
-          ),
-
+          judgePrompt(evidence,exifForPrompt,results,hint,wantAlts,learned),
           [S.full],
           judgeModel
         );
 
-        [
-          'latitude',
-          'longitude',
-          'confidence',
-          'radius_km'
-        ].forEach(k=>{
-
-          if(final[k]!=null) {
-            final[k]=Number(final[k]);
-          }
+        ['latitude','longitude','confidence','radius_km'].forEach(k=>{
+          if(final[k]!=null) final[k]=Number(final[k]);
         });
 
-        if(
-          !isNum(final.latitude)||
-          !isNum(final.longitude)||
-          Math.abs(final.latitude)>90||
-          Math.abs(final.longitude)>180
-        ) {
+        if(!safeCoords(final.latitude,final.longitude)) {
           throw new Error('Hakem geçerli koordinat vermedi');
         }
 
         step('judge','ok',final.city||final.country||'');
-
       } catch(e) {
-
         step('judge','fail',errMsg(e));
         final=null;
       }
     }
 
     if(!final) {
-
       final={
         ...results.slice().sort(
-          (a,b)=>
-            (b.data.confidence||0)-
-            (a.data.confidence||0)
+          (a,b)=>(b.data.confidence||0)-(a.data.confidence||0)
         )[0].data
       };
     }
@@ -2618,7 +2349,6 @@ $('go').addEventListener('click',async()=>{
     /* 6. DOĞRULAMA */
 
     const checks=[];
-
     let finalGeo=null;
     let exifGeo=null;
 
@@ -2631,16 +2361,11 @@ $('go').addEventListener('click',async()=>{
 
     for(let i=0;i<guesses.length;i++) {
       for(let j=i+1;j<guesses.length;j++) {
-
-        spread=Math.max(
-          spread,
-          haversine(guesses[i],guesses[j])
-        );
+        spread=Math.max(spread,haversine(guesses[i],guesses[j]));
       }
     }
 
     results.forEach(r=>{
-
       r.dist=haversine(
         [r.data.latitude,r.data.longitude],
         [final.latitude,final.longitude]
@@ -2648,48 +2373,27 @@ $('go').addEventListener('click',async()=>{
     });
 
     if(doGeo) {
-
       step('geo','run');
 
       try {
-
-        finalGeo=await reverseGeo(
-          final.latitude,
-          final.longitude
-        );
+        finalGeo=await reverseGeo(final.latitude,final.longitude);
 
         for(const r of results) {
-
           await sleep(1100);
-
           try {
-
-            r.geo=await reverseGeo(
-              r.data.latitude,
-              r.data.longitude
-            );
-
+            r.geo=await reverseGeo(r.data.latitude,r.data.longitude);
           } catch(e) {}
         }
 
-        if(S.exif&&isNum(S.exif.lat)) {
-
+        if(S.exif&&safeCoords(S.exif.lat,S.exif.lon)) {
           await sleep(1100);
-
           try {
-
-            exifGeo=await reverseGeo(
-              S.exif.lat,
-              S.exif.lon
-            );
-
+            exifGeo=await reverseGeo(S.exif.lat,S.exif.lon);
           } catch(e) {}
         }
 
         step('geo','ok');
-
       } catch(e) {
-
         step('geo','fail',errMsg(e));
       }
     }
@@ -2701,35 +2405,27 @@ $('go').addEventListener('click',async()=>{
       : 50;
 
     if(results.length>1) {
-
       if(spread<100) {
-
         checks.push({
           ok:true,
           text:'Modeller birbirine '+fmtKm(spread)+' içinde yakın.'
         });
-
         conf=Math.min(99,conf+5);
 
       } else if(spread<800) {
-
         checks.push({
           ok:true,
           text:'Modeller arasında en fazla '+fmtKm(spread)+' fark var.'
         });
 
       } else {
-
         checks.push({
           ok:false,
           text:'Modeller '+fmtKm(spread)+' kadar ayrışıyor.'
         });
-
         conf=Math.max(5,conf-15);
       }
-
     } else {
-
       checks.push({
         ok:false,
         text:'Tek model kullanıldı; çapraz karşılaştırma yok.'
@@ -2737,12 +2433,8 @@ $('go').addEventListener('click',async()=>{
     }
 
     if(finalGeo) {
-
-      if(
-        finalGeo.cc&&
-        final.country_code&&
-        finalGeo.cc===String(final.country_code).toUpperCase()
-      ) {
+      if(finalGeo.cc&&final.country_code&&
+        finalGeo.cc===String(final.country_code).toUpperCase()) {
 
         checks.push({
           ok:true,
@@ -2750,17 +2442,14 @@ $('go').addEventListener('click',async()=>{
         });
 
       } else if(finalGeo.cc) {
-
         checks.push({
           ok:false,
           text:'Koordinat haritada '+finalGeo.country+
             ' içinde görünüyor; tahmin '+final.country+' diyor.'
         });
-
         conf=Math.max(5,conf-15);
 
       } else {
-
         checks.push({
           ok:false,
           text:'Koordinat haritada doğrulanamadı.'
@@ -2768,24 +2457,20 @@ $('go').addEventListener('click',async()=>{
       }
     }
 
-    if(S.exif&&isNum(S.exif.lat)) {
-
+    if(S.exif&&safeCoords(S.exif.lat,S.exif.lon)) {
       const d=haversine(
         [S.exif.lat,S.exif.lon],
         [final.latitude,final.longitude]
       );
 
       if(d<=Math.max(5,final.radius_km||0)) {
-
         checks.push({
           ok:true,
           text:'EXIF GPS konumu görsel tahminle örtüşüyor ('+fmtKm(d)+').'
         });
-
         conf=Math.max(conf,97);
 
       } else {
-
         checks.push({
           ok:false,
           text:'EXIF GPS konumu tahminden '+fmtKm(d)+' uzakta.'
@@ -2793,15 +2478,10 @@ $('go').addEventListener('click',async()=>{
       }
 
     } else {
-
-      checks.push({
-        ok:false,
-        text:'EXIF GPS verisi yok.'
-      });
+      checks.push({ok:false,text:'EXIF GPS verisi yok.'});
     }
 
     if(evidence) {
-
       const strong=
         (evidence.texts?.length||0)+
         (evidence.plates?.length||0)+
@@ -2817,10 +2497,9 @@ $('go').addEventListener('click',async()=>{
 
     final.confidence=Math.round(conf);
 
-    /* 8. SONUÇ */
+    /* 8. SONUÇ NESNESİ */
 
     const R={
-
       final,
       models:results,
       evidence,
@@ -2830,11 +2509,8 @@ $('go').addEventListener('click',async()=>{
       checks,
       spread,
       depth,
-
-      learnedExamples:useMemory
-        ? getLearningMemory().length
-        : 0
-
+      visualMatches:[],
+      learnedExamples:useMemory?getLearningMemory().length:0
     };
 
     currentResult=R;
@@ -2843,23 +2519,50 @@ $('go').addEventListener('click',async()=>{
     drawOnMap(R);
     saveHistory(R);
 
-  } catch(e) {
+    /* 9. GÖRSEL EŞLEŞTİRME */
 
+    if(doVisual) {
+      step('visual','run');
+
+      try {
+        const visual=await runVisualMatching(
+          R,
+          judgeModel,
+          Number($('visualRadius').value)
+        );
+
+        R.visualMatches=visual;
+        step(
+          'visual',
+          'ok',
+          visual.length+' referans sonuç'
+        );
+
+        render(R);
+        drawOnMap(R);
+        saveHistory(R);
+
+      } catch(e) {
+        step('visual','fail',errMsg(e));
+        $('visualStatus').textContent=
+          'Görsel eşleştirme tamamlanamadı: '+errMsg(e);
+      }
+    }
+
+  } catch(e) {
     showError(errMsg(e));
 
   } finally {
-
     btn.disabled=false;
     btn.textContent='Derin taramayı başlat';
   }
 });
 
 /* ==========================================
-   HATA GÖSTERİMİ
+   HATA
 ========================================== */
 
 function showError(msg) {
-
   $('result').innerHTML=`
     <h2>Sonuç</h2>
     <div class="err">
@@ -2875,7 +2578,6 @@ function showError(msg) {
 ========================================== */
 
 const EV_LABELS={
-
   texts:'Okunan metinler (OCR)',
   plates:'Plakalar',
   signs_and_brands:'Tabela ve markalar',
@@ -2891,7 +2593,6 @@ const EV_LABELS={
 };
 
 function fmtItem(x) {
-
   if(typeof x!=='object'||!x) return esc(x);
 
   return Object.entries(x)
@@ -2899,204 +2600,117 @@ function fmtItem(x) {
     .map(([k,v])=>
       '<em>'+esc(k)+':</em> '+
       esc(typeof v==='object'?JSON.stringify(v):v)
-    )
-    .join(' · ');
+    ).join(' · ');
 }
 
 function evidenceHTML(ev) {
-
   if(!ev) return '';
 
   let h='<h3 class="sub">Kanıt dosyası</h3>';
 
   Object.keys(EV_LABELS).forEach(k=>{
-
     const a=ev[k];
-
     if(!Array.isArray(a)||!a.length) return;
 
     h+=`
       <details ${k==='texts'||k==='landmarks'?'open':''}>
         <summary>${EV_LABELS[k]} (${a.length})</summary>
-        <ul>
-          ${a.map(x=>'<li>'+fmtItem(x)+'</li>').join('')}
-        </ul>
+        <ul>${a.map(x=>'<li>'+fmtItem(x)+'</li>').join('')}</ul>
       </details>
     `;
   });
 
   if(ev.sun_shadow) {
-
-    h+=`
-      <details>
-        <summary>Güneş ve gölge analizi</summary>
-        <p>${esc(ev.sun_shadow)}</p>
-      </details>
-    `;
+    h+='<details><summary>Güneş ve gölge analizi</summary><p>'+esc(ev.sun_shadow)+'</p></details>';
   }
 
   if(ev.weather_climate) {
-
-    h+=`
-      <details>
-        <summary>Hava ve iklim</summary>
-        <p>${esc(ev.weather_climate)}</p>
-      </details>
-    `;
+    h+='<details><summary>Hava ve iklim</summary><p>'+esc(ev.weather_climate)+'</p></details>';
   }
 
   return h;
 }
 
 function render(R) {
-
   const r=R.final;
   const conf=r.confidence||0;
 
-  const coords=isNum(r.latitude)
+  const coords=safeCoords(r.latitude,r.longitude)
     ? r.latitude.toFixed(5)+', '+r.longitude.toFixed(5)
     : '—';
 
   const clues=(r.clues||[]).map(c=>`
-
     <div class="clue">
-
       <div>
         <strong>${esc(c.category)}</strong>
         <br>
-        <em>
-          ${esc({
-            high:'güçlü ipucu',
-            medium:'orta ipucu',
-            low:'zayıf ipucu'
-          }[c.weight]||'')}
-        </em>
+        <em>${esc({
+          high:'güçlü ipucu',
+          medium:'orta ipucu',
+          low:'zayıf ipucu'
+        }[c.weight]||'')}</em>
       </div>
-
       <div>${esc(c.observation)}</div>
-
     </div>
-
   `).join('');
 
   const alts=(r.alternatives||[]).map((a,i)=>`
-
     <button class="alt" data-i="${i}">
       <span>${esc(a.place)}</span>
       <span>%${esc(a.confidence)}</span>
     </button>
-
   `).join('');
 
   const checks=(R.checks||[]).map(c=>`
-
     <div class="check ${c.ok?'ok':'bad'}">
       <i>${c.ok?'✓':'!'}</i>
       <span>${esc(c.text)}</span>
     </div>
-
   `).join('');
 
   const mrows=(R.models||[]).map((m,i)=>`
-
     <tr>
-
       <td>
-        <span class="dot"
-          style="background:${COLORS[(i+1)%COLORS.length]}">
-        </span>
+        <span class="dot" style="background:${COLORS[(i+1)%COLORS.length]}"></span>
         ${esc(m.model)}
       </td>
-
-      <td>
-        ${esc([
-          m.data.city,
-          m.data.country
-        ].filter(Boolean).join(', '))}
-      </td>
-
+      <td>${esc([m.data.city,m.data.country].filter(Boolean).join(', '))}</td>
       <td>%${esc(m.data.confidence??'?')}</td>
-
       <td>${fmtKm(m.dist||0)}</td>
-
       <td>${esc(m.geo?.country||'—')}</td>
-
     </tr>
-
   `).join('');
 
   const ex=R.exif;
 
-  const exifBlock=ex
-    ? `
-      <div class="meta">
+  const exifBlock=ex?`
+    <div class="meta">
+      <div><b>Kamera</b>${esc([ex.make,ex.model].filter(Boolean).join(' ')||'—')}</div>
+      <div><b>Çekim tarihi</b>${esc(ex.date||'—')}</div>
+      <div><b>EXIF GPS</b>${safeCoords(ex.lat,ex.lon)?esc(ex.lat.toFixed(5)+', '+ex.lon.toFixed(5)):'yok'}</div>
+      ${isNum(ex.alt)?'<div><b>Rakım</b>'+Math.round(ex.alt)+' m</div>':''}
+    </div>
+  `:'';
 
-        <div>
-          <b>Kamera</b>
-          ${esc([ex.make,ex.model].filter(Boolean).join(' ')||'—')}
-        </div>
-
-        <div>
-          <b>Çekim tarihi</b>
-          ${esc(ex.date||'—')}
-        </div>
-
-        <div>
-          <b>EXIF GPS</b>
-          ${isNum(ex.lat)
-            ? esc(ex.lat.toFixed(5)+', '+ex.lon.toFixed(5))
-            : 'yok'}
-        </div>
-
-        ${isNum(ex.alt)
-          ? '<div><b>Rakım</b>'+Math.round(ex.alt)+' m</div>'
-          : ''}
-
-      </div>
-    `
-    : '';
-
-  const gmaps=
-    'https://www.google.com/maps/@'+
-    r.latitude+','+r.longitude+',17z/data=!3m1!1e3';
+  const gmaps='https://www.google.com/maps/@'+r.latitude+','+r.longitude+',17z/data=!3m1!1e3';
 
   $('result').innerHTML=`
-
     <h2>Sonuç</h2>
 
     <div class="place">
-
       <div class="flag">${flag(r.country_code)}</div>
-
       <div>
-
-        <h3>
-          ${esc(
-            [r.city,r.country]
-            .filter(Boolean)
-            .join(', ')||'Bilinmiyor'
-          )}
-        </h3>
-
-        <p>
-          ${esc(
-            [r.neighborhood,r.region]
-            .filter(Boolean)
-            .join(' · ')
-          )}
-        </p>
-
+        <h3>${esc([r.city,r.country].filter(Boolean).join(', ')||'Bilinmiyor')}</h3>
+        <p>${esc([r.neighborhood,r.region].filter(Boolean).join(' · '))}</p>
       </div>
-
     </div>
 
-    <div class="bar" role="img"
-         aria-label="Güven yüzde ${conf}">
+    <div class="bar" role="img" aria-label="Güven yüzde ${conf}">
       <span style="width:${conf}%"></span>
     </div>
 
     <small>
-      Güven: %${conf}
+      AI güven değerlendirmesi: %${conf}
       · yaklaşık ${esc(r.radius_km||'?')} km hata payı
       · ${R.models.length} model
       ${R.evidence?' · kanıt çıkarma':''}
@@ -3104,257 +2718,127 @@ function render(R) {
 
     <p>${esc(r.summary)}</p>
 
-    ${r.reasoning
-      ? `
-        <details open>
-          <summary>Akıl yürütme</summary>
-          <p>${esc(r.reasoning)}</p>
-        </details>
-      `
-      : ''}
+    ${r.reasoning?`
+      <details open>
+        <summary>Akıl yürütme</summary>
+        <p>${esc(r.reasoning)}</p>
+      </details>
+    `:''}
 
     <div class="meta">
-
-      <div>
-        <b>Koordinat</b>
-        ${esc(coords)}
-      </div>
-
-      <div>
-        <b>Trafik yönü</b>
-        ${esc(r.driving_side||'—')}
-      </div>
-
-      <div>
-        <b>İklim</b>
-        ${esc(r.climate||'—')}
-      </div>
-
-      <div>
-        <b>Dil / yazı</b>
-        ${esc(r.language_script||'—')}
-      </div>
-
-      <div>
-        <b>Mevsim / saat</b>
-        ${esc(r.season_time||'—')}
-      </div>
-
-      ${R.finalGeo
-        ? `
-          <div>
-            <b>Harita adresi</b>
-            ${esc(R.finalGeo.name)}
-          </div>
-        `
-        : ''}
-
+      <div><b>Koordinat</b>${esc(coords)}</div>
+      <div><b>Trafik yönü</b>${esc(r.driving_side||'—')}</div>
+      <div><b>İklim</b>${esc(r.climate||'—')}</div>
+      <div><b>Dil / yazı</b>${esc(r.language_script||'—')}</div>
+      <div><b>Mevsim / saat</b>${esc(r.season_time||'—')}</div>
+      ${R.finalGeo?'<div><b>Harita adresi</b>'+esc(R.finalGeo.name)+'</div>':''}
     </div>
 
     <div class="actions">
-
-      <button class="ghost" id="copy">
-        Koordinatı kopyala
-      </button>
-
+      <button class="ghost" id="copy">Koordinatı kopyala</button>
+      <a class="ghost" target="_blank" rel="noopener" href="${gmaps}">Google Haritalar</a>
       <a class="ghost" target="_blank" rel="noopener"
-         href="${gmaps}">
-        Google Haritalar
-      </a>
-
-      <a class="ghost" target="_blank" rel="noopener"
-         href="https://www.openstreetmap.org/?mlat=${r.latitude}&mlon=${r.longitude}#map=15/${r.latitude}/${r.longitude}">
+        href="https://www.openstreetmap.org/?mlat=${r.latitude}&mlon=${r.longitude}#map=15/${r.latitude}/${r.longitude}">
         OpenStreetMap
       </a>
-
-      <button class="ghost" id="exp">
-        JSON raporu indir
-      </button>
-
+      <button class="ghost" id="exp">JSON raporu indir</button>
     </div>
 
     <h3 class="sub">Doğrulama</h3>
-
     ${checks}
 
-    ${(r.contradictions&&r.contradictions.length)
-      ? `
-        <h3 class="sub">Tespit edilen çelişkiler</h3>
-        <ul>
-          ${r.contradictions.map(c=>'<li>'+esc(c)+'</li>').join('')}
-        </ul>
-      `
-      : ''}
+    ${r.contradictions?.length?`
+      <h3 class="sub">Tespit edilen çelişkiler</h3>
+      <ul>${r.contradictions.map(c=>'<li>'+esc(c)+'</li>').join('')}</ul>
+    `:''}
 
-    ${r.verification_notes
-      ? '<p class="muted">'+esc(r.verification_notes)+'</p>'
-      : ''}
+    ${r.verification_notes?'<p class="muted">'+esc(r.verification_notes)+'</p>':''}
 
     <h3 class="sub">Model karşılaştırması</h3>
-
     <div style="overflow-x:auto">
-
       <table>
-
         <tr>
-          <th>Model</th>
-          <th>Tahmin</th>
-          <th>Güven</th>
-          <th>Uzaklık</th>
-          <th>Harita ülkesi</th>
+          <th>Model</th><th>Tahmin</th><th>Güven</th><th>Uzaklık</th><th>Harita ülkesi</th>
         </tr>
-
         ${mrows}
-
       </table>
-
     </div>
 
-    ${exifBlock
-      ? '<h3 class="sub">Metadata</h3>'+exifBlock
-      : ''}
-
+    ${exifBlock?'<h3 class="sub">Metadata</h3>'+exifBlock:''}
     ${evidenceHTML(R.evidence)}
+    ${clues?'<h3 class="sub">İpuçları</h3>'+clues:''}
 
-    ${clues
-      ? '<h3 class="sub">İpuçları</h3>'+clues
-      : ''}
+    ${r.ruled_out?.length?`
+      <h3 class="sub">Elenen bölgeler</h3>
+      <ul>${r.ruled_out.map(x=>'<li>'+esc(x)+'</li>').join('')}</ul>
+    `:''}
 
-    ${(r.ruled_out&&r.ruled_out.length)
-      ? `
-        <h3 class="sub">Elenen bölgeler</h3>
-        <ul>
-          ${r.ruled_out.map(x=>'<li>'+esc(x)+'</li>').join('')}
-        </ul>
-      `
-      : ''}
-
-    ${alts
-      ? `
-        <h3 class="sub">Alternatif konumlar</h3>
-        <div class="alts">${alts}</div>
-      `
-      : ''}
+    ${alts?`
+      <h3 class="sub">Alternatif konumlar</h3>
+      <div class="alts">${alts}</div>
+    `:''}
 
     <div class="learning-panel">
-
       <h3>🧠 İzsür Adaptive Memory</h3>
-
-      <p>
-        Bu fotoğrafın gerçek konumunu işaretleyerek
-        sistemin gelecekteki analizlerini geliştirebilirsin.
-      </p>
+      <p>Bu fotoğrafın gerçek konumunu işaretleyerek gelecekteki analizlerde kullanılacak doğrulanmış örnek oluşturabilirsin.</p>
 
       <div class="learning-stats">
-
-        <div>
-          <b id="learnCount">0</b>
-          <small>Öğrenilen örnek</small>
-        </div>
-
-        <div>
-          <b id="learnError">0 km</b>
-          <small>Ortalama hata</small>
-        </div>
-
-        <div>
-          <b id="learnCountries">0</b>
-          <small>Ülke</small>
-        </div>
-
+        <div><b id="learnCount">0</b><small>Öğrenilen örnek</small></div>
+        <div><b id="learnError">0 km</b><small>Ortalama hata</small></div>
+        <div><b id="learnCountries">0</b><small>Ülke</small></div>
       </div>
 
-      <label for="learnLabel">
-        Gerçek konumun adı
-      </label>
+      <label for="learnLabel">Gerçek konumun adı</label>
+      <input type="text" id="learnLabel" placeholder="Örn: Kayseri, Cumhuriyet Meydanı">
 
-      <input type="text" id="learnLabel"
-        placeholder="Örn: Kayseri, Cumhuriyet Meydanı">
+      <button class="ghost" id="learnPick">Haritada doğru konumu işaretle</button>
 
-      <button class="ghost" id="learnPick">
-        Haritada doğru konumu işaretle
-      </button>
+      <p class="learning-status" id="learnStatus">Henüz gerçek konum seçilmedi.</p>
 
-      <p class="learning-status" id="learnStatus">
-        Henüz gerçek konum seçilmedi.
-      </p>
-
-      <button class="primary" id="learnSave">
-        Bu örnekten öğren
-      </button>
-
+      <button class="primary" id="learnSave">Bu örnekten öğren</button>
     </div>
-
   `;
 
-  /* Koordinat kopyalama */
-
   $('copy')?.addEventListener('click',async e=>{
-
     try {
-
       await navigator.clipboard.writeText(coords);
-
       e.target.textContent='Kopyalandı';
-
     } catch(err) {
-
       e.target.textContent='Kopyalanamadı';
     }
   });
 
-  /* JSON raporu */
-
   $('exp')?.addEventListener('click',()=>{
-
-    const b=new Blob(
-      [JSON.stringify(R,null,2)],
-      {type:'application/json'}
-    );
-
+    const b=new Blob([JSON.stringify(R,null,2)],{type:'application/json'});
     const a=document.createElement('a');
 
     a.href=URL.createObjectURL(b);
-    a.download='konum-raporu.json';
+    a.download='izsur-konum-raporu.json';
     a.click();
 
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   });
 
-  /* Alternatif konumlar */
-
   document.querySelectorAll('.alt').forEach(b=>{
-
     b.addEventListener('click',()=>{
+      const a=r.alternatives[Number(b.dataset.i)];
 
-      const a=r.alternatives[b.dataset.i];
-
-      if(isNum(a.latitude)&&isNum(a.longitude)) {
-
-        map.flyTo(
-          [a.latitude,a.longitude],
-          9
-        );
+      if(safeCoords(a.latitude,a.longitude)) {
+        map.flyTo([a.latitude,a.longitude],9);
       }
     });
   });
 
-  /* Öğrenme paneli */
-
   updateLearningStats();
 
   $('learnPick')?.addEventListener('click',()=>{
-
     learningPickMode=!learningPickMode;
 
     $('learnPick').textContent=learningPickMode
       ? 'Konum seçimini iptal et'
       : 'Haritada doğru konumu işaretle';
 
-    $('map').classList.toggle(
-      'learning-active',
-      learningPickMode
-    );
+    $('map').classList.toggle('learning-active',learningPickMode);
 
     $('learnStatus').textContent=learningPickMode
       ? 'Haritada fotoğrafın gerçek konumuna tıkla.'
@@ -3362,52 +2846,38 @@ function render(R) {
   });
 
   $('learnSave')?.addEventListener('click',async()=>{
-
     if(!currentResult) return;
 
     if(!selectedActualLocation) {
-
-      $('learnStatus').textContent=
-        'Önce haritadan gerçek konumu seçmelisin.';
-
+      $('learnStatus').textContent='Önce haritadan gerçek konumu seçmelisin.';
       return;
     }
 
     const btn=$('learnSave');
-
     btn.disabled=true;
     btn.textContent='Kaydediliyor…';
 
     try {
-
-      const label=$('learnLabel').value.trim();
-
       const entry=await saveCorrection(
         currentResult,
-        label,
+        $('learnLabel').value.trim(),
         selectedActualLocation.lat,
         selectedActualLocation.lon
       );
 
       learningPickMode=false;
-
       $('map').classList.remove('learning-active');
 
       $('learnStatus').textContent=
-        '✓ Öğrenildi! Gerçek konum ile AI tahmini arasındaki fark: '+
-        fmtKm(entry.distanceKm)+
-        '. Örnek kalıcı hafızaya kaydedildi.';
+        '✓ Öğrenildi! AI tahmini ile gerçek konum arasındaki fark: '+
+        fmtKm(entry.distanceKm)+'. Örnek hafızaya kaydedildi.';
 
       btn.textContent='Öğrenildi';
-
       updateLearningStats();
       renderMemory();
 
     } catch(e) {
-
-      $('learnStatus').textContent=
-        'Hata: '+errMsg(e);
-
+      $('learnStatus').textContent='Hata: '+errMsg(e);
       btn.disabled=false;
       btn.textContent='Bu örnekten öğren';
     }
@@ -3419,42 +2889,26 @@ function render(R) {
 ========================================== */
 
 const getHistory=()=>{
-
   try {
-
-    return JSON.parse(
-      localStorage.getItem(HKEY)
-    )||[];
-
+    return JSON.parse(localStorage.getItem(HKEY))||[];
   } catch {
-
     return [];
   }
 };
 
 const setHistory=h=>{
-
   try {
-
-    localStorage.setItem(
-      HKEY,
-      JSON.stringify(h)
-    );
-
+    localStorage.setItem(HKEY,JSON.stringify(h));
   } catch(e) {
-
     console.warn('Geçmiş kaydedilemedi.',e);
   }
 };
 
 function saveHistory(R) {
-
   if(!S.thumb||!S.thumb.startsWith('data:')) return;
 
   const slim={
-
     ...R,
-
     models:R.models.map(m=>({
       model:m.model,
       data:m.data,
@@ -3464,77 +2918,54 @@ function saveHistory(R) {
   };
 
   const h=getHistory();
-
-  h.unshift({
-    thumb:S.thumb,
-    R:slim
-  });
-
+  h.unshift({thumb:S.thumb,R:slim});
   setHistory(h.slice(0,8));
-
   renderHistory();
 }
 
 function renderHistory() {
-
   const h=getHistory();
   const box=$('hist');
 
   if(!h.length) {
-
-    box.innerHTML=
-      '<small class="muted">Henüz kayıt yok.</small>';
-
+    box.innerHTML='<small class="muted">Henüz kayıt yok.</small>';
     return;
   }
 
   box.innerHTML=h.map((x,i)=>`
-
     <button data-i="${i}">
-
       <img alt="" src="${x.thumb}">
-
-      <span>
-        ${esc(
-          x.R.final.city||
-          x.R.final.country||
-          'Bilinmiyor'
-        )}
-      </span>
-
+      <span>${esc(x.R.final.city||x.R.final.country||'Bilinmiyor')}</span>
     </button>
-
   `).join('');
 
   box.querySelectorAll('button').forEach(b=>{
-
     b.addEventListener('click',()=>{
-
-      const x=getHistory()[b.dataset.i];
-
+      const x=getHistory()[Number(b.dataset.i)];
       if(!x) return;
 
       currentResult=x.R;
-
       resetSelection();
 
       render(x.R);
       drawOnMap(x.R);
 
-      $('result').scrollIntoView({
-        behavior:'smooth',
-        block:'start'
-      });
+      if(x.R.visualMatches?.length) {
+        $('visualResults').classList.remove('hidden');
+        renderVisualCards(x.R.visualMatches);
+        $('visualStatus').textContent='Geçmiş analizdeki görsel eşleştirme sonuçları.';
+      } else {
+        $('visualResults').classList.add('hidden');
+      }
+
+      $('result').scrollIntoView({behavior:'smooth',block:'start'});
     });
   });
 }
 
 $('clear').addEventListener('click',()=>{
-
   if(!confirm('Analiz geçmişi silinsin mi?')) return;
-
   setHistory([]);
-
   renderHistory();
 });
 
@@ -3543,59 +2974,34 @@ $('clear').addEventListener('click',()=>{
 ========================================== */
 
 async function loadModels() {
-
   let ids=[];
 
   try {
-
     const l=await puter.ai.listModels();
 
     ids=(l||[])
-      .map(m=>
-        typeof m==='string'
-          ? m
-          : (m.id||m.name)
-      )
+      .map(m=>typeof m==='string'?m:(m.id||m.name))
       .filter(Boolean);
 
   } catch(e) {
-
     console.error('Model listesi alınamadı:',e);
   }
 
   const ok=/(gpt-4o|gpt-4\.1|gpt-5|gpt-6|claude|gemini|grok|pixtral|vision|-vl)/i;
-
   const bad=/(embed|audio|tts|realtime|transcribe|moderation|image|search|codex|instruct-)/i;
 
-  let list=[...new Set(ids)].filter(i=>
-    ok.test(i)&&!bad.test(i)
-  );
+  let list=[...new Set(ids)].filter(i=>ok.test(i)&&!bad.test(i));
 
   if(!list.length) {
-
-    list=[
-      'gpt-4o',
-      'gpt-5-nano',
-      'claude-sonnet-4-5',
-      'gemini-2.5-flash'
-    ];
+    list=['gpt-4o','gpt-5-nano','claude-sonnet-4-5','gemini-2.5-flash'];
   }
 
-  const pick=re=>
-    list.filter(i=>re.test(i))
-      .sort()
-      .reverse()[0];
+  const pick=re=>list.filter(i=>re.test(i)).sort().reverse()[0];
 
   const defaults=[
-
-    list.includes('gpt-4o')
-      ? 'gpt-4o'
-      : pick(/^gpt-/),
-
+    list.includes('gpt-4o')?'gpt-4o':pick(/^gpt-/),
     pick(/claude.*sonnet/),
-
     pick(/gemini.*flash/)
-
   ].filter(Boolean);
 
   list=[
@@ -3606,31 +3012,17 @@ async function loadModels() {
   const on=defaults.slice(0,2);
 
   $('models').innerHTML=list.map(i=>`
-
     <label class="chk">
-
-      <input type="checkbox"
-        class="mdl"
-        value="${esc(i)}"
-        ${on.includes(i)?'checked':''}>
-
+      <input type="checkbox" class="mdl" value="${esc(i)}" ${on.includes(i)?'checked':''}>
       ${esc(i)}
-
     </label>
-
   `).join('');
 
   $('judge').innerHTML=list.map(i=>`
-
-    <option value="${esc(i)}">
-      ${esc(i)}
-    </option>
-
+    <option value="${esc(i)}">${esc(i)}</option>
   `).join('');
 
-  if(defaults[0]) {
-    $('judge').value=defaults[0];
-  }
+  if(defaults[0]) $('judge').value=defaults[0];
 }
 
 /* ==========================================
@@ -3638,12 +3030,9 @@ async function loadModels() {
 ========================================== */
 
 loadModels();
-
 renderHistory();
-
 renderMemory();
 
 </script>
-
 </body>
 </html>
