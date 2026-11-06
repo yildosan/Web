@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -517,21 +516,23 @@ details li em {color:var(--muted);font-style:normal}
   <label for="depth">Tarama derinliği</label>
 
   <select id="depth">
-    <option value="fast">Hızlı: tek model</option>
-    <option value="deep" selected>Detaylı: kırpmalar + OCR + çoklu model + hakem</option>
+    <option value="fast" selected>Hızlı: tek model</option>
+    <option value="deep">Detaylı: kırpmalar + OCR + çoklu model + hakem</option>
     <option value="max">Maksimum: 3×3 kırpma + tüm modeller + hakem</option>
   </select>
 
-  <label>Karşılaştırılacak modeller</label>
+  <label>Karşılaştırılacak ücretsiz modeller</label>
   <div class="models" id="models">
-    <small class="muted">Modeller yükleniyor…</small>
+    <small class="muted">Ücretsiz modeller yükleniyor…</small>
   </div>
 
-  <label for="custom">Özel model kimliği</label>
-  <input type="text" id="custom" placeholder="Puter.js model kimliği">
+  <label for="custom">Özel ücretsiz model kimliği</label>
+  <input type="text" id="custom" placeholder="Örn: model-kimliği:free">
 
   <label for="judge">Hakem modeli</label>
-  <select id="judge"></select>
+  <select id="judge">
+    <option value="">Ücretsiz modeller bekleniyor…</option>
+  </select>
 
   <label for="hint">Ek bağlam</label>
   <textarea id="hint" placeholder="Örn: Avrupa'da bir tatilde çekildi, Mayıs ayı"></textarea>
@@ -552,7 +553,7 @@ details li em {color:var(--muted);font-style:normal}
   </label>
 
   <label class="chk">
-    <input type="checkbox" id="visualMatch" checked>
+    <input type="checkbox" id="visualMatch">
     KartaView ile görsel eşleştirme yap
   </label>
 
@@ -563,9 +564,11 @@ details li em {color:var(--muted);font-style:normal}
     <option value="3000">3 kilometre – geniş arama</option>
   </select>
 
-  <button class="primary" id="go" disabled>Derin taramayı başlat</button>
+  <button class="primary" id="go" disabled>Analizi başlat</button>
 
   <p class="note">
+    Yalnızca Puter tarafından ücretsiz olarak işaretlenmiş modeller kullanılır.
+    Ücretsiz kullanım kotası veya model erişimi sınırlı olabilir.
     Tahminler olasılıksaldır ve yanlış olabilir. Görsel eşleştirme yalnızca
     aday koordinatların çevresinde mevcut KartaView fotoğraflarını arar.
     Fotoğraf bulunmaması konumun yanlış olduğu anlamına gelmez.
@@ -701,6 +704,32 @@ const errMsg = e =>
   e?.message ||
   e?.error?.message ||
   (typeof e === 'string' ? e : 'Bilinmeyen hata');
+
+function isBalanceError(error) {
+  const message=errMsg(error).toLowerCase();
+
+  return [
+    'insufficient_funds',
+    'insufficient funds',
+    'low balance',
+    'not enough funding',
+    'not enough balance',
+    'out of credits',
+    'payment required',
+    'quota exceeded',
+    'billing'
+  ].some(term=>message.includes(term));
+}
+
+function friendlyAIError(error) {
+  if(isBalanceError(error)) {
+    return 'Puter ücretsiz kullanım kotası veya hesap bakiyesi yetersiz. '+
+      'Kod ücretli modele geçiş yapmadı ve tekrar istek göndermedi. '+
+      'Puter hesabındaki kullanım durumunu kontrol et.';
+  }
+
+  return errMsg(error);
+}
 
 function flag(cc) {
   if(!cc || cc.length !== 2) return '🌍';
@@ -1331,8 +1360,10 @@ async function saveCorrection(R,label,lat,lon) {
   const memory=getLearningMemory();
 
   const duplicate=memory.some(x=>
+    Array.isArray(x.actual?.coordinates) &&
+    safeCoords(...x.actual.coordinates) &&
     haversine(
-      x.actual?.coordinates||[999,999],
+      x.actual.coordinates,
       [lat,lon]
     )<.02 &&
     x.date &&
@@ -1482,52 +1513,76 @@ function extractText(resp) {
 }
 
 function parseJSON(t) {
-  const c=t.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const c=String(t)
+    .replace(/```json/gi,'')
+    .replace(/```/g,'')
+    .trim();
+
   const a=c.indexOf('{');
   const b=c.lastIndexOf('}');
 
-  if(a<0||b<0) throw new Error('Model geçerli JSON döndürmedi.');
+  if(a<0||b<0) {
+    throw new Error('Model geçerli JSON döndürmedi.');
+  }
 
   return JSON.parse(c.slice(a,b+1));
 }
 
+/*
+  Her çağrıda yalnızca bir AI isteği yapılır.
+  Otomatik görsel küçültme/tekrar denemesi yoktur.
+  Otomatik sağlayıcı yedeği kapalıdır.
+*/
+
 async function ask(prompt,images,model) {
-  if(!images||!images.length) {
-    const response=await puter.ai.chat(prompt,{model});
-    return extractText(response);
+  if(!model) {
+    throw new Error('AI modeli seçilmedi.');
   }
 
-  let lastError=null;
+  if(!puter?.ai?.chat) {
+    throw new Error('Puter.js AI servisine erişilemiyor.');
+  }
 
-  const attempts=[
-    images,
-    images.slice(0,3),
-    images.slice(0,1)
-  ];
+  try {
+    let response;
 
-  const unique=attempts.filter((a,i)=>
-    a.length>0 && attempts.findIndex(x=>x.length===a.length)===i
-  );
+    if(!images||!images.length) {
+      response=await puter.ai.chat(
+        prompt,
+        {
+          model,
+          fallback:false
+        }
+      );
+    } else {
+      const media=images.length===1?images[0]:images;
 
-  for(const imgs of unique) {
-    try {
-      const media=imgs.length===1?imgs[0]:imgs;
-
-      const response=await puter.ai.chat(
+      response=await puter.ai.chat(
         prompt,
         media,
         false,
-        {model}
+        {
+          model,
+          fallback:false
+        }
       );
-
-      return extractText(response);
-    } catch(e) {
-      lastError=e;
     }
-  }
 
-  throw new Error(errMsg(lastError));
+    return extractText(response);
+
+  } catch(e) {
+    if(isBalanceError(e)) {
+      throw new Error(friendlyAIError(e));
+    }
+
+    throw new Error(errMsg(e));
+  }
 }
+
+/*
+  JSON bozuk gelirse ikinci bir AI isteği yapılmaz.
+  Böylece gereksiz kredi/kota tüketimi engellenir.
+*/
 
 async function askJSON(prompt,images,model) {
   const t=await ask(prompt,images,model);
@@ -1535,13 +1590,10 @@ async function askJSON(prompt,images,model) {
   try {
     return parseJSON(t);
   } catch(e) {
-    const fixed=await ask(
-      'Correct this into one valid JSON object. Return ONLY JSON. Preserve the data:\n'+t.slice(0,12000),
-      [],
-      model
+    throw new Error(
+      'Model geçerli JSON üretmedi. Tekrar istek gönderilmedi. '+
+      'Model: '+model
     );
-
-    return parseJSON(fixed);
   }
 }
 
@@ -1767,15 +1819,6 @@ async function reverseGeo(lat,lon) {
    KARTAVIEW GÖRSEL EŞLEŞTİRME
 ========================================== */
 
-/*
-  Bu fonksiyon önce AI tahmin koordinatlarının çevresinde
-  KartaView fotoğraflarını arar.
-
-  KartaView API erişimi, CORS veya endpoint politikaları
-  nedeniyle tarayıcıdan başarısız olabilir. Böyle bir durumda
-  ana analiz akışı kesilmez.
-*/
-
 function getKartaViewImageUrl(photo) {
   const raw=
     photo.fileurlProc||
@@ -1947,7 +1990,10 @@ Use "high" only when several distinctive features agree.
     prompt,
     [originalUrl,referenceUrl],
     false,
-    {model}
+    {
+      model,
+      fallback:false
+    }
   );
 
   const result=parseJSON(extractText(response));
@@ -2060,6 +2106,10 @@ async function runVisualMatching(R,model,radius) {
       }
 
     } catch(e) {
+      if(isBalanceError(e)) {
+        throw new Error(friendlyAIError(e));
+      }
+
       results.push({
         ...p,
         comparison:null,
@@ -2156,13 +2206,31 @@ $('go').addEventListener('click',async()=>{
   ].map(c=>c.value);
 
   const custom=$('custom').value.trim();
-  if(custom&&!models.includes(custom)) models.push(custom);
 
-  if(!models.length) return showError('En az bir model seç.');
+  if(custom) {
+    if(!/:free$/i.test(custom)) {
+      return showError(
+        'Özel model kimliği :free ile bitmeli. Ücretli modeller engellenmiştir.'
+      );
+    }
+
+    if(!models.includes(custom)) models.push(custom);
+  }
+
+  models=[...new Set(models)];
+
+  if(!models.length) {
+    return showError('En az bir ücretsiz model seç.');
+  }
 
   if(depth==='fast') models=models.slice(0,1);
 
   const judgeModel=$('judge').value;
+
+  if(!judgeModel||!/:free$/i.test(judgeModel)) {
+    return showError('Geçerli bir ücretsiz hakem modeli seçilemedi.');
+  }
+
   const useEvidence=depth!=='fast';
   const useJudge=depth!=='fast';
 
@@ -2266,16 +2334,23 @@ $('go').addEventListener('click',async()=>{
         );
 
         step('evidence','ok',n+' kanıt');
+
       } catch(e) {
+        if(isBalanceError(e)) throw e;
+
         step('evidence','fail',errMsg(e));
       }
     }
 
-    if(useMemory&&evidence) learned=learningContext(evidence,true);
+    if(useMemory&&evidence) {
+      learned=learningContext(evidence,true);
+    }
 
-    /* 4. MODELLER */
+    /* 4. MODELLER - SIRALI ÇALIŞTIRMA */
 
-    const settled=await Promise.all(models.map(async m=>{
+    const results=[];
+
+    for(const m of models) {
       step('m:'+m,'run');
 
       try {
@@ -2295,18 +2370,25 @@ $('go').addEventListener('click',async()=>{
 
         step('m:'+m,'ok',d.city||d.country||'');
 
-        return {model:m,data:d};
+        results.push({
+          model:m,
+          data:d
+        });
 
       } catch(e) {
-        step('m:'+m,'fail',errMsg(e));
-        return null;
-      }
-    }));
+        if(isBalanceError(e)) {
+          step('m:'+m,'fail','Puter kullanım kotası yetersiz.');
+          throw e;
+        }
 
-    const results=settled.filter(Boolean);
+        step('m:'+m,'fail',errMsg(e));
+      }
+    }
 
     if(!results.length) {
-      throw new Error('Hiçbir model geçerli konum döndürmedi. Başka model seç.');
+      throw new Error(
+        'Hiçbir model geçerli konum döndürmedi. Ücretsiz modelin görsel girişini desteklediğini kontrol et.'
+      );
     }
 
     /* 5. HAKEM */
@@ -2332,7 +2414,10 @@ $('go').addEventListener('click',async()=>{
         }
 
         step('judge','ok',final.city||final.country||'');
+
       } catch(e) {
+        if(isBalanceError(e)) throw e;
+
         step('judge','fail',errMsg(e));
         final=null;
       }
@@ -2393,6 +2478,7 @@ $('go').addEventListener('click',async()=>{
         }
 
         step('geo','ok');
+
       } catch(e) {
         step('geo','fail',errMsg(e));
       }
@@ -2543,6 +2629,11 @@ $('go').addEventListener('click',async()=>{
         saveHistory(R);
 
       } catch(e) {
+        if(isBalanceError(e)) {
+          step('visual','fail','Puter kullanım kotası yetersiz.');
+          throw e;
+        }
+
         step('visual','fail',errMsg(e));
         $('visualStatus').textContent=
           'Görsel eşleştirme tamamlanamadı: '+errMsg(e);
@@ -2550,11 +2641,11 @@ $('go').addEventListener('click',async()=>{
     }
 
   } catch(e) {
-    showError(errMsg(e));
+    showError(friendlyAIError(e));
 
   } finally {
     btn.disabled=false;
-    btn.textContent='Derin taramayı başlat';
+    btn.textContent='Analizi başlat';
   }
 });
 
@@ -2567,8 +2658,11 @@ function showError(msg) {
     <h2>Sonuç</h2>
     <div class="err">
       Hata: ${esc(msg)}
-      <br>
-      Başka model ya da daha düşük tarama derinliği dene.
+      <br><br>
+      <small>
+        Ücretsiz model erişimini ve Puter kullanım kotanı kontrol et.
+        Daha düşük tarama derinliği deneyebilirsin.
+      </small>
     </div>
   `;
 }
@@ -2970,59 +3064,91 @@ $('clear').addEventListener('click',()=>{
 });
 
 /* ==========================================
-   MODEL LİSTESİ
+   MODEL LİSTESİ - YALNIZCA ÜCRETSİZ
 ========================================== */
 
+function getModelId(model) {
+  if(typeof model==='string') return model;
+
+  return model?.id||model?.name||'';
+}
+
 async function loadModels() {
-  let ids=[];
+  const modelBox=$('models');
+  const judgeBox=$('judge');
+  const go=$('go');
+
+  modelBox.innerHTML='<small class="muted">Puter ücretsiz modelleri kontrol ediliyor…</small>';
+  judgeBox.innerHTML='<option value="">Modeller yükleniyor…</option>';
+
+  go.disabled=true;
+
+  let available=[];
 
   try {
-    const l=await puter.ai.listModels();
+    const response=await puter.ai.listModels();
 
-    ids=(l||[])
-      .map(m=>typeof m==='string'?m:(m.id||m.name))
+    available=(response||[])
+      .map(getModelId)
       .filter(Boolean);
 
   } catch(e) {
     console.error('Model listesi alınamadı:',e);
+
+    modelBox.innerHTML=
+      '<small class="muted">Puter model listesi alınamadı. Sayfayı yenileyip tekrar dene.</small>';
+
+    judgeBox.innerHTML='<option value="">Model listesi alınamadı</option>';
+    return;
   }
 
-  const ok=/(gpt-4o|gpt-4\.1|gpt-5|gpt-6|claude|gemini|grok|pixtral|vision|-vl)/i;
-  const bad=/(embed|audio|tts|realtime|transcribe|moderation|image|search|codex|instruct-)/i;
+  /*
+    Yalnızca Puter tarafından ücretsiz varyant olarak
+    işaretlenmiş :free modeller kabul edilir.
+  */
 
-  let list=[...new Set(ids)].filter(i=>ok.test(i)&&!bad.test(i));
+  const freeModels=[...new Set(available)]
+    .filter(id=>/:free$/i.test(id))
+    .sort((a,b)=>a.localeCompare(b));
 
-  if(!list.length) {
-    list=['gpt-4o','gpt-5-nano','claude-sonnet-4-5','gemini-2.5-flash'];
+  if(!freeModels.length) {
+    modelBox.innerHTML=`
+      <small class="muted">
+        Şu anda listelenen ücretsiz (:free) model bulunamadı.
+        Ücretli modellere otomatik geçiş yapılmayacak.
+      </small>
+    `;
+
+    judgeBox.innerHTML='<option value="">Ücretsiz model bulunamadı</option>';
+    go.disabled=true;
+    return;
   }
 
-  const pick=re=>list.filter(i=>re.test(i)).sort().reverse()[0];
+  const selected=freeModels[0];
 
-  const defaults=[
-    list.includes('gpt-4o')?'gpt-4o':pick(/^gpt-/),
-    pick(/claude.*sonnet/),
-    pick(/gemini.*flash/)
-  ].filter(Boolean);
-
-  list=[
-    ...defaults,
-    ...list.filter(i=>!defaults.includes(i)).sort()
-  ].slice(0,40);
-
-  const on=defaults.slice(0,2);
-
-  $('models').innerHTML=list.map(i=>`
+  modelBox.innerHTML=freeModels.map((id,index)=>`
     <label class="chk">
-      <input type="checkbox" class="mdl" value="${esc(i)}" ${on.includes(i)?'checked':''}>
-      ${esc(i)}
+      <input
+        type="checkbox"
+        class="mdl"
+        value="${esc(id)}"
+        ${index===0?'checked':''}>
+      ${esc(id)}
     </label>
   `).join('');
 
-  $('judge').innerHTML=list.map(i=>`
-    <option value="${esc(i)}">${esc(i)}</option>
+  judgeBox.innerHTML=freeModels.map(id=>`
+    <option value="${esc(id)}">${esc(id)}</option>
   `).join('');
 
-  if(defaults[0]) $('judge').value=defaults[0];
+  judgeBox.value=selected;
+
+  go.disabled=!S.full;
+
+  console.info(
+    'Puter ücretsiz modelleri:',
+    freeModels
+  );
 }
 
 /* ==========================================
@@ -3035,4 +3161,4 @@ renderMemory();
 
 </script>
 </body>
-</html>
+  </html>
